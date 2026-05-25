@@ -1,0 +1,15 @@
+# The Lily Letters Co.
+
+> Premium wedding stationery, personalized wedding details, custom signage, and wedding printables.
+
+## About
+The Lily Letters Co. offers editable Canva wedding templates: invitations, signs, menus, seating charts, and bridal shower stationery.
+
+## Primary pages
+- Shop: /products
+- Blog: /blog
+- FAQ: /faq
+
+## Contact
+- Email: thelilyletters.co@gmail.com
+- Instagram: https://www.instagram.com/thelilyletters.co

@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Instagram, Mail, Heart } from 'lucide-react';
+import api from '../lib/api';
 
 const footerLinks = {
   Shop: [
@@ -11,6 +13,7 @@ const footerLinks = {
     { label: 'Bundle Sets', to: '/products?category=bundles' },
   ],
   Info: [
+    { label: 'Wedding Journal', to: '/blog' },
     { label: 'About Us', to: '/about' },
     { label: 'FAQ', to: '/faq' },
     { label: 'Contact', to: '/contact' },
@@ -24,6 +27,20 @@ const footerLinks = {
 };
 
 export default function Footer() {
+  const [email, setEmail] = useState('');
+  const [msg, setMsg] = useState('');
+
+  const onSubscribe = async (e) => {
+    e.preventDefault();
+    try {
+      await api.subscribe(email, 'footer');
+      setMsg('Subscribed! Thank you.');
+      setEmail('');
+    } catch (err) {
+      setMsg(err.message || 'Could not subscribe.');
+    }
+  };
+
   return (
     <footer className="bg-wine text-cream">
       {/* Top section */}
@@ -93,21 +110,24 @@ export default function Footer() {
                 Subscribe for exclusive offers, styling tips, and new template launches.
               </p>
             </div>
-            <form
-              className="flex gap-0 w-full md:w-auto"
-              onSubmit={(e) => e.preventDefault()}
-            >
-              <input
-                type="email"
-                placeholder="Your email address"
-                className="flex-1 md:w-64 px-4 py-3 bg-cream/10 border border-cream/20 text-cream placeholder-cream/40 text-sm font-body focus:outline-none focus:border-cream/50 transition-colors"
-              />
-              <button
-                type="submit"
-                className="px-6 py-3 bg-gold hover:bg-[#7a6a3e] text-cream text-xs font-body font-medium tracking-widest uppercase transition-colors whitespace-nowrap"
-              >
-                Subscribe
-              </button>
+            <form className="flex flex-col gap-2 w-full md:w-auto" onSubmit={onSubscribe}>
+              <div className="flex gap-0">
+                <input
+                  type="email"
+                  required
+                  placeholder="Your email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="flex-1 md:w-64 px-4 py-3 bg-cream/10 border border-cream/20 text-cream placeholder-cream/40 text-sm font-body focus:outline-none focus:border-cream/50 transition-colors"
+                />
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-gold hover:bg-[#7a6a3e] text-cream text-xs font-body font-medium tracking-widest uppercase transition-colors whitespace-nowrap"
+                >
+                  Subscribe
+                </button>
+              </div>
+              {msg && <p className="text-xs text-cream/70">{msg}</p>}
             </form>
           </div>
         </div>

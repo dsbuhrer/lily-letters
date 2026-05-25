@@ -5,7 +5,7 @@ import {
   ShoppingBag, Star, Download, Check, ArrowLeft,
   ChevronLeft, ChevronRight
 } from 'lucide-react';
-import { getProductById, products } from '../data/products';
+import { useProduct, useProducts } from '../hooks/useProducts';
 import useCartStore from '../store/cartStore';
 import ProductCard from '../components/ProductCard';
 import WishlistButton from '../components/WishlistButton';
@@ -13,10 +13,20 @@ import WishlistButton from '../components/WishlistButton';
 export default function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const product = getProductById(id);
+  const { product, loading } = useProduct(id);
+  const { products: allProducts } = useProducts();
   const [selectedImg, setSelectedImg] = useState(0);
   const [added, setAdded] = useState(false);
   const { addItem, openCart } = useCartStore();
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-cream pt-24 flex items-center justify-center">
+        <p className="font-body text-sm text-[#2d2020]/50">Loading…</p>
+      </main>
+    );
+  }
+
   if (!product) {
     return (
       <main className="min-h-screen bg-cream pt-24 flex items-center justify-center">
@@ -30,7 +40,7 @@ export default function ProductDetailPage() {
     );
   }
 
-  const related = products
+  const related = allProducts
     .filter((p) => p.id !== product.id && p.category === product.category)
     .slice(0, 4);
 

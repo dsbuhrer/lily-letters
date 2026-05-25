@@ -1,5 +1,5 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { AnimatePresence } from 'framer-motion';
 
 import Header from './components/Header';
@@ -14,8 +14,22 @@ import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import FAQPage from './pages/FAQPage';
 import WishlistPage from './pages/WishlistPage';
+import AdminLayout from './components/admin/AdminLayout';
+import AdminGuard from './components/admin/AdminGuard';
+import AdminLoginPage from './pages/admin/AdminLoginPage';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import AdminPostsPage from './pages/admin/AdminPostsPage';
+import AdminPostEditorPage from './pages/admin/AdminPostEditorPage';
+import AdminProductsPage from './pages/admin/AdminProductsPage';
+import AdminSubscribersPage from './pages/admin/AdminSubscribersPage';
 
-const HIDE_LAYOUT = ['/checkout', '/order-confirmation'];
+const BlogIndexPage = lazy(() => import('./pages/blog/BlogIndexPage'));
+const BlogPostPage = lazy(() => import('./pages/blog/BlogPostPage'));
+const BlogCategoryPage = lazy(() => import('./pages/blog/BlogCategoryPage'));
+const BlogSearchPage = lazy(() => import('./pages/blog/BlogSearchPage'));
+const BlogTagPage = lazy(() => import('./pages/blog/BlogTagPage'));
+
+const HIDE_LAYOUT = ['/checkout', '/order-confirmation', '/admin'];
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -23,6 +37,14 @@ function ScrollToTop() {
     window.scrollTo(0, 0);
   }, [pathname]);
   return null;
+}
+
+function PageFallback() {
+  return (
+    <main className="min-h-screen bg-cream pt-28 flex items-center justify-center">
+      <p className="font-body text-sm text-[#2d2020]/50">Loading…</p>
+    </main>
+  );
 }
 
 export default function App() {
@@ -46,7 +68,59 @@ export default function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
-          {/* 404 */}
+
+          <Route
+            path="/blog"
+            element={
+              <Suspense fallback={<PageFallback />}>
+                <BlogIndexPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/blog/search"
+            element={
+              <Suspense fallback={<PageFallback />}>
+                <BlogSearchPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/blog/category/:slug"
+            element={
+              <Suspense fallback={<PageFallback />}>
+                <BlogCategoryPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/blog/tag/:slug"
+            element={
+              <Suspense fallback={<PageFallback />}>
+                <BlogTagPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/blog/:slug"
+            element={
+              <Suspense fallback={<PageFallback />}>
+                <BlogPostPage />
+              </Suspense>
+            }
+          />
+
+          <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route element={<AdminGuard />}>
+            <Route element={<AdminLayout />}>
+              <Route path="/admin" element={<AdminDashboardPage />} />
+              <Route path="/admin/posts" element={<AdminPostsPage />} />
+              <Route path="/admin/posts/:id" element={<AdminPostEditorPage />} />
+              <Route path="/admin/products" element={<AdminProductsPage />} />
+              <Route path="/admin/subscribers" element={<AdminSubscribersPage />} />
+            </Route>
+          </Route>
+
           <Route
             path="*"
             element={

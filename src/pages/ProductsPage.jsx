@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, ChevronDown, SlidersHorizontal } from 'lucide-react';
-import { products, categories } from '../data/products';
+import { categories } from '../data/products';
+import { useProducts } from '../hooks/useProducts';
 import ProductCard from '../components/ProductCard';
 
 const sortOptions = [
@@ -33,19 +34,19 @@ const groupedCategories = (() => {
   return groups;
 })();
 
-// Count products per category
-const countByCategory = (catId) => {
-  if (catId === 'all') return products.length;
-  return products.filter((p) => p.category === catId).length;
-};
-
 export default function ProductsPage() {
+  const { products } = useProducts();
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('default');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const categoryParam = searchParams.get('category') || 'all';
+
+  const countByCategory = (catId) => {
+    if (catId === 'all') return products.length;
+    return products.filter((p) => p.category === catId).length;
+  };
 
   const setCategory = (cat) => {
     if (cat === 'all') {

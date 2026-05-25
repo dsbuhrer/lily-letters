@@ -7,6 +7,7 @@ import useWishlistStore from '../store/wishlistStore';
 
 const navLinks = [
   { to: '/products', label: 'Shop' },
+  { to: '/blog', label: 'Journal' },
   { to: '/about', label: 'About' },
   { to: '/faq', label: 'FAQ' },
   { to: '/contact', label: 'Contact' },

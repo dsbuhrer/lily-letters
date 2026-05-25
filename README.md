@@ -1,43 +1,92 @@
-# Lily Letters
+# Lily Letters Co.
 
-Loja virtual de cartas e produtos personalizados, construída com React, Vite e Tailwind CSS.
+Wedding stationery shop with editorial blog, custom CMS, and SEO/AEO-ready server rendering.
 
-## Funcionalidades
+## Features
 
-- Catálogo de produtos com páginas de detalhe
-- Carrinho de compras e lista de desejos
-- Checkout e confirmação de pedido
-- Páginas institucionais (sobre, FAQ, contato)
+- Product catalog (API + static fallback)
+- Cart, wishlist, checkout flow
+- **Blog** with SSR (`/blog/*`) — meta tags, JSON-LD, FAQ schema
+- **CMS** at `/admin` — posts (Tiptap), products, newsletter subscribers
+- Newsletter signup (footer + blog) → PostgreSQL
+- Dynamic `sitemap.xml`, `rss.xml`, `robots.txt`, `llms.txt`
 
-## Requisitos
+## Requirements
 
 - Node.js 18+
-- npm
+- [Supabase](https://supabase.com) project (PostgreSQL + Storage)
+- Optional: [Supabase CLI](https://supabase.com/docs/guides/cli) for migrations
 
-## Instalação
+## Setup
+
+1. Install dependencies:
 
 ```bash
 npm install
 ```
 
-## Desenvolvimento
+2. Copy environment variables:
 
 ```bash
-npm run dev
+cp .env.example .env
 ```
 
-## Build
+Fill in `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `SITE_URL`.
+
+3. Apply database migrations (Supabase Dashboard SQL or CLI):
+
+```bash
+supabase db push
+# or run SQL files in supabase/migrations/ manually
+```
+
+4. Seed admin user, categories, products, and blog posts:
+
+```bash
+npm run seed
+```
+
+5. Development (Vite + API on port 3001):
+
+```bash
+npm run dev:full
+```
+
+- Store & CMS: http://localhost:5173
+- API / blog SSR (production-like): http://localhost:3001
+
+## Production
 
 ```bash
 npm run build
-npm run preview
+npm run start
 ```
+
+Serves `dist/` and handles API + blog SSR on `PORT` (default 3001).
+
+## CMS
+
+| URL | Purpose |
+|-----|---------|
+| `/admin/login` | Admin login |
+| `/admin` | Dashboard |
+| `/admin/posts` | Blog posts |
+| `/admin/products` | Shop products |
+| `/admin/subscribers` | Newsletter emails + CSV export |
 
 ## Stack
 
-- React 18
-- Vite 5
-- React Router
-- Zustand
-- Tailwind CSS
-- Framer Motion
+- **Frontend:** React 18, Vite 5, React Router, Tailwind, Zustand, Tiptap (admin)
+- **Server:** Express, JWT auth, Sharp → WebP uploads
+- **Data:** Supabase PostgreSQL + Storage (`blog-images`, `product-images`)
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Vite only |
+| `npm run dev:server` | Express API only |
+| `npm run dev:full` | Vite + Express |
+| `npm run build` | Production frontend build |
+| `npm run start` | Production server |
+| `npm run seed` | Seed database |
