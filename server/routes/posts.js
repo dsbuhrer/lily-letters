@@ -81,10 +81,18 @@ router.get('/:slug', async (req, res) => {
 
     if (error || !post) return res.status(404).json({ error: 'Post not found' });
 
-    await supabase.from('post_views').insert({ post_id: post.id });
-    await supabase.rpc('increment_post_views', { post_id: post.id }).catch(() => {
-      supabase.from('posts').update({ view_count: (post.view_count || 0) + 1 }).eq('id', post.id);
-    });
+    try {
+      await supabase.from('post_views').insert({ post_id: post.id });
+      const { error: rpcErr } = await supabase.rpc('increment_post_views', { post_id: post.id });
+      if (rpcErr) {
+        await supabase
+          .from('posts')
+          .update({ view_count: (post.view_count || 0) + 1 })
+          .eq('id', post.id);
+      }
+    } catch (viewErr) {
+      console.warn('post view tracking:', viewErr.message);
+    }
 
     let related = [];
     if (post.category_id) {

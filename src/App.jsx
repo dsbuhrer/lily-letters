@@ -21,6 +21,8 @@ import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminPostsPage from './pages/admin/AdminPostsPage';
 import AdminPostEditorPage from './pages/admin/AdminPostEditorPage';
 import AdminProductsPage from './pages/admin/AdminProductsPage';
+import AdminProductEditorPage from './pages/admin/AdminProductEditorPage';
+import AdminLeadsPage from './pages/admin/AdminLeadsPage';
 import AdminSubscribersPage from './pages/admin/AdminSubscribersPage';
 
 const BlogIndexPage = lazy(() => import('./pages/blog/BlogIndexPage'));
@@ -117,6 +119,8 @@ export default function App() {
               <Route path="/admin/posts" element={<AdminPostsPage />} />
               <Route path="/admin/posts/:id" element={<AdminPostEditorPage />} />
               <Route path="/admin/products" element={<AdminProductsPage />} />
+              <Route path="/admin/products/:id" element={<AdminProductEditorPage />} />
+              <Route path="/admin/leads" element={<AdminLeadsPage />} />
               <Route path="/admin/subscribers" element={<AdminSubscribersPage />} />
             </Route>
           </Route>

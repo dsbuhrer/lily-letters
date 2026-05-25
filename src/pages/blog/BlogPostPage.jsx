@@ -10,6 +10,7 @@ import ArticleCta from '../../components/blog/ArticleCta';
 import ShopTheLook from '../../components/blog/ShopTheLook';
 import NewsletterBlock from '../../components/blog/NewsletterBlock';
 import BlogCard from '../../components/blog/BlogCard';
+import { BLOG_HERO_HEIGHT, BLOG_HERO_WIDTH } from '../../constants/blogHeroImage';
 
 export default function BlogPostPage() {
   const { slug } = useParams();
@@ -96,8 +97,8 @@ export default function BlogPostPage() {
           <img
             src={post.hero_image}
             alt={post.hero_alt || post.title}
-            width={1200}
-            height={675}
+            width={BLOG_HERO_WIDTH}
+            height={BLOG_HERO_HEIGHT}
             className="w-full aspect-[16/9] object-cover mb-8"
             fetchPriority="high"
           />

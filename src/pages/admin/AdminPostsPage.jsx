@@ -1,18 +1,76 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../lib/api';
+import AdminListToolbar from '../../components/admin/AdminListToolbar';
+import { filterBySearch, sortByKey } from '../../utils/adminListFilter';
+
+const POST_SORT_OPTIONS = [
+  { value: 'updated_desc', label: 'Updated (newest)' },
+  { value: 'updated_asc', label: 'Updated (oldest)' },
+  { value: 'title_asc', label: 'Title (A–Z)' },
+  { value: 'title_desc', label: 'Title (Z–A)' },
+  { value: 'status', label: 'Status (draft first)' },
+];
+
+const postComparators = {
+  updated_desc: (a, b) => new Date(b.updated_at) - new Date(a.updated_at),
+  updated_asc: (a, b) => new Date(a.updated_at) - new Date(b.updated_at),
+  title_asc: (a, b) => (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' }),
+  title_desc: (a, b) => (b.title || '').localeCompare(a.title || '', undefined, { sensitivity: 'base' }),
+  status: (a, b) => {
+    const order = { draft: 0, published: 1 };
+    return (order[a.status] ?? 2) - (order[b.status] ?? 2) || (a.title || '').localeCompare(b.title || '');
+  },
+};
+
+function PostStatusLabel({ status }) {
+  const isPublished = status === 'published';
+  return (
+    <span
+      className={`inline-block text-[10px] uppercase tracking-widest px-2.5 py-1 border ${
+        isPublished
+          ? 'bg-wine/10 text-wine border-wine/25'
+          : 'bg-[#2d2020]/5 text-[#2d2020]/60 border-taupe'
+      }`}
+    >
+      {isPublished ? 'Published' : 'Draft'}
+    </span>
+  );
+}
 
 export default function AdminPostsPage() {
   const [posts, setPosts] = useState([]);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('updated_desc');
 
   useEffect(() => {
     api.admin.posts().then((r) => setPosts(r.posts || [])).catch(console.error);
   }, []);
 
+  const filteredPosts = useMemo(() => {
+    const matched = filterBySearch(posts, search, (post) => [
+      post.title,
+      post.slug,
+      post.status,
+      post.excerpt,
+    ]);
+    return sortByKey(matched, sort, postComparators);
+  }, [posts, search, sort]);
+
   const remove = async (id) => {
     if (!confirm('Delete this post?')) return;
     await api.admin.deletePost(id);
     setPosts((p) => p.filter((x) => x.id !== id));
+  };
+
+  const publish = async (post) => {
+    if (!confirm(`Publish "${post.title}"?`)) return;
+    try {
+      const { post: updated } = await api.admin.publishPost(post.id);
+      setPosts((p) => p.map((x) => (x.id === post.id ? { ...x, ...updated, status: 'published' } : x)));
+    } catch (e) {
+      alert(e.message || 'Could not publish');
+    }
   };
 
   return (
@@ -23,6 +81,18 @@ export default function AdminPostsPage() {
           New post
         </Link>
       </div>
+
+      <AdminListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search title, slug, status…"
+        sort={sort}
+        onSortChange={setSort}
+        sortOptions={POST_SORT_OPTIONS}
+        filteredCount={filteredPosts.length}
+        totalCount={posts.length}
+      />
+
       <div className="bg-white/80 border border-taupe overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-cream border-b border-taupe">
@@ -34,25 +104,59 @@ export default function AdminPostsPage() {
             </tr>
           </thead>
           <tbody>
-            {posts.map((post) => (
-              <tr key={post.id} className="border-b border-taupe/40">
-                <td className="p-4">
-                  <Link to={`/admin/posts/${post.id}`} className="text-wine hover:underline font-medium">
-                    {post.title}
-                  </Link>
-                  <p className="text-xs text-[#2d2020]/50 mt-1">/blog/{post.slug}</p>
-                </td>
-                <td className="p-4 capitalize">{post.status}</td>
-                <td className="p-4 text-[#2d2020]/60">
-                  {new Date(post.updated_at).toLocaleDateString()}
-                </td>
-                <td className="p-4 text-right">
-                  <button type="button" onClick={() => remove(post.id)} className="text-red-600 text-xs hover:underline">
-                    Delete
-                  </button>
+            {filteredPosts.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="p-8 text-center text-[#2d2020]/50">
+                  {posts.length === 0 ? 'No posts yet.' : 'No posts match your search.'}
                 </td>
               </tr>
-            ))}
+            ) : (
+              filteredPosts.map((post) => (
+                <tr key={post.id} className="border-b border-taupe/40">
+                  <td className="p-4">
+                    <Link to={`/admin/posts/${post.id}`} className="text-wine hover:underline font-medium">
+                      {post.title}
+                    </Link>
+                    <p className="text-xs text-[#2d2020]/50 mt-1">/blog/{post.slug}</p>
+                  </td>
+                  <td className="p-4">
+                    <PostStatusLabel status={post.status} />
+                  </td>
+                  <td className="p-4 text-[#2d2020]/60">
+                    {new Date(post.updated_at).toLocaleDateString()}
+                  </td>
+                  <td className="p-4 text-right">
+                    <div className="flex flex-wrap items-center justify-end gap-3">
+                      {post.status !== 'published' && (
+                        <button
+                          type="button"
+                          onClick={() => publish(post)}
+                          className="text-wine text-xs font-medium hover:underline"
+                        >
+                          Publish
+                        </button>
+                      )}
+                      {post.status === 'published' && post.slug && (
+                        <a
+                          href={`/blog/${post.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#2d2020]/70 text-xs font-medium hover:underline"
+                        >
+                          View
+                        </a>
+                      )}
+                      <Link to={`/admin/posts/${post.id}`} className="text-wine text-xs font-medium hover:underline">
+                        Edit
+                      </Link>
+                      <button type="button" onClick={() => remove(post.id)} className="text-red-600 text-xs hover:underline">
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

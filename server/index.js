@@ -4,13 +4,14 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getConfig } from './config.js';
+import { getConfig, validateSupabaseConfig } from './config.js';
 import { getSupabase, requireSupabase } from './lib/supabase.js';
 import authRoutes from './routes/auth.js';
 import postsRoutes from './routes/posts.js';
 import adminRoutes from './routes/admin.js';
 import productsRoutes, { productAdminRouter } from './routes/products.js';
 import subscribersRoutes from './routes/subscribers.js';
+import leadsRoutes from './routes/leads.js';
 import seoRoutes from './routes/seoRoutes.js';
 import categoriesRoutes from './routes/categories.js';
 import {
@@ -44,6 +45,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/admin/products', productAdminRouter);
 app.use('/api/products', productsRoutes);
 app.use('/api/subscribers', subscribersRoutes);
+app.use('/api/leads', leadsRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use(seoRoutes);
 
@@ -115,7 +117,11 @@ async function handleBlogSsr(req, res, next) {
         .single();
       if (!post) return next();
 
-      await supabase.rpc('increment_post_views', { post_id: post.id }).catch(() => {});
+      try {
+        await supabase.rpc('increment_post_views', { post_id: post.id });
+      } catch {
+        /* view counter optional */
+      }
 
       let related = [];
       if (post.category_id) {
@@ -150,17 +156,30 @@ app.get(['/blog', '/blog/', '/blog/category/:slug', '/blog/tag/:slug', '/blog/:s
 
 if (!config.isDev) {
   const dist = path.join(__dirname, '../dist');
+  const indexHtml = path.join(dist, 'index.html');
   app.use(express.static(dist, { maxAge: '1y', index: false }));
-  app.get('*', (req, res, next) => {
+  app.use((req, res, next) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') return next();
     if (req.path.startsWith('/api')) return next();
-    res.sendFile(path.join(dist, 'index.html'));
+    res.sendFile(indexHtml);
   });
 }
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, supabase: !!getSupabase() });
+  const check = validateSupabaseConfig();
+  res.json({
+    ok: true,
+    supabase: !!getSupabase(),
+    supabaseHint: check.ok ? undefined : check.message,
+  });
 });
 
 app.listen(config.port, () => {
-  console.log(`Server http://localhost:${config.port} (Supabase: ${getSupabase() ? 'on' : 'off'})`);
+  const check = validateSupabaseConfig();
+  console.log(`Server http://localhost:${config.port}`);
+  if (check.ok) {
+    console.log('Supabase: connected');
+  } else {
+    console.warn(`Supabase: ${check.message}`);
+  }
 });

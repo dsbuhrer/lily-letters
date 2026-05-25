@@ -85,7 +85,7 @@ const productSchema = z.object({
   description: z.string().optional(),
   includes: z.array(z.string()).optional(),
   canva_link: z.string().optional(),
-  images: z.array(z.string()).optional(),
+  images: z.array(z.string().min(1)).min(1, 'At least one product image is required'),
   tags: z.array(z.string()).optional(),
   colors: z.array(z.string()).optional(),
   collection: z.string().optional(),
@@ -98,6 +98,18 @@ admin.get('/', async (_req, res) => {
   const supabase = requireSupabase();
   const { data } = await supabase.from('products').select('*').order('id');
   res.json({ products: (data || []).map(mapProduct) });
+});
+
+admin.get('/:id', async (req, res) => {
+  try {
+    const supabase = requireSupabase();
+    const { data, error } = await supabase.from('products').select('*').eq('id', req.params.id).maybeSingle();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Product not found' });
+    res.json({ product: mapProduct(data) });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 admin.post('/', async (req, res) => {

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Instagram, Clock, CheckCircle } from 'lucide-react';
+import { Mail, Instagram, Clock, CheckCircle, Loader2 } from 'lucide-react';
+import api from '../lib/api';
 
 const fadeUp = {
   initial: { opacity: 0, y: 24 },
@@ -21,11 +22,27 @@ const topics = [
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', topic: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      await api.submitContact({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        topic: form.topic || undefined,
+        message: form.message.trim(),
+      });
+      setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      setSubmitError(err.message || 'Could not send your message. Please try again or email us directly.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -212,9 +229,24 @@ export default function ContactPage() {
                     />
                   </div>
 
-                  <button type="submit" className="btn-primary w-full">
-                    <Mail size={14} strokeWidth={1.5} />
-                    Send Message
+                  {submitError && (
+                    <p className="p-3 bg-red-50 border border-red-200 text-red-800 text-sm" role="alert">
+                      {submitError}
+                    </p>
+                  )}
+
+                  <button type="submit" className="btn-primary w-full" disabled={submitting}>
+                    {submitting ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" />
+                        Sending…
+                      </>
+                    ) : (
+                      <>
+                        <Mail size={14} strokeWidth={1.5} />
+                        Send Message
+                      </>
+                    )}
                   </button>
 
                   <p className="font-body text-xs text-[#2d2020]/40 text-center">

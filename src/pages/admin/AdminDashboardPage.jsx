@@ -12,10 +12,16 @@ export default function AdminDashboardPage() {
   return (
     <div className="p-8">
       <h1 className="font-display text-3xl text-wine mb-8">Dashboard</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         {[
           { label: 'Draft posts', value: stats?.drafts ?? '—' },
           { label: 'Published', value: stats?.published ?? '—' },
+          {
+            label: 'Leads',
+            value: stats?.leads_unread != null && stats.leads_unread > 0
+              ? `${stats.leads_unread} new`
+              : (stats?.leads ?? '—'),
+          },
           { label: 'Subscribers', value: stats?.subscribers ?? '—' },
         ].map((s) => (
           <div key={s.label} className="bg-white/80 border border-taupe p-6">
@@ -30,6 +36,9 @@ export default function AdminDashboardPage() {
         </Link>
         <Link to="/admin/products" className="btn-secondary">
           Manage products
+        </Link>
+        <Link to="/admin/leads" className="btn-secondary">
+          View leads
         </Link>
         <Link to="/admin/subscribers" className="btn-ghost">
           View subscribers

@@ -7,11 +7,33 @@ import { authMiddleware } from '../middleware/auth.js';
 import { uploadImage } from '../services/storage.js';
 import { slugify, readingTime } from '../utils/slug.js';
 import { sanitizeOptions } from './posts.js';
+import { generatePostSeo } from '../services/geminiSeo.js';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
+function multerErrorHandler(err, req, res, next) {
+  if (!err) return next();
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({ error: 'Image too large (max 5MB)' });
+  }
+  return res.status(400).json({ error: err.message || 'Upload failed' });
+}
+
 router.use(authMiddleware);
+
+async function handleGeneratePostSeo(req, res) {
+  try {
+    const seo = await generatePostSeo(req.body);
+    res.json(seo);
+  } catch (e) {
+    res.status(e.status || 500).json({ error: e.message });
+  }
+}
+
+// SEO generation — register before /posts/:id routes (Express 5-safe paths)
+router.post('/generate-post-seo', handleGeneratePostSeo);
+router.post('/posts/generate-seo', handleGeneratePostSeo);
 
 const postSchema = z.object({
   title: z.string().min(1),
@@ -31,7 +53,7 @@ const postSchema = z.object({
   author_name: z.string().optional(),
   author_bio: z.string().optional(),
   author_avatar: z.string().optional(),
-  hero_image: z.string().optional(),
+  hero_image: z.string().trim().min(1, 'Hero image is required'),
   hero_alt: z.string().optional(),
   seo_keywords: z.array(z.string()).optional(),
   featured: z.boolean().optional(),
@@ -39,11 +61,12 @@ const postSchema = z.object({
 
 function preparePost(body, existingSlug) {
   const parsed = postSchema.parse(body);
-  const slug = parsed.slug || slugify(parsed.title);
+  const slug = existingSlug || slugify(parsed.title);
   const content = sanitizeHtml(parsed.content || '', sanitizeOptions);
+  const { slug: _omit, ...rest } = parsed;
   return {
-    ...parsed,
-    slug: existingSlug || slug,
+    ...rest,
+    slug,
     content,
     reading_time_minutes: readingTime(content),
     updated_at: new Date().toISOString(),
@@ -152,30 +175,43 @@ router.get('/tags', async (_req, res) => {
 });
 
 // --- Upload ---
-router.post('/upload', upload.single('file'), async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).json({ error: 'No file' });
-    const bucket = req.body.bucket === 'product-images' ? 'product-images' : 'blog-images';
-    const url = await uploadImage(req.file.buffer, req.file.mimetype, bucket, req.body.prefix || 'uploads');
-    res.json({ url });
-  } catch (e) {
-    res.status(e.status || 500).json({ error: e.message });
-  }
-});
+router.post(
+  '/upload',
+  (req, res, next) => {
+    upload.single('file')(req, res, (err) => {
+      if (err) return multerErrorHandler(err, req, res, next);
+      next();
+    });
+  },
+  async (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: 'No file' });
+      const bucket = req.body.bucket === 'product-images' ? 'product-images' : 'blog-images';
+      const url = await uploadImage(req.file.buffer, req.file.mimetype, bucket, req.body.prefix || 'uploads');
+      res.json({ url });
+    } catch (e) {
+      res.status(e.status || 500).json({ error: e.message });
+    }
+  },
+);
 
 // --- Dashboard stats ---
 router.get('/stats', async (_req, res) => {
   try {
     const supabase = requireSupabase();
-    const [drafts, published, subs] = await Promise.all([
+    const [drafts, published, subs, leads, leadsUnread] = await Promise.all([
       supabase.from('posts').select('id', { count: 'exact', head: true }).eq('status', 'draft'),
       supabase.from('posts').select('id', { count: 'exact', head: true }).eq('status', 'published'),
       supabase.from('subscribers').select('id', { count: 'exact', head: true }).is('unsubscribed_at', null),
+      supabase.from('leads').select('id', { count: 'exact', head: true }),
+      supabase.from('leads').select('id', { count: 'exact', head: true }).is('read_at', null),
     ]);
     res.json({
       drafts: drafts.count || 0,
       published: published.count || 0,
       subscribers: subs.count || 0,
+      leads: leads.count || 0,
+      leads_unread: leadsUnread.count || 0,
     });
   } catch (e) {
     res.status(500).json({ error: e.message });

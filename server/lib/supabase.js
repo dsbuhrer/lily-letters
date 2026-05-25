@@ -1,14 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
-import { getConfig } from '../config.js';
+import { getConfig, validateSupabaseConfig } from '../config.js';
 
 let client = null;
 
 export function getSupabase() {
   if (client) return client;
+  const check = validateSupabaseConfig();
+  if (!check.ok) return null;
   const { supabaseUrl, supabaseServiceKey } = getConfig();
-  if (!supabaseUrl || !supabaseServiceKey) {
-    return null;
-  }
   client = createClient(supabaseUrl, supabaseServiceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -16,11 +15,17 @@ export function getSupabase() {
 }
 
 export function requireSupabase() {
-  const sb = getSupabase();
-  if (!sb) {
-    const err = new Error('Supabase is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
+  const check = validateSupabaseConfig();
+  if (!check.ok) {
+    const err = new Error(check.message);
     err.status = 503;
     throw err;
   }
-  return sb;
+  if (!client) {
+    const { supabaseUrl, supabaseServiceKey } = getConfig();
+    client = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+  }
+  return client;
 }
