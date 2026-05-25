@@ -52,6 +52,18 @@
     @apply w-full border border-taupe bg-white/80 px-4 py-3 text-sm font-body text-[#2d2020] placeholder-[#a89c96] focus:outline-none focus:border-gold transition-colors duration-200;
   }
 
+  .input-field-valid {
+    @apply border-sage focus:border-sage;
+  }
+
+  .input-field-error {
+    @apply border-red-400/70 focus:border-red-400/70;
+  }
+
+  .checkout-callout {
+    @apply rounded-sm;
+  }
+
   .divider-ornament {
     @apply flex items-center gap-4 text-gold;
   }

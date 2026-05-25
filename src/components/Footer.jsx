@@ -51,7 +51,7 @@ export default function Footer() {
                 <Instagram size={20} strokeWidth={1.5} />
               </a>
               <a
-                href="mailto:hello@thelilylettersco.com"
+                href="mailto:thelilyletters.co@gmail.com"
                 className="text-cream/60 hover:text-cream transition-colors"
                 aria-label="Email"
               >

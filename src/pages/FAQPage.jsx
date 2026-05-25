@@ -14,7 +14,7 @@ const faqData = [
       },
       {
         q: "My download link isn't working. What do I do?",
-        a: "First, check your spam/junk folder for the confirmation email. If you still can't find it, contact us at hello@thelilylettters.com with your order number and we'll resend your download link within 24 hours.",
+        a: "First, check your spam/junk folder for the confirmation email. If you still can't find it, contact us at thelilyletters.co@gmail.com with your order number and we'll resend your download link within 24 hours.",
       },
       {
         q: 'How long do I have access to my download?',
@@ -39,12 +39,16 @@ const faqData = [
         a: 'Open your downloaded PDF and click on the Canva link for the template you want to edit. This will open Canva in your browser. Click "Use template" to create your own editable copy. From there, you can change text, colors, fonts, and images to personalize it for your wedding.',
       },
       {
-        q: 'Can I change the fonts and colors?',
-        a: 'Absolutely! All elements in our Canva templates are fully editable. You can change text, fonts, colors, layout, and images to match your wedding palette and style perfectly.',
+        q: 'Can I change the text?',
+        a: 'All text in our templates are fully editable. You can easily add your information, change fonts, size, colors, and layout.',
       },
       {
-        q: "Can I share my Canva template with my partner or planner?",
-        a: "Once you click \"Use template\" and create your own copy, it belongs to you. You can share your Canva file directly with anyone you'd like to collaborate with by using Canva's built-in sharing features.",
+        q: 'Can I change the colors of the images?',
+        a: 'Line-art illustrations: yes — colors, size, and position are all editable.\n\nWatercolor and painted artwork: no — these are fixed images and cannot be modified (for example, the envelope liner images).',
+      },
+      {
+        q: 'Can I share my Canva template with my partner or planner?',
+        a: 'No. The template is for personal use only and cannot be shared with planners, partners, or any third party. Each user needs their own license.',
       },
     ],
   },
@@ -54,19 +58,19 @@ const faqData = [
     items: [
       {
         q: 'What paper should I use for printing?',
-        a: 'We recommend 80–100lb cardstock for invitations and other formal pieces. For everyday items like programs or menus, 60–80lb paper works beautifully. A matte finish gives an elegant look, while a glossy finish makes colors pop.',
+        a: 'We recommend using white cardstock of at least 200gsm for the best results. A matte finish gives an elegant look, while a glossy finish makes colors pop.',
       },
       {
         q: 'What are the standard template sizes?',
-        a: 'Most of our invitation suites come in A5 (5.83" × 8.27") and 5×7" formats. RSVP cards are typically A6 (4.13" × 5.83"). All templates include bleed and cut marks when exported as PDF from Canva.',
+        a: 'Template sizes vary depending on the product, so we recommend checking the images and description of each listing for the exact dimensions. Most invitations are designed in 5×7" format, and all templates include bleed and cut marks when exported as PDF from Canva.',
       },
       {
         q: 'Can I print at a professional print shop?',
-        a: 'Yes! Simply export your finished Canva design as a PDF (Print) and bring it to any local or online print shop. We recommend Canva Print, Vistaprint, Moo, or your local print shop for best results.',
+        a: 'Yes! Simply export your finished Canva design as a PDF (Print) and bring it to any local or online print shop. We recommend Prints of Love, or your local print shop for best results. Important: before placing a large order, always request a test print first to check colors, sizing, and paper quality.',
       },
       {
         q: 'Can I print at home?',
-        a: 'Yes! Our templates are designed to print beautifully on a standard home inkjet or laser printer. For best results, use a high-quality printer setting and the paper weight recommended above.',
+        a: 'Yes! Our templates are designed to print beautifully on a standard home inkjet or laser printer. Before printing, make sure your printer supports the paper weight you plan to use — not all home printers handle heavy cardstock. For best results, use a high-quality print setting and always do a test print first.',
       },
     ],
   },
@@ -122,7 +126,7 @@ function FAQItem({ question, answer }) {
             transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
-            <p className="font-body text-sm text-[#2d2020]/60 leading-relaxed pb-5 pr-8">
+            <p className="font-body text-sm text-[#2d2020]/60 leading-relaxed pb-5 pr-8 whitespace-pre-line">
               {answer}
             </p>
           </motion.div>

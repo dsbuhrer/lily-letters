@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom';
 import useCartStore from '../store/cartStore';
 
 export default function CartDrawer() {
-  const { items, isOpen, closeCart, removeItem, updateQuantity } = useCartStore();
-  const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
+  const { items, isOpen, closeCart, removeItem } = useCartStore();
+  const subtotal = items.reduce((s, i) => s + i.price, 0);
 
   return (
     <AnimatePresence>
@@ -36,7 +36,7 @@ export default function CartDrawer() {
                   Your Cart
                   {items.length > 0 && (
                     <span className="font-body text-sm text-gold ml-2">
-                      ({items.reduce((s, i) => s + i.quantity, 0)} item{items.reduce((s, i) => s + i.quantity, 0) !== 1 ? 's' : ''})
+                      ({items.length} item{items.length !== 1 ? 's' : ''})
                     </span>
                   )}
                 </h2>
@@ -98,26 +98,9 @@ export default function CartDrawer() {
                           Digital Download · PDF with Canva Links
                         </p>
                         <div className="flex items-center justify-between mt-2">
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              className="w-6 h-6 border border-taupe text-[#2d2020] hover:border-wine hover:text-wine transition-colors flex items-center justify-center text-sm"
-                            >
-                              −
-                            </button>
-                            <span className="w-6 text-center font-body text-sm">
-                              {item.quantity}
-                            </span>
-                            <button
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="w-6 h-6 border border-taupe text-[#2d2020] hover:border-wine hover:text-wine transition-colors flex items-center justify-center text-sm"
-                            >
-                              +
-                            </button>
-                          </div>
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 ml-auto">
                             <span className="font-body text-sm font-medium text-wine">
-                              ${(item.price * item.quantity).toFixed(2)}
+                              ${item.price.toFixed(2)}
                             </span>
                             <button
                               type="button"

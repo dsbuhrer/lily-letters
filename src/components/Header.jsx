@@ -19,7 +19,7 @@ export default function Header() {
   const { items: wishlistItems } = useWishlistStore();
   const location = useLocation();
 
-  const totalItems = items.reduce((s, i) => s + i.quantity, 0);
+  const totalItems = items.length;
   const wishlistCount = wishlistItems.length;
 
   useEffect(() => {

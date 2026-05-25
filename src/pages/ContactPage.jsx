@@ -62,10 +62,10 @@ export default function ContactPage() {
                 <div>
                   <h3 className="font-body text-sm font-medium text-[#2d2020] mb-1">Email Us</h3>
                   <a
-                    href="mailto:hello@thelilyletttersco.com"
+                    href="mailto:thelilyletters.co@gmail.com"
                     className="font-body text-sm text-gold hover:text-wine transition-colors"
                   >
-                    hello@thelilylettters.com
+                    thelilyletters.co@gmail.com
                   </a>
                   <p className="font-body text-xs text-[#2d2020]/40 mt-1">
                     For all order & template questions

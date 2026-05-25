@@ -1,8 +1,14 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, CreditCard, ChevronRight, Check, ShieldCheck } from 'lucide-react';
+import { Lock, CreditCard, ChevronRight, Check, ShieldCheck, Mail } from 'lucide-react';
 import useCartStore from '../store/cartStore';
+import CheckoutEmailNotice from '../components/CheckoutEmailNotice';
+import {
+  normalizeEmail,
+  isValidEmail,
+  suggestEmailFix,
+} from '../utils/emailHelpers';
 
 const inputClass =
   'w-full border border-taupe bg-white px-4 py-3 text-sm font-body text-[#2d2020] placeholder-[#a89c96] focus:outline-none focus:border-gold transition-colors duration-200';
@@ -10,7 +16,7 @@ const inputClass =
 export default function CheckoutPage() {
   const { items, clearCart } = useCartStore();
   const navigate = useNavigate();
-  const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
+  const subtotal = items.reduce((s, i) => s + i.price, 0);
 
   const [step, setStep] = useState(1); // 1: info, 2: payment
   const [loading, setLoading] = useState(false);
@@ -27,10 +33,92 @@ export default function CheckoutPage() {
     nameOnCard: '',
   });
 
+  const emailInputRef = useRef(null);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [emailSuggestion, setEmailSuggestion] = useState(null);
+  const [showDeliveryPreview, setShowDeliveryPreview] = useState(false);
+  const [emailShake, setEmailShake] = useState(false);
+  const [showTypoPromptOnSubmit, setShowTypoPromptOnSubmit] = useState(false);
+
+  const getEmailInputClass = () => {
+    let cls = inputClass;
+    if (emailTouched && emailError) cls += ' input-field-error';
+    else if (emailTouched && isValidEmail(info.email)) cls += ' input-field-valid';
+    return cls;
+  };
+
+  const handleEmailBlur = () => {
+    const normalized = normalizeEmail(info.email);
+    if (normalized !== info.email) {
+      setInfo((prev) => ({ ...prev, email: normalized }));
+    }
+    setEmailTouched(true);
+    if (!normalized) {
+      setEmailError('Please enter your email address.');
+      setShowDeliveryPreview(false);
+      setEmailSuggestion(null);
+      return;
+    }
+    if (!isValidEmail(normalized)) {
+      setEmailError('Please enter a valid email address.');
+      setShowDeliveryPreview(false);
+      setEmailSuggestion(null);
+      return;
+    }
+    setEmailError('');
+    setEmailSuggestion(suggestEmailFix(normalized));
+    setShowDeliveryPreview(true);
+    setShowTypoPromptOnSubmit(false);
+  };
+
+  const handleEmailChange = (value) => {
+    setInfo((prev) => ({ ...prev, email: value }));
+    if (emailError) setEmailError('');
+    setShowTypoPromptOnSubmit(false);
+    const suggestion = suggestEmailFix(value);
+    setEmailSuggestion(suggestion);
+    if (!value.trim()) setShowDeliveryPreview(false);
+  };
+
+  const applyEmailSuggestion = () => {
+    if (!emailSuggestion) return;
+    setInfo((prev) => ({ ...prev, email: emailSuggestion }));
+    setEmailSuggestion(null);
+    setShowTypoPromptOnSubmit(false);
+    setShowDeliveryPreview(true);
+    setEmailError('');
+  };
+
+  const proceedToPayment = () => {
+    const normalized = normalizeEmail(info.email);
+    setInfo((prev) => ({ ...prev, email: normalized }));
+    setStep(2);
+    setShowTypoPromptOnSubmit(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleInfoSubmit = (e) => {
     e.preventDefault();
-    setStep(2);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const normalized = normalizeEmail(info.email);
+    setEmailTouched(true);
+
+    if (!isValidEmail(normalized)) {
+      setEmailError('Please enter a valid email address.');
+      setEmailShake(true);
+      setTimeout(() => setEmailShake(false), 500);
+      emailInputRef.current?.focus();
+      return;
+    }
+
+    const suggestion = suggestEmailFix(normalized);
+    if (suggestion && !showTypoPromptOnSubmit) {
+      setEmailSuggestion(suggestion);
+      setShowTypoPromptOnSubmit(true);
+      return;
+    }
+
+    proceedToPayment();
   };
 
   const handlePaymentSubmit = (e) => {
@@ -137,21 +225,106 @@ export default function CheckoutPage() {
                     Contact Information
                   </h2>
                   <form onSubmit={handleInfoSubmit} className="space-y-4">
+                    <CheckoutEmailNotice />
+
                     <div>
-                      <label className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5">
-                        Email Address *
+                      <label
+                        htmlFor="checkout-email"
+                        className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5"
+                      >
+                        Email for your download & receipt *
                       </label>
-                      <input
+                      <motion.input
+                        ref={emailInputRef}
+                        id="checkout-email"
                         type="email"
                         required
-                        placeholder="your@email.com"
+                        autoComplete="email"
+                        placeholder="you@email.com"
                         value={info.email}
-                        onChange={(e) => setInfo({ ...info, email: e.target.value })}
-                        className={inputClass}
+                        onChange={(e) => handleEmailChange(e.target.value)}
+                        onBlur={handleEmailBlur}
+                        animate={emailShake ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
+                        transition={{ duration: 0.4 }}
+                        className={getEmailInputClass()}
                       />
-                      <p className="font-body text-xs text-[#2d2020]/40 mt-1">
-                        Your PDF with Canva links and receipt will be sent here
-                      </p>
+
+                      {emailTouched && emailError && (
+                        <p className="font-body text-xs text-red-600/90 mt-1.5" role="alert">
+                          {emailError}
+                        </p>
+                      )}
+
+                      <AnimatePresence>
+                        {emailSuggestion && !showTypoPromptOnSubmit && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -4 }}
+                            className="mt-2 flex flex-wrap items-center gap-2"
+                          >
+                            <span className="font-body text-xs text-[#2d2020]/60">
+                              Did you mean{' '}
+                              <span className="font-medium text-wine">{emailSuggestion}</span>?
+                            </span>
+                            <button
+                              type="button"
+                              onClick={applyEmailSuggestion}
+                              className="font-body text-xs px-2.5 py-1 bg-wine/10 text-wine hover:bg-wine/15 transition-colors"
+                            >
+                              Use suggestion
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      <AnimatePresence>
+                        {showTypoPromptOnSubmit && emailSuggestion && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -4 }}
+                            className="mt-2 p-3 bg-gold/10 border border-gold/30"
+                          >
+                            <p className="font-body text-xs text-[#2d2020]/70 mb-2">
+                              Before you continue: did you mean{' '}
+                              <strong className="text-wine">{emailSuggestion}</strong>?
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={applyEmailSuggestion}
+                                className="font-body text-xs px-3 py-1.5 bg-wine text-cream hover:bg-[#3a1926] transition-colors"
+                              >
+                                Use suggestion
+                              </button>
+                              <button
+                                type="button"
+                                onClick={proceedToPayment}
+                                className="font-body text-xs px-3 py-1.5 border border-taupe text-[#2d2020]/70 hover:border-wine hover:text-wine transition-colors"
+                              >
+                                Keep as entered
+                              </button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      <AnimatePresence>
+                        {showDeliveryPreview && isValidEmail(info.email) && !emailError && (
+                          <motion.p
+                            initial={{ opacity: 0, y: -4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            className="font-body text-xs text-[#2d2020]/60 mt-2 leading-relaxed"
+                          >
+                            We&apos;ll send your download to{' '}
+                            <strong className="text-wine font-medium">
+                              {normalizeEmail(info.email)}
+                            </strong>
+                          </motion.p>
+                        )}
+                      </AnimatePresence>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -215,18 +388,31 @@ export default function CheckoutPage() {
                     </button>
                   </div>
 
-                  {/* Contact summary */}
-                  <div className="bg-white border border-taupe/30 p-4 mb-6 flex items-center justify-between">
-                    <div>
-                      <p className="font-body text-xs text-[#2d2020]/40 uppercase tracking-wider mb-0.5">Sending to</p>
-                      <p className="font-body text-sm text-[#2d2020]">{info.email}</p>
+                  {/* Delivery email confirmation */}
+                  <div className="bg-wine/5 border border-gold/30 p-4 mb-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex gap-3 min-w-0">
+                        <Mail size={18} strokeWidth={1.5} className="text-gold flex-shrink-0 mt-0.5" />
+                        <div className="min-w-0">
+                          <p className="font-body text-xs text-[#2d2020]/50 uppercase tracking-wider mb-0.5">
+                            Delivery email
+                          </p>
+                          <p className="font-body text-sm font-medium text-wine break-all">
+                            {info.email}
+                          </p>
+                          <p className="font-body text-xs text-[#2d2020]/55 mt-1.5 leading-relaxed">
+                            Your templates will be sent here — tap Change if this looks wrong.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setStep(1)}
+                        className="font-body text-xs text-gold hover:text-wine flex-shrink-0 transition-colors"
+                      >
+                        Change
+                      </button>
                     </div>
-                    <button
-                      onClick={() => setStep(1)}
-                      className="font-body text-xs text-gold hover:text-wine"
-                    >
-                      Change
-                    </button>
                   </div>
 
                   <form onSubmit={handlePaymentSubmit} className="space-y-4">
@@ -352,22 +538,17 @@ export default function CheckoutPage() {
               <div className="space-y-3 mb-5">
                 {items.map((item) => (
                   <div key={item.id} className="flex gap-3 items-center">
-                    <div className="relative">
-                      <img
-                        src={item.images[0]}
-                        alt={item.name}
-                        className="w-14 h-14 object-cover"
-                      />
-                      <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-wine text-cream text-xs rounded-full flex items-center justify-center font-body">
-                        {item.quantity}
-                      </span>
-                    </div>
+                    <img
+                      src={item.images[0]}
+                      alt={item.name}
+                      className="w-14 h-14 object-cover flex-shrink-0"
+                    />
                     <div className="flex-1 min-w-0">
                       <p className="font-body text-sm text-[#2d2020] truncate">{item.name}</p>
                       <p className="font-body text-xs text-[#2d2020]/40">Digital Download</p>
                     </div>
                     <span className="font-body text-sm font-medium text-wine">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      ${item.price.toFixed(2)}
                     </span>
                   </div>
                 ))}
@@ -391,13 +572,20 @@ export default function CheckoutPage() {
               </div>
 
               <div className="mt-4 space-y-1.5">
-                <p className="font-body text-xs text-[#2d2020]/50 flex items-center gap-1.5">
-                  <Check size={11} className="text-sage" />
-                  Instant PDF download after payment
+                <p className="font-body text-xs text-[#2d2020]/50 flex items-start gap-1.5">
+                  <Check size={11} className="text-sage flex-shrink-0 mt-0.5" />
+                  {step === 2 && info.email ? (
+                    <>
+                      Instant download + email sent to{' '}
+                      <span className="text-wine font-medium break-all">{info.email}</span>
+                    </>
+                  ) : (
+                    'Instant download + email sent to the address you enter'
+                  )}
                 </p>
                 <p className="font-body text-xs text-[#2d2020]/50 flex items-center gap-1.5">
                   <Check size={11} className="text-sage" />
-                  Download link sent to your email
+                  Instant PDF download after payment
                 </p>
                 <p className="font-body text-xs text-[#2d2020]/50 flex items-center gap-1.5">
                   <Check size={11} className="text-sage" />
