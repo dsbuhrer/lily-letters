@@ -1,6 +1,6 @@
--- Contact form leads (site → CMS)
+-- Contact form submissions (site → CMS)
 
-CREATE TABLE leads (
+CREATE TABLE contacts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   email TEXT NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE leads (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_leads_created_at ON leads(created_at DESC);
-CREATE INDEX idx_leads_unread ON leads(created_at DESC) WHERE read_at IS NULL;
+CREATE INDEX idx_contacts_created_at ON contacts(created_at DESC);
+CREATE INDEX idx_contacts_unread ON contacts(created_at DESC) WHERE read_at IS NULL;
 
-ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;

@@ -77,7 +77,7 @@ export function renderBlogIndex({ posts, categories, siteUrl }) {
     <main class="min-h-screen bg-cream pt-28 pb-16">
       <div class="max-w-3xl mx-auto px-6">
         <header class="mb-12 text-center">
-          <p class="section-subtitle mb-3">The Journal</p>
+          <p class="section-subtitle mb-3">The Blog</p>
           <h1 class="section-heading">Wedding Inspiration & Expert Guides</h1>
           <p class="mt-4 font-body text-[#2d2020]/70 max-w-xl mx-auto">${escapeHtml(description)}</p>
         </header>

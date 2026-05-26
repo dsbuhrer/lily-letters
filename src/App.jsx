@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { useEffect, lazy, Suspense } from 'react';
 import { AnimatePresence } from 'framer-motion';
 
@@ -22,7 +22,7 @@ import AdminPostsPage from './pages/admin/AdminPostsPage';
 import AdminPostEditorPage from './pages/admin/AdminPostEditorPage';
 import AdminProductsPage from './pages/admin/AdminProductsPage';
 import AdminProductEditorPage from './pages/admin/AdminProductEditorPage';
-import AdminLeadsPage from './pages/admin/AdminLeadsPage';
+import AdminContactsPage from './pages/admin/AdminContactsPage';
 import AdminSubscribersPage from './pages/admin/AdminSubscribersPage';
 
 const BlogIndexPage = lazy(() => import('./pages/blog/BlogIndexPage'));
@@ -120,7 +120,8 @@ export default function App() {
               <Route path="/admin/posts/:id" element={<AdminPostEditorPage />} />
               <Route path="/admin/products" element={<AdminProductsPage />} />
               <Route path="/admin/products/:id" element={<AdminProductEditorPage />} />
-              <Route path="/admin/leads" element={<AdminLeadsPage />} />
+              <Route path="/admin/contacts" element={<AdminContactsPage />} />
+              <Route path="/admin/leads" element={<Navigate to="/admin/contacts" replace />} />
               <Route path="/admin/subscribers" element={<AdminSubscribersPage />} />
             </Route>
           </Route>

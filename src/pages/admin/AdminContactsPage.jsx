@@ -4,14 +4,14 @@ import api from '../../lib/api';
 import AdminListToolbar from '../../components/admin/AdminListToolbar';
 import { filterBySearch, sortByKey } from '../../utils/adminListFilter';
 
-const LEAD_SORT_OPTIONS = [
+const CONTACT_SORT_OPTIONS = [
   { value: 'created_desc', label: 'Newest first' },
   { value: 'created_asc', label: 'Oldest first' },
   { value: 'name_asc', label: 'Name (A–Z)' },
   { value: 'unread_first', label: 'Unread first' },
 ];
 
-const leadComparators = {
+const contactComparators = {
   created_desc: (a, b) => new Date(b.created_at) - new Date(a.created_at),
   created_asc: (a, b) => new Date(a.created_at) - new Date(b.created_at),
   name_asc: (a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }),
@@ -22,7 +22,7 @@ const leadComparators = {
   },
 };
 
-function LeadStatusBadge({ readAt }) {
+function ContactStatusBadge({ readAt }) {
   const unread = !readAt;
   return (
     <span
@@ -37,8 +37,8 @@ function LeadStatusBadge({ readAt }) {
   );
 }
 
-export default function AdminLeadsPage() {
-  const [leads, setLeads] = useState([]);
+export default function AdminContactsPage() {
+  const [contacts, setContacts] = useState([]);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('created_desc');
   const [unreadOnly, setUnreadOnly] = useState(false);
@@ -49,8 +49,8 @@ export default function AdminLeadsPage() {
     setLoading(true);
     const params = unreadOnly ? { unread: '1' } : {};
     api.admin
-      .leads(params)
-      .then((r) => setLeads(r.leads || []))
+      .contacts(params)
+      .then((r) => setContacts(r.contacts || []))
       .catch(console.error)
       .finally(() => setLoading(false));
   };
@@ -59,22 +59,22 @@ export default function AdminLeadsPage() {
     load();
   }, [unreadOnly]);
 
-  const filteredLeads = useMemo(() => {
-    const matched = filterBySearch(leads, search, (lead) => [
-      lead.name,
-      lead.email,
-      lead.topic,
-      lead.message,
+  const filteredContacts = useMemo(() => {
+    const matched = filterBySearch(contacts, search, (contact) => [
+      contact.name,
+      contact.email,
+      contact.topic,
+      contact.message,
     ]);
-    return sortByKey(matched, sort, leadComparators);
-  }, [leads, search, sort]);
+    return sortByKey(matched, sort, contactComparators);
+  }, [contacts, search, sort]);
 
-  const openLead = async (lead) => {
-    setSelected(lead);
-    if (!lead.read_at) {
+  const openContact = async (contact) => {
+    setSelected(contact);
+    if (!contact.read_at) {
       try {
-        const { lead: updated } = await api.admin.updateLead(lead.id, { read: true });
-        setLeads((list) => list.map((l) => (l.id === lead.id ? updated : l)));
+        const { contact: updated } = await api.admin.updateContact(contact.id, { read: true });
+        setContacts((list) => list.map((c) => (c.id === contact.id ? updated : c)));
         setSelected(updated);
       } catch (e) {
         console.error(e);
@@ -83,23 +83,23 @@ export default function AdminLeadsPage() {
   };
 
   const remove = async (id) => {
-    if (!confirm('Delete this lead?')) return;
-    await api.admin.deleteLead(id);
-    setLeads((list) => list.filter((l) => l.id !== id));
+    if (!confirm('Delete this contact?')) return;
+    await api.admin.deleteContact(id);
+    setContacts((list) => list.filter((c) => c.id !== id));
     if (selected?.id === id) setSelected(null);
   };
 
-  const toggleUnread = async (lead) => {
-    const { lead: updated } = await api.admin.updateLead(lead.id, { read: !lead.read_at });
-    setLeads((list) => list.map((l) => (l.id === lead.id ? updated : l)));
-    if (selected?.id === lead.id) setSelected(updated);
+  const toggleUnread = async (contact) => {
+    const { contact: updated } = await api.admin.updateContact(contact.id, { read: !contact.read_at });
+    setContacts((list) => list.map((c) => (c.id === contact.id ? updated : c)));
+    if (selected?.id === contact.id) setSelected(updated);
   };
 
   return (
     <div className="p-8">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="font-display text-3xl text-wine">Leads</h1>
+          <h1 className="font-display text-3xl text-wine">Contacts</h1>
           <p className="text-sm text-[#2d2020]/50 mt-1">Contact form submissions from the site</p>
         </div>
         <label className="flex items-center gap-2 text-sm text-[#2d2020]/70">
@@ -118,42 +118,42 @@ export default function AdminLeadsPage() {
         searchPlaceholder="Search name, email, topic, message…"
         sort={sort}
         onSortChange={setSort}
-        sortOptions={LEAD_SORT_OPTIONS}
-        filteredCount={filteredLeads.length}
-        totalCount={leads.length}
+        sortOptions={CONTACT_SORT_OPTIONS}
+        filteredCount={filteredContacts.length}
+        totalCount={contacts.length}
       />
 
       <div className="grid lg:grid-cols-5 gap-6">
         <div className="lg:col-span-2 bg-white/80 border border-taupe overflow-hidden">
           {loading ? (
             <p className="p-8 text-[#2d2020]/50 text-sm">Loading…</p>
-          ) : filteredLeads.length === 0 ? (
+          ) : filteredContacts.length === 0 ? (
             <p className="p-8 text-center text-[#2d2020]/50 text-sm">
-              {leads.length === 0 ? 'No leads yet.' : 'No leads match your search.'}
+              {contacts.length === 0 ? 'No contacts yet.' : 'No contacts match your search.'}
             </p>
           ) : (
             <ul className="divide-y divide-taupe/40 max-h-[70vh] overflow-y-auto">
-              {filteredLeads.map((lead) => (
-                <li key={lead.id}>
+              {filteredContacts.map((contact) => (
+                <li key={contact.id}>
                   <button
                     type="button"
-                    onClick={() => openLead(lead)}
+                    onClick={() => openContact(contact)}
                     className={`w-full text-left p-4 hover:bg-cream/60 transition-colors ${
-                      selected?.id === lead.id ? 'bg-cream' : ''
+                      selected?.id === contact.id ? 'bg-cream' : ''
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="font-medium text-wine truncate">{lead.name}</p>
-                        <p className="text-xs text-[#2d2020]/50 truncate">{lead.email}</p>
+                        <p className="font-medium text-wine truncate">{contact.name}</p>
+                        <p className="text-xs text-[#2d2020]/50 truncate">{contact.email}</p>
                       </div>
-                      <LeadStatusBadge readAt={lead.read_at} />
+                      <ContactStatusBadge readAt={contact.read_at} />
                     </div>
-                    {lead.topic && (
-                      <p className="text-xs text-[#2d2020]/60 mt-2 truncate">{lead.topic}</p>
+                    {contact.topic && (
+                      <p className="text-xs text-[#2d2020]/60 mt-2 truncate">{contact.topic}</p>
                     )}
                     <p className="text-xs text-[#2d2020]/40 mt-1">
-                      {new Date(lead.created_at).toLocaleString()}
+                      {new Date(contact.created_at).toLocaleString()}
                     </p>
                   </button>
                 </li>
@@ -166,7 +166,7 @@ export default function AdminLeadsPage() {
           {!selected ? (
             <div className="p-10 text-center text-[#2d2020]/45">
               <Mail className="mx-auto mb-3 text-gold" size={32} strokeWidth={1.25} />
-              <p className="text-sm">Select a lead to view the full message</p>
+              <p className="text-sm">Select a contact to view the full message</p>
             </div>
           ) : (
             <div className="p-6">
@@ -181,7 +181,7 @@ export default function AdminLeadsPage() {
                   </a>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <LeadStatusBadge readAt={selected.read_at} />
+                  <ContactStatusBadge readAt={selected.read_at} />
                   <button
                     type="button"
                     className="btn-ghost text-xs py-1.5"

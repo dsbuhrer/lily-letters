@@ -17,10 +17,10 @@ export default function AdminDashboardPage() {
           { label: 'Draft posts', value: stats?.drafts ?? '—' },
           { label: 'Published', value: stats?.published ?? '—' },
           {
-            label: 'Leads',
-            value: stats?.leads_unread != null && stats.leads_unread > 0
-              ? `${stats.leads_unread} new`
-              : (stats?.leads ?? '—'),
+            label: 'Contacts',
+            value: stats?.contacts_unread != null && stats.contacts_unread > 0
+              ? `${stats.contacts_unread} new`
+              : (stats?.contacts ?? '—'),
           },
           { label: 'Subscribers', value: stats?.subscribers ?? '—' },
         ].map((s) => (
@@ -37,8 +37,8 @@ export default function AdminDashboardPage() {
         <Link to="/admin/products" className="btn-secondary">
           Manage products
         </Link>
-        <Link to="/admin/leads" className="btn-secondary">
-          View leads
+        <Link to="/admin/contacts" className="btn-secondary">
+          View contacts
         </Link>
         <Link to="/admin/subscribers" className="btn-ghost">
           View subscribers

@@ -112,6 +112,14 @@ admin.get('/:id', async (req, res) => {
   }
 });
 
+function productError(res, e) {
+  if (e?.name === 'ZodError') {
+    const msg = e.issues?.[0]?.message || 'Invalid product data';
+    return res.status(400).json({ error: msg });
+  }
+  return res.status(500).json({ error: e.message });
+}
+
 admin.post('/', async (req, res) => {
   try {
     const supabase = requireSupabase();
@@ -125,7 +133,7 @@ admin.post('/', async (req, res) => {
     if (error) throw error;
     res.status(201).json({ product: mapProduct(data) });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    productError(res, e);
   }
 });
 
@@ -138,7 +146,7 @@ admin.put('/:id', async (req, res) => {
     if (error) throw error;
     res.json({ product: mapProduct(data) });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    productError(res, e);
   }
 });
 

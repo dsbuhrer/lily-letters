@@ -13,7 +13,7 @@ const footerLinks = {
     { label: 'Bundle Sets', to: '/products?category=bundles' },
   ],
   Info: [
-    { label: 'Wedding Journal', to: '/blog' },
+    { label: 'Blog', to: '/blog' },
     { label: 'About Us', to: '/about' },
     { label: 'FAQ', to: '/faq' },
     { label: 'Contact', to: '/contact' },

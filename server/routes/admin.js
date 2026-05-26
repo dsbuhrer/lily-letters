@@ -199,19 +199,19 @@ router.post(
 router.get('/stats', async (_req, res) => {
   try {
     const supabase = requireSupabase();
-    const [drafts, published, subs, leads, leadsUnread] = await Promise.all([
+    const [drafts, published, subs, contacts, contactsUnread] = await Promise.all([
       supabase.from('posts').select('id', { count: 'exact', head: true }).eq('status', 'draft'),
       supabase.from('posts').select('id', { count: 'exact', head: true }).eq('status', 'published'),
       supabase.from('subscribers').select('id', { count: 'exact', head: true }).is('unsubscribed_at', null),
-      supabase.from('leads').select('id', { count: 'exact', head: true }),
-      supabase.from('leads').select('id', { count: 'exact', head: true }).is('read_at', null),
+      supabase.from('contacts').select('id', { count: 'exact', head: true }),
+      supabase.from('contacts').select('id', { count: 'exact', head: true }).is('read_at', null),
     ]);
     res.json({
       drafts: drafts.count || 0,
       published: published.count || 0,
       subscribers: subs.count || 0,
-      leads: leads.count || 0,
-      leads_unread: leadsUnread.count || 0,
+      contacts: contacts.count || 0,
+      contacts_unread: contactsUnread.count || 0,
     });
   } catch (e) {
     res.status(500).json({ error: e.message });

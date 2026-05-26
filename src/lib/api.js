@@ -1,13 +1,31 @@
-const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+/**
+ * Em dev com Vite (qualquer porta, ex. 5173/5174): URL relativa → proxy /api no vite.config.js (sem CORS).
+ * MAMP/Apache (porta 80, etc.): defina VITE_API_URL=http://localhost:3001 no .env.
+ */
+export function resolveApiBase() {
+  const fromEnv = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+  if (fromEnv) return fromEnv;
 
-async function parseJsonResponse(res) {
+  if (import.meta.env.DEV && typeof window !== 'undefined') {
+    const { hostname, port } = window.location;
+    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+    // Vite dev server — não é a porta da API
+    if (isLocal && port && port !== '3001') return '';
+    if (isLocal) return 'http://localhost:3001';
+  }
+
+  return '';
+}
+
+async function parseJsonResponse(res, requestUrl) {
   const text = await res.text();
   const trimmed = text.trimStart();
   if (trimmed.startsWith('<!DOCTYPE') || trimmed.startsWith('<html')) {
+    const hint = resolveApiBase()
+      ? 'Confira se o backend está rodando (npm run dev:server) e se VITE_API_URL aponta para http://localhost:3001.'
+      : 'Rode npm run dev:full (Vite + API) ou defina VITE_API_URL=http://localhost:3001 no .env e reinicie o Vite.';
     throw new Error(
-      API_BASE
-        ? 'A API retornou HTML em vez de JSON. Confira VITE_API_URL e se o servidor está rodando (npm run dev:server).'
-        : 'A API retornou HTML em vez de JSON. Rode npm run dev:full (Vite + API) ou defina VITE_API_URL=http://localhost:3001 no .env.',
+      `A API retornou HTML em vez de JSON (${requestUrl}). ${hint}`,
     );
   }
   if (!text) return {};
@@ -19,7 +37,8 @@ async function parseJsonResponse(res) {
 }
 
 async function request(path, options = {}) {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const url = `${resolveApiBase()}${path}`;
+  const res = await fetch(url, {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
@@ -27,7 +46,7 @@ async function request(path, options = {}) {
     },
     ...options,
   });
-  const data = await parseJsonResponse(res);
+  const data = await parseJsonResponse(res, url);
   if (!res.ok) {
     if (res.status === 404) {
       throw new Error(
@@ -61,7 +80,7 @@ export const api = {
     request('/api/subscribers', { method: 'POST', body: JSON.stringify({ email, source }) }),
 
   submitContact: (payload) =>
-    request('/api/leads', { method: 'POST', body: JSON.stringify(payload) }),
+    request('/api/contacts', { method: 'POST', body: JSON.stringify(payload) }),
 
   getCategories: () => request('/api/categories'),
 
@@ -91,23 +110,24 @@ export const api = {
       const q = new URLSearchParams(params).toString();
       return request(`/api/subscribers/admin?${q}`);
     },
-    leads: (params = {}) => {
+    contacts: (params = {}) => {
       const q = new URLSearchParams(params).toString();
-      return request(`/api/leads/admin${q ? `?${q}` : ''}`);
+      return request(`/api/contacts/admin${q ? `?${q}` : ''}`);
     },
-    updateLead: (id, data) =>
-      request(`/api/leads/admin/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-    deleteLead: (id) => request(`/api/leads/admin/${id}`, { method: 'DELETE' }),
+    updateContact: (id, data) =>
+      request(`/api/contacts/admin/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    deleteContact: (id) => request(`/api/contacts/admin/${id}`, { method: 'DELETE' }),
     upload: async (file, bucket = 'blog-images') => {
       const form = new FormData();
       form.append('file', file);
       form.append('bucket', bucket);
-      const res = await fetch(`${API_BASE}/api/admin/upload`, {
+      const uploadUrl = `${resolveApiBase()}/api/admin/upload`;
+      const res = await fetch(uploadUrl, {
         method: 'POST',
         credentials: 'include',
         body: form,
       });
-      const data = await parseJsonResponse(res);
+      const data = await parseJsonResponse(res, uploadUrl);
       if (!res.ok) throw new Error(data.error || 'Upload failed');
       return data;
     },

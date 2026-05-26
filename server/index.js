@@ -11,7 +11,7 @@ import postsRoutes from './routes/posts.js';
 import adminRoutes from './routes/admin.js';
 import productsRoutes, { productAdminRouter } from './routes/products.js';
 import subscribersRoutes from './routes/subscribers.js';
-import leadsRoutes from './routes/leads.js';
+import contactsRoutes from './routes/contacts.js';
 import seoRoutes from './routes/seoRoutes.js';
 import categoriesRoutes from './routes/categories.js';
 import {
@@ -32,8 +32,11 @@ app.use(
 );
 app.use(
   cors({
-    origin: config.isDev ? ['http://localhost:5173', 'http://localhost:3001'] : config.siteUrl,
+    // Dev: reflete qualquer Origin (5173, 5174, MAMP, etc.)
+    origin: config.isDev ? true : config.siteUrl,
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   }),
 );
 app.use(express.json({ limit: '2mb' }));
@@ -45,7 +48,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/admin/products', productAdminRouter);
 app.use('/api/products', productsRoutes);
 app.use('/api/subscribers', subscribersRoutes);
-app.use('/api/leads', leadsRoutes);
+app.use('/api/contacts', contactsRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use(seoRoutes);
 
@@ -172,6 +175,10 @@ app.get('/api/health', (_req, res) => {
     supabase: !!getSupabase(),
     supabaseHint: check.ok ? undefined : check.message,
   });
+});
+
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'API route not found', path: req.originalUrl });
 });
 
 app.listen(config.port, () => {

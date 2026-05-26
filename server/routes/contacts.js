@@ -22,7 +22,7 @@ const submitSchema = z.object({
   message: z.string().trim().min(1).max(5000),
 });
 
-function mapLead(row) {
+function mapContact(row) {
   if (!row) return null;
   return {
     id: row.id,
@@ -45,7 +45,7 @@ router.post('/', async (req, res) => {
       body.topic && contactTopics.includes(body.topic) ? body.topic : body.topic || null;
 
     const { data, error } = await supabase
-      .from('leads')
+      .from('contacts')
       .insert({
         name: body.name,
         email: body.email.toLowerCase(),
@@ -58,7 +58,7 @@ router.post('/', async (req, res) => {
       .single();
 
     if (error) throw error;
-    res.status(201).json({ ok: true, lead: mapLead(data) });
+    res.status(201).json({ ok: true, contact: mapContact(data) });
   } catch (e) {
     if (e.name === 'ZodError') {
       return res.status(400).json({ error: e.errors?.[0]?.message || 'Invalid form data' });
@@ -73,13 +73,13 @@ admin.use(authMiddleware);
 admin.get('/', async (req, res) => {
   try {
     const supabase = requireSupabase();
-    let query = supabase.from('leads').select('*').order('created_at', { ascending: false });
+    let query = supabase.from('contacts').select('*').order('created_at', { ascending: false });
 
     if (req.query.unread === '1') query = query.is('read_at', null);
 
     const { data, error } = await query;
     if (error) throw error;
-    res.json({ leads: (data || []).map(mapLead) });
+    res.json({ contacts: (data || []).map(mapContact) });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -88,10 +88,14 @@ admin.get('/', async (req, res) => {
 admin.get('/:id', async (req, res) => {
   try {
     const supabase = requireSupabase();
-    const { data, error } = await supabase.from('leads').select('*').eq('id', req.params.id).maybeSingle();
+    const { data, error } = await supabase
+      .from('contacts')
+      .select('*')
+      .eq('id', req.params.id)
+      .maybeSingle();
     if (error) throw error;
-    if (!data) return res.status(404).json({ error: 'Lead not found' });
-    res.json({ lead: mapLead(data) });
+    if (!data) return res.status(404).json({ error: 'Contact not found' });
+    res.json({ contact: mapContact(data) });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -111,13 +115,13 @@ admin.patch('/:id', async (req, res) => {
 
     const supabase = requireSupabase();
     const { data, error } = await supabase
-      .from('leads')
+      .from('contacts')
       .update(updates)
       .eq('id', req.params.id)
       .select()
       .single();
     if (error) throw error;
-    res.json({ lead: mapLead(data) });
+    res.json({ contact: mapContact(data) });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -126,7 +130,7 @@ admin.patch('/:id', async (req, res) => {
 admin.delete('/:id', async (req, res) => {
   try {
     const supabase = requireSupabase();
-    const { error } = await supabase.from('leads').delete().eq('id', req.params.id);
+    const { error } = await supabase.from('contacts').delete().eq('id', req.params.id);
     if (error) throw error;
     res.json({ ok: true });
   } catch (e) {

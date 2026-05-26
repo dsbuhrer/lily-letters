@@ -6,7 +6,7 @@ const links = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/posts', label: 'Posts', icon: FileText },
   { to: '/admin/products', label: 'Products', icon: Package },
-  { to: '/admin/leads', label: 'Leads', icon: MessageSquare },
+  { to: '/admin/contacts', label: 'Contacts', icon: MessageSquare },
   { to: '/admin/subscribers', label: 'Subscribers', icon: Mail },
 ];
 

@@ -47,7 +47,7 @@ export default function BlogIndexPage() {
 
       <div className="max-w-6xl mx-auto px-6 lg:px-8">
         <header className="text-center max-w-2xl mx-auto mb-14">
-          <p className="section-subtitle mb-3">The Journal</p>
+          <p className="section-subtitle mb-3">The Blog</p>
           <h1 className="section-heading">Wedding Inspiration & Expert Guides</h1>
           <p className="mt-4 font-body text-[#2d2020]/70 leading-relaxed">
             Planning tips, signage ideas, and stationery inspiration — written for couples who want a personalized, elegant wedding.
