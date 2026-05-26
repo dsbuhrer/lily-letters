@@ -115,12 +115,25 @@ async function main() {
         .limit(4);
       related = rel || [];
     }
+
+    let relatedProducts = [];
+    const productIds = Array.isArray(post.related_product_ids) ? post.related_product_ids : [];
+    if (productIds.length) {
+      const { data: prods } = await supabase
+        .from('products')
+        .select('id, slug, name, subtitle, price, original_price, images, badge, category, rating, reviews')
+        .in('id', productIds)
+        .eq('active', true);
+      relatedProducts = prods || [];
+    }
+
     writeFile(
       path.join(dist, 'blog', post.slug, 'index.html'),
       renderBlogPost({
         post,
         category: post.categories,
         related,
+        relatedProducts,
         faq: post.faq,
       }),
     );

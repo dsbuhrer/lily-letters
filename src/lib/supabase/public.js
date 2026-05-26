@@ -1,5 +1,6 @@
 import { requireSupabase } from './client';
 import { mapProduct, mapPost } from './mappers';
+import { slugify } from '../utils/slug';
 
 export async function getProducts(params = {}) {
   const supabase = requireSupabase();
@@ -66,7 +67,14 @@ export async function getPosts(params = {}) {
     if (cat) query = query.eq('category_id', cat.id);
   }
 
-  if (tag) query = query.contains('tag_slugs', [tag]);
+  if (tag) {
+    const humanLabel = tag.replace(/-/g, ' ');
+    const variants = [...new Set([tag, humanLabel, slugify(humanLabel)])].filter(Boolean);
+    const orFilter = variants
+      .map((v) => `tag_slugs.cs.${JSON.stringify([v])}`)
+      .join(',');
+    query = query.or(orFilter);
+  }
 
   if (q) {
     query = query.textSearch('search_vector', q, { type: 'websearch', config: 'english' });
@@ -110,13 +118,15 @@ export async function getPost(slug) {
   if (post.category_id) {
     const { data: rel } = await supabase
       .from('posts')
-      .select('id, slug, title, excerpt, hero_image, published_at, reading_time_minutes')
+      .select(
+        'id, slug, title, excerpt, hero_image, hero_alt, published_at, reading_time_minutes, categories(id, slug, name)',
+      )
       .eq('status', 'published')
       .eq('category_id', post.category_id)
       .neq('id', post.id)
       .order('published_at', { ascending: false })
       .limit(4);
-    related = rel || [];
+    related = (rel || []).map((p) => mapPost(p, p.categories));
   }
 
   let relatedProducts = [];

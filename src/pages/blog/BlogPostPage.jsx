@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import api from '../../lib/api';
+import { prepareBlogContentHtml } from '../../lib/blogContent';
+import { isSupabaseConfigured } from '../../lib/supabaseClient';
 import SeoHead from '../../components/seo/SeoHead';
 import Breadcrumbs from '../../components/blog/Breadcrumbs';
 import TableOfContents from '../../components/blog/TableOfContents';
@@ -15,30 +17,66 @@ import { BLOG_HERO_HEIGHT, BLOG_HERO_WIDTH } from '../../constants/blogHeroImage
 export default function BlogPostPage() {
   const { slug } = useParams();
   const [data, setData] = useState(null);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!slug) return;
+    setLoading(true);
+    setError(null);
+    setData(null);
+
+    if (!isSupabaseConfigured()) {
+      setError('config');
+      setLoading(false);
+      return;
+    }
+
     api
       .getPost(slug)
       .then(setData)
-      .catch(() => setError(true));
+      .catch((err) => setError(err?.message || 'not_found'))
+      .finally(() => setLoading(false));
   }, [slug]);
 
-  if (error) {
+  const preparedContent = useMemo(
+    () => (data?.post?.content ? prepareBlogContentHtml(data.post.content) : ''),
+    [data?.post?.content],
+  );
+
+  if (loading) {
     return (
-      <main className="min-h-screen bg-cream pt-28 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="font-display text-3xl text-wine mb-4">Article not found</h1>
-          <Link to="/blog" className="btn-primary">Back to blog</Link>
+      <main className="min-h-screen bg-cream pt-28 pb-20">
+        <div className="max-w-3xl mx-auto px-6 animate-pulse space-y-6">
+          <div className="h-4 w-48 bg-taupe/30" />
+          <div className="w-full aspect-[16/9] bg-taupe/20" />
+          <div className="h-10 w-3/4 bg-taupe/25" />
+          <div className="space-y-3">
+            <div className="h-4 bg-taupe/20" />
+            <div className="h-4 bg-taupe/20" />
+            <div className="h-4 w-5/6 bg-taupe/20" />
+          </div>
         </div>
       </main>
     );
   }
 
-  if (!data) {
+  if (error) {
     return (
-      <main className="min-h-screen bg-cream pt-28 flex items-center justify-center">
-        <p className="text-[#2d2020]/50">Loading…</p>
+      <main className="min-h-screen bg-cream pt-28 flex items-center justify-center px-6">
+        <div className="text-center max-w-md">
+          <h1 className="font-display text-3xl text-wine mb-4">
+            {error === 'config' ? 'Blog unavailable' : 'Article not found'}
+          </h1>
+          <p className="font-body text-sm text-[#2d2020]/60 mb-6">
+            {error === 'config'
+              ? 'Supabase is not configured in this build. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY, then rebuild.'
+              : 'This article may have been removed or the link is incorrect.'}
+          </p>
+          <Link to="/blog" className="btn-primary">
+            Back to blog
+          </Link>
+        </div>
       </main>
     );
   }
@@ -120,6 +158,41 @@ export default function BlogPostPage() {
               year: 'numeric',
             })}
           </p>
+          {(post.author_bio || post.author_avatar) && (
+            <div className="mt-6 flex items-start gap-4 p-4 bg-white/50 border border-taupe/40">
+              {post.author_avatar && (
+                <img
+                  src={post.author_avatar}
+                  alt=""
+                  width={56}
+                  height={56}
+                  className="w-14 h-14 rounded-full object-cover shrink-0"
+                />
+              )}
+              <div>
+                <p className="font-display text-lg text-wine">{post.author_name}</p>
+                {post.author_bio && (
+                  <p className="mt-1 font-body text-sm text-[#2d2020]/70 leading-relaxed">
+                    {post.author_bio}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+          {post.tags?.length > 0 && (
+            <ul className="mt-4 flex flex-wrap gap-2" aria-label="Article tags">
+              {post.tags.map((tag) => (
+                <li key={tag.slug}>
+                  <Link
+                    to={`/blog/tag/${tag.slug}`}
+                    className="px-3 py-1 border border-taupe text-xs uppercase tracking-wider text-wine hover:bg-wine hover:text-cream transition-colors"
+                  >
+                    {tag.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </header>
 
         {post.direct_answer && (
@@ -128,12 +201,16 @@ export default function BlogPostPage() {
           </p>
         )}
 
-        <TableOfContents contentHtml={post.content} />
+        {preparedContent && <TableOfContents contentHtml={preparedContent} />}
 
-        <div
-          className="prose-blog font-body text-[#2d2020] leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: post.content }}
-        />
+        {preparedContent ? (
+          <div
+            className="prose-blog font-body text-[#2d2020] leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: preparedContent }}
+          />
+        ) : (
+          <p className="font-body text-sm text-[#2d2020]/50">Article content is not available.</p>
+        )}
 
         <div className="mt-10 pt-8 border-t border-taupe/50">
           <ShareButtons title={post.title} url={url} image={post.hero_image} />

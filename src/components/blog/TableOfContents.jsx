@@ -7,8 +7,9 @@ export default function TableOfContents({ contentHtml }) {
     const div = document.createElement('div');
     div.innerHTML = contentHtml || '';
     const found = [];
-    div.querySelectorAll('h2, h3').forEach((el, i) => {
-      const id = `section-${i}`;
+    div.querySelectorAll('h2, h3').forEach((el) => {
+      const id = el.id || el.textContent?.trim().toLowerCase().replace(/\s+/g, '-');
+      if (!id) return;
       found.push({ id, text: el.textContent, level: el.tagName });
     });
     setHeadings(found);

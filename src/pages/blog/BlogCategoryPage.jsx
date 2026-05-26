@@ -11,9 +11,14 @@ export default function BlogCategoryPage() {
   const [name, setName] = useState(slug?.replace(/-/g, ' '));
 
   useEffect(() => {
-    api.getPosts({ category: slug, limit: 24 }).then((r) => {
-      setPosts(r.posts || []);
-      if (r.posts?.[0]?.category?.name) setName(r.posts[0].category.name);
+    Promise.all([
+      api.getCategories(),
+      api.getPosts({ category: slug, limit: 24 }),
+    ]).then(([cats, listing]) => {
+      const match = (cats.categories || []).find((c) => c.slug === slug);
+      if (match?.name) setName(match.name);
+      else if (listing.posts?.[0]?.category?.name) setName(listing.posts[0].category.name);
+      setPosts(listing.posts || []);
     });
   }, [slug]);
 

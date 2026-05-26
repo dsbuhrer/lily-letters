@@ -57,7 +57,7 @@ export function renderBlogIndex({ posts, categories }) {
   });
 }
 
-export function renderBlogPost({ post, category, related, faq }) {
+export function renderBlogPost({ post, category, related, relatedProducts = [], faq }) {
   const siteUrl = getSiteUrl();
   const canonical = post.canonical_url || `${siteUrl}/blog/${post.slug}`;
   const title = post.meta_title || `${post.title} | The Lily Letters Co.`;
@@ -83,6 +83,17 @@ export function renderBlogPost({ post, category, related, faq }) {
     )
     .join('');
 
+  const shopHtml = (relatedProducts || [])
+    .map(
+      (p) => `
+    <a href="/products/${escapeHtml(p.slug || p.id)}" class="block border border-taupe/50 p-4 hover:border-wine transition-colors">
+      ${p.images?.[0] ? `<img src="${escapeHtml(p.images[0])}" alt="${escapeHtml(p.name)}" width="400" height="300" class="w-full aspect-[4/3] object-cover mb-3" loading="lazy" />` : ''}
+      <p class="font-display text-lg text-wine">${escapeHtml(p.name)}</p>
+      <p class="text-sm text-[#2d2020]/60 mt-1">$${Number(p.price).toFixed(2)}</p>
+    </a>`,
+    )
+    .join('');
+
   const body = `
     <main class="min-h-screen bg-cream pt-28 pb-16">
       <article class="max-w-3xl mx-auto px-6" itemscope itemtype="https://schema.org/Article">
@@ -98,6 +109,7 @@ export function renderBlogPost({ post, category, related, faq }) {
         ${post.direct_answer ? `<p class="text-lg font-body text-[#2d2020] leading-relaxed border-l-2 border-gold pl-4 mb-8" itemprop="description"><strong>Quick answer:</strong> ${escapeHtml(post.direct_answer)}</p>` : ''}
         <div class="prose-blog font-body text-[#2d2020] leading-relaxed space-y-4" itemprop="articleBody">${post.content}</div>
         ${faq?.length ? `<section class="mt-12" aria-labelledby="faq-heading"><h2 id="faq-heading" class="font-display text-2xl text-wine mb-4">Frequently Asked Questions</h2>${faqHtml}</section>` : ''}
+        ${shopHtml ? `<section class="mt-12"><h2 class="font-display text-2xl text-wine mb-2">Shop the look</h2><p class="font-body text-sm text-[#2d2020]/60 mb-6">Editable Canva templates to match this inspiration.</p><div class="grid grid-cols-1 sm:grid-cols-2 gap-6">${shopHtml}</div></section>` : ''}
         <section class="mt-12 p-8 bg-wine text-cream text-center">
           <h2 class="font-display text-2xl mb-2">Shop Wedding Templates</h2>
           <p class="text-sm text-cream/80 mb-4">Editable in Canva — download instantly after purchase.</p>
