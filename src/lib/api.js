@@ -53,7 +53,11 @@ async function request(path, options = {}) {
         'Endpoint da API não encontrado. Reinicie o backend (npm run dev:server) ou use npm run dev:full.',
       );
     }
-    throw new Error(data.error || res.statusText);
+    const err = new Error(data.error || res.statusText);
+    if (data.fields && typeof data.fields === 'object') {
+      err.fields = data.fields;
+    }
+    throw err;
   }
   return data;
 }

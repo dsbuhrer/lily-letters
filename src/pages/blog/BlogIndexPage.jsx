@@ -5,15 +5,23 @@ import api from '../../lib/api';
 import SeoHead from '../../components/seo/SeoHead';
 import BlogCard from '../../components/blog/BlogCard';
 import NewsletterBlock from '../../components/blog/NewsletterBlock';
+import {
+  BlogCategoriesSkeleton,
+  BlogPostsSkeleton,
+  BlogLoadingIndicator,
+} from '../../components/blog/BlogIndexSkeleton';
 
 export default function BlogIndexPage() {
   const [posts, setPosts] = useState([]);
   const [trending, setTrending] = useState([]);
   const [popular, setPopular] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [loadingPosts, setLoadingPosts] = useState(true);
   const [q, setQ] = useState('');
 
   useEffect(() => {
+    setLoadingPosts(true);
     Promise.all([
       api.getPosts({ limit: 12, sort: 'new' }),
       api.getPosts({ limit: 3, sort: 'trending' }),
@@ -24,12 +32,21 @@ export default function BlogIndexPage() {
         setTrending(trend.posts || []);
         setPopular(pop.posts || []);
       })
-      .catch(() => {});
+      .catch(() => {
+        setPosts([]);
+        setTrending([]);
+        setPopular([]);
+      })
+      .finally(() => setLoadingPosts(false));
+  }, []);
 
-    fetch('/api/categories')
-      .then((r) => r.json())
+  useEffect(() => {
+    setLoadingCategories(true);
+    api
+      .getCategories()
       .then((d) => setCategories(d.categories || []))
-      .catch(() => setCategories([]));
+      .catch(() => setCategories([]))
+      .finally(() => setLoadingCategories(false));
   }, []);
 
   const search = (e) => {
@@ -67,60 +84,80 @@ export default function BlogIndexPage() {
           </button>
         </form>
 
-        {categories.length > 0 && (
-          <nav aria-label="Categories" className="flex flex-wrap justify-center gap-2 mb-14">
-            {categories.map((c) => (
-              <Link
-                key={c.slug}
-                to={`/blog/category/${c.slug}`}
-                className="px-4 py-2 border border-taupe text-sm text-wine hover:bg-wine hover:text-cream transition-colors"
-              >
-                {c.name}
-              </Link>
-            ))}
-          </nav>
+        {(loadingCategories || loadingPosts) && (
+          <BlogLoadingIndicator
+            label={
+              loadingCategories && loadingPosts
+                ? 'Loading blog'
+                : loadingCategories
+                  ? 'Loading categories'
+                  : 'Loading articles'
+            }
+          />
         )}
 
-        <div className="grid lg:grid-cols-3 gap-10 mb-16">
-          <aside className="lg:col-span-1 space-y-10">
-            {trending.length > 0 && (
-              <div>
-                <h2 className="font-display text-xl text-wine mb-4">Trending</h2>
-                <ul className="space-y-3">
-                  {trending.map((p) => (
-                    <li key={p.id}>
-                      <Link to={`/blog/${p.slug}`} className="text-sm text-wine hover:underline font-body">
-                        {p.title}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {popular.length > 0 && (
-              <div>
-                <h2 className="font-display text-xl text-wine mb-4">Most popular</h2>
-                <ul className="space-y-3">
-                  {popular.map((p) => (
-                    <li key={p.id}>
-                      <Link to={`/blog/${p.slug}`} className="text-sm text-wine hover:underline font-body">
-                        {p.title}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </aside>
-          <section className="lg:col-span-2 space-y-12">
-            {posts.map((post) => (
-              <BlogCard key={post.id} post={post} />
-            ))}
-            {posts.length === 0 && (
-              <p className="text-center text-[#2d2020]/50 font-body">Articles coming soon.</p>
-            )}
-          </section>
-        </div>
+        {loadingCategories ? (
+          <BlogCategoriesSkeleton />
+        ) : (
+          categories.length > 0 && (
+            <nav aria-label="Categories" className="flex flex-wrap justify-center gap-2 mb-14">
+              {categories.map((c) => (
+                <Link
+                  key={c.slug}
+                  to={`/blog/category/${c.slug}`}
+                  className="px-4 py-2 border border-taupe text-sm text-wine hover:bg-wine hover:text-cream transition-colors"
+                >
+                  {c.name}
+                </Link>
+              ))}
+            </nav>
+          )
+        )}
+
+        {loadingPosts ? (
+          <BlogPostsSkeleton />
+        ) : (
+          <div className="grid lg:grid-cols-3 gap-10 mb-16">
+            <aside className="lg:col-span-1 space-y-10">
+              {trending.length > 0 && (
+                <div>
+                  <h2 className="font-display text-xl text-wine mb-4">Trending</h2>
+                  <ul className="space-y-3">
+                    {trending.map((p) => (
+                      <li key={p.id}>
+                        <Link to={`/blog/${p.slug}`} className="text-sm text-wine hover:underline font-body">
+                          {p.title}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {popular.length > 0 && (
+                <div>
+                  <h2 className="font-display text-xl text-wine mb-4">Most popular</h2>
+                  <ul className="space-y-3">
+                    {popular.map((p) => (
+                      <li key={p.id}>
+                        <Link to={`/blog/${p.slug}`} className="text-sm text-wine hover:underline font-body">
+                          {p.title}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </aside>
+            <section className="lg:col-span-2 space-y-12">
+              {posts.map((post) => (
+                <BlogCard key={post.id} post={post} />
+              ))}
+              {posts.length === 0 && (
+                <p className="text-center text-[#2d2020]/50 font-body">Articles coming soon.</p>
+              )}
+            </section>
+          </div>
+        )}
 
         <NewsletterBlock source="blog" />
       </div>

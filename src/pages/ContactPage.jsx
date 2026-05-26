@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Instagram, Clock, CheckCircle, Loader2 } from 'lucide-react';
 import api from '../lib/api';
+import { validateContactForm, contactFormSummaryError } from '../utils/contactFormValidation';
 
 const fadeUp = {
   initial: { opacity: 0, y: 24 },
@@ -24,11 +25,34 @@ export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const updateField = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+    if (submitError) setSubmitError('');
+  };
+
+  const fieldClass = (field) =>
+    fieldErrors[field] ? 'input-field input-field-error' : 'input-field';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const clientFields = validateContactForm(form);
+    if (Object.keys(clientFields).length > 0) {
+      setFieldErrors(clientFields);
+      setSubmitError(contactFormSummaryError(clientFields));
+      return;
+    }
+
     setSubmitting(true);
     setSubmitError('');
+    setFieldErrors({});
     try {
       await api.submitContact({
         name: form.name.trim(),
@@ -39,6 +63,7 @@ export default function ContactPage() {
       setSubmitted(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
+      if (err.fields) setFieldErrors(err.fields);
       setSubmitError(err.message || 'Could not send your message. Please try again or email us directly.');
     } finally {
       setSubmitting(false);
@@ -158,7 +183,12 @@ export default function ContactPage() {
                   get back to you at <strong>{form.email}</strong> within 1–2 business days.
                 </p>
                 <button
-                  onClick={() => { setSubmitted(false); setForm({ name: '', email: '', topic: '', message: '' }); }}
+                  onClick={() => {
+                    setSubmitted(false);
+                    setForm({ name: '', email: '', topic: '', message: '' });
+                    setFieldErrors({});
+                    setSubmitError('');
+                  }}
                   className="btn-ghost"
                 >
                   Send Another Message
@@ -169,64 +199,107 @@ export default function ContactPage() {
                 <h2 className="font-display text-2xl font-light text-wine mb-6">
                   Send Us a Message
                 </h2>
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit} noValidate className="space-y-5">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5">
+                      <label
+                        htmlFor="contact-name"
+                        className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5"
+                      >
                         Your Name *
                       </label>
                       <input
+                        id="contact-name"
                         type="text"
-                        required
+                        autoComplete="name"
                         placeholder="Jane Smith"
                         value={form.name}
-                        onChange={(e) => setForm({ ...form, name: e.target.value })}
-                        className="input-field"
+                        onChange={(e) => updateField('name', e.target.value)}
+                        className={fieldClass('name')}
+                        aria-invalid={Boolean(fieldErrors.name)}
+                        aria-describedby={fieldErrors.name ? 'contact-name-error' : undefined}
                       />
+                      {fieldErrors.name && (
+                        <p id="contact-name-error" className="font-body text-xs text-red-800 mt-1.5" role="alert">
+                          {fieldErrors.name}
+                        </p>
+                      )}
                     </div>
                     <div>
-                      <label className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5">
+                      <label
+                        htmlFor="contact-email"
+                        className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5"
+                      >
                         Email Address *
                       </label>
                       <input
+                        id="contact-email"
                         type="email"
-                        required
+                        autoComplete="email"
                         placeholder="your@email.com"
                         value={form.email}
-                        onChange={(e) => setForm({ ...form, email: e.target.value })}
-                        className="input-field"
+                        onChange={(e) => updateField('email', e.target.value)}
+                        className={fieldClass('email')}
+                        aria-invalid={Boolean(fieldErrors.email)}
+                        aria-describedby={fieldErrors.email ? 'contact-email-error' : undefined}
                       />
+                      {fieldErrors.email && (
+                        <p id="contact-email-error" className="font-body text-xs text-red-800 mt-1.5" role="alert">
+                          {fieldErrors.email}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   <div>
-                    <label className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5">
+                    <label
+                      htmlFor="contact-topic"
+                      className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5"
+                    >
                       Topic
                     </label>
                     <select
+                      id="contact-topic"
                       value={form.topic}
-                      onChange={(e) => setForm({ ...form, topic: e.target.value })}
-                      className="input-field"
+                      onChange={(e) => updateField('topic', e.target.value)}
+                      className={fieldClass('topic')}
+                      aria-invalid={Boolean(fieldErrors.topic)}
+                      aria-describedby={fieldErrors.topic ? 'contact-topic-error' : undefined}
                     >
                       <option value="">Select a topic...</option>
                       {topics.map((t) => (
                         <option key={t} value={t}>{t}</option>
                       ))}
                     </select>
+                    {fieldErrors.topic && (
+                      <p id="contact-topic-error" className="font-body text-xs text-red-800 mt-1.5" role="alert">
+                        {fieldErrors.topic}
+                      </p>
+                    )}
                   </div>
 
                   <div>
-                    <label className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5">
+                    <label
+                      htmlFor="contact-message"
+                      className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5"
+                    >
                       Your Message *
                     </label>
                     <textarea
-                      required
+                      id="contact-message"
                       rows={5}
                       placeholder="Tell us how we can help you..."
                       value={form.message}
-                      onChange={(e) => setForm({ ...form, message: e.target.value })}
-                      className="input-field resize-none"
+                      onChange={(e) => updateField('message', e.target.value)}
+                      className={`${fieldClass('message')} resize-none`}
+                      aria-invalid={Boolean(fieldErrors.message)}
+                      aria-describedby={fieldErrors.message ? 'contact-message-error' : undefined}
                     />
+                    {fieldErrors.message && (
+                      <p id="contact-message-error" className="font-body text-xs text-red-800 mt-1.5" role="alert">
+                        {fieldErrors.message}
+                      </p>
+                    )}
                   </div>
 
                   {submitError && (

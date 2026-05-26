@@ -109,7 +109,6 @@ export default function ProductDetailPage() {
                 <span className={`absolute top-3 left-3 px-3 py-1 text-xs font-body font-medium tracking-wider uppercase ${
                   product.badge === 'Sale' ? 'bg-wine text-cream' : 
                   product.badge === 'New' ? 'bg-sage text-cream' :
-                  product.badge === 'Low Stock' ? 'bg-[#b87333] text-cream' :
                   'bg-gold text-cream'
                 }`}>
                   {product.badge === 'Sale' && product.originalPrice

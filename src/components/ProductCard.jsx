@@ -148,10 +148,6 @@ export default function ProductCard({ product, index = 0 }) {
 
                 ? 'bg-sage text-cream'
 
-                : product.badge === 'Low Stock'
-
-                ? 'bg-[#b87333] text-cream'
-
                 : 'bg-gold text-cream'
 
             }`}

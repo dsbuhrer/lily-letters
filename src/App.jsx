@@ -1,6 +1,7 @@
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { useEffect, lazy, Suspense } from 'react';
 import { AnimatePresence } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -43,8 +44,9 @@ function ScrollToTop() {
 
 function PageFallback() {
   return (
-    <main className="min-h-screen bg-cream pt-28 flex items-center justify-center">
-      <p className="font-body text-sm text-[#2d2020]/50">Loading…</p>
+    <main className="min-h-screen bg-cream pt-28 flex flex-col items-center justify-center gap-4 blog-loader-enter">
+      <Loader2 size={32} strokeWidth={1.5} className="text-wine blog-loader-spin" aria-hidden />
+      <p className="font-body text-xs tracking-[0.2em] uppercase text-[#2d2020]/50">Loading…</p>
     </main>
   );
 }

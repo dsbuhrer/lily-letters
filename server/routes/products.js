@@ -18,7 +18,7 @@ function mapProduct(row) {
     category: row.category,
     price: Number(row.price),
     originalPrice: row.original_price ? Number(row.original_price) : null,
-    badge: row.badge,
+    badge: row.badge === 'Low Stock' ? null : row.badge,
     rating: Number(row.rating),
     reviews: row.reviews,
     description: row.description,

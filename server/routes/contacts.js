@@ -3,6 +3,7 @@ import { z } from 'zod';
 import crypto from 'crypto';
 import { requireSupabase } from '../lib/supabase.js';
 import { authMiddleware } from '../middleware/auth.js';
+import { zodValidationResponse } from '../utils/validationErrors.js';
 
 const router = Router();
 
@@ -16,10 +17,23 @@ const contactTopics = [
 ];
 
 const submitSchema = z.object({
-  name: z.string().trim().min(1).max(200),
-  email: z.string().trim().email().max(320),
-  topic: z.string().trim().max(120).optional().nullable(),
-  message: z.string().trim().min(1).max(5000),
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Please enter your name.')
+    .max(200, 'Name must be 200 characters or fewer.'),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Please enter your email address.')
+    .email('Please enter a valid email address (e.g. yourname@example.com).')
+    .max(320, 'Email address is too long.'),
+  topic: z.string().trim().max(120, 'Topic must be 120 characters or fewer.').optional().nullable(),
+  message: z
+    .string()
+    .trim()
+    .min(1, 'Please enter your message.')
+    .max(5000, 'Message must be 5,000 characters or fewer.'),
 });
 
 function mapContact(row) {
@@ -61,7 +75,7 @@ router.post('/', async (req, res) => {
     res.status(201).json({ ok: true, contact: mapContact(data) });
   } catch (e) {
     if (e.name === 'ZodError') {
-      return res.status(400).json({ error: e.errors?.[0]?.message || 'Invalid form data' });
+      return res.status(400).json(zodValidationResponse(e));
     }
     res.status(500).json({ error: e.message });
   }

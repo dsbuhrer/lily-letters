@@ -162,7 +162,7 @@ export const products = [
     category: 'wedding-table-signs',
     price: 6.00,
     originalPrice: null,
-    badge: 'Low Stock',
+    badge: null,
     rating: 5.0,
     reviews: 5,
     description:
@@ -196,7 +196,7 @@ export const products = [
     category: 'wedding-extras',
     price: 5.00,
     originalPrice: null,
-    badge: 'Low Stock',
+    badge: null,
     rating: 5.0,
     reviews: 5,
     description:
