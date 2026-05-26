@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Download, Mail, Check, ExternalLink, User, ArrowRight } from 'lucide-react';
+import { useUiFeedback } from '../context/UiFeedbackContext';
 
 const CANVA_PDF_MOCK_URL = '#download-pdf';
 
 export default function OrderConfirmationPage() {
+  const { toast } = useUiFeedback();
   const { state } = useLocation();
   const [showAccountPrompt, setShowAccountPrompt] = useState(false);
   const [accountCreated, setAccountCreated] = useState(false);
@@ -114,7 +116,7 @@ export default function OrderConfirmationPage() {
             href={CANVA_PDF_MOCK_URL}
             onClick={(e) => {
               e.preventDefault();
-              alert('📄 In production, this would download your PDF with all Canva template links!');
+              toast.info('In production, this would download your PDF with all Canva template links.');
             }}
             className="btn-primary w-full justify-center"
           >

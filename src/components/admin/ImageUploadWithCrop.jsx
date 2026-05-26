@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { Upload, X, Loader2, Crop } from 'lucide-react';
 import api from '../../lib/api';
+import { useUiFeedback } from '../../context/UiFeedbackContext';
 import ImageCropModal from './ImageCropModal';
 
 /**
@@ -27,6 +28,7 @@ export default function ImageUploadWithCrop({
   recommendedSize,
   recommendedSizeNote,
 }) {
+  const { toast } = useUiFeedback();
   const inputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
   const [cropSrc, setCropSrc] = useState(null);
@@ -39,7 +41,7 @@ export default function ImageUploadWithCrop({
 
   const reportError = (message) => {
     if (onError) onError(message);
-    else alert(message);
+    else toast.error(message);
   };
 
   const openCropFromFile = (file) => {

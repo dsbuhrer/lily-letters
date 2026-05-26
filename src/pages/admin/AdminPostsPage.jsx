@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../lib/api';
+import { useUiFeedback } from '../../context/UiFeedbackContext';
 import AdminListToolbar from '../../components/admin/AdminListToolbar';
 import { filterBySearch, sortByKey } from '../../utils/adminListFilter';
 
@@ -39,6 +40,7 @@ function PostStatusLabel({ status }) {
 }
 
 export default function AdminPostsPage() {
+  const { confirm, toast } = useUiFeedback();
   const [posts, setPosts] = useState([]);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('updated_desc');
@@ -58,18 +60,34 @@ export default function AdminPostsPage() {
   }, [posts, search, sort]);
 
   const remove = async (id) => {
-    if (!confirm('Delete this post?')) return;
+    const post = posts.find((p) => p.id === id);
+    const ok = await confirm({
+      title: 'Delete post?',
+      message: post?.title
+        ? `"${post.title}" will be permanently removed.`
+        : 'This post will be permanently removed.',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
     await api.admin.deletePost(id);
     setPosts((p) => p.filter((x) => x.id !== id));
+    toast.success('Post deleted.');
   };
 
   const publish = async (post) => {
-    if (!confirm(`Publish "${post.title}"?`)) return;
+    const ok = await confirm({
+      title: 'Publish post?',
+      message: `"${post.title}" will be visible on the blog.`,
+      confirmLabel: 'Publish',
+    });
+    if (!ok) return;
     try {
       const { post: updated } = await api.admin.publishPost(post.id);
       setPosts((p) => p.map((x) => (x.id === post.id ? { ...x, ...updated, status: 'published' } : x)));
+      toast.success('Post published.');
     } catch (e) {
-      alert(e.message || 'Could not publish');
+      toast.error(e.message || 'Could not publish.');
     }
   };
 

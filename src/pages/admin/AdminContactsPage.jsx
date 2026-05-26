@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Mail, Trash2, X } from 'lucide-react';
 import api from '../../lib/api';
+import { useUiFeedback } from '../../context/UiFeedbackContext';
 import AdminListToolbar from '../../components/admin/AdminListToolbar';
 import { filterBySearch, sortByKey } from '../../utils/adminListFilter';
 
@@ -38,6 +39,7 @@ function ContactStatusBadge({ readAt }) {
 }
 
 export default function AdminContactsPage() {
+  const { confirm, toast } = useUiFeedback();
   const [contacts, setContacts] = useState([]);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('created_desc');
@@ -83,10 +85,20 @@ export default function AdminContactsPage() {
   };
 
   const remove = async (id) => {
-    if (!confirm('Delete this contact?')) return;
+    const contact = contacts.find((c) => c.id === id) || (selected?.id === id ? selected : null);
+    const ok = await confirm({
+      title: 'Delete contact?',
+      message: contact?.name
+        ? `Remove the message from ${contact.name}? This cannot be undone.`
+        : 'This contact message will be permanently removed.',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
     await api.admin.deleteContact(id);
     setContacts((list) => list.filter((c) => c.id !== id));
     if (selected?.id === id) setSelected(null);
+    toast.success('Contact deleted.');
   };
 
   const toggleUnread = async (contact) => {

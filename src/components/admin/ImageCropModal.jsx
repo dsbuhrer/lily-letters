@@ -1,8 +1,10 @@
 import { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import { getCroppedImageBlob } from '../../utils/cropImage';
+import { useUiFeedback } from '../../context/UiFeedbackContext';
 
 export default function ImageCropModal({ imageSrc, onClose, onComplete, aspect = 4 / 3 }) {
+  const { toast } = useUiFeedback();
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
@@ -19,7 +21,7 @@ export default function ImageCropModal({ imageSrc, onClose, onComplete, aspect =
       const blob = await getCroppedImageBlob(imageSrc, croppedAreaPixels);
       onComplete(blob);
     } catch (e) {
-      alert(e.message || 'Could not crop image');
+      toast.error(e.message || 'Could not crop image.');
     } finally {
       setBusy(false);
     }

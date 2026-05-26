@@ -5,6 +5,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import { ChevronLeft, ChevronRight, Loader2, Sparkles, Plus, Trash2, Info } from 'lucide-react';
 import api from '../../lib/api';
+import { useUiFeedback } from '../../context/UiFeedbackContext';
 import ImageUploadWithCrop from '../../components/admin/ImageUploadWithCrop';
 import {
   BLOG_HERO_ASPECT,
@@ -112,6 +113,7 @@ function validateStep(step, form, editor) {
 }
 
 export default function AdminPostEditorPage() {
+  const { confirm, toast } = useUiFeedback();
   const { id } = useParams();
   const navigate = useNavigate();
   const isNew = id === 'new';
@@ -295,7 +297,12 @@ export default function AdminPostEditorPage() {
       setStepError(err);
       return;
     }
-    if (!confirm('Publish this post? It will be visible on the blog.')) return;
+    const ok = await confirm({
+      title: 'Publish post?',
+      message: 'This post will be visible on the blog.',
+      confirmLabel: 'Publish',
+    });
+    if (!ok) return;
     setSaving(true);
     setStepError('');
     try {
@@ -307,8 +314,10 @@ export default function AdminPostEditorPage() {
         navigate(`/admin/posts/${res.post.id}`, { replace: true });
       }
       setForm((f) => ({ ...f, status: 'published' }));
+      toast.success('Post published.');
     } catch (e) {
       setStepError(e.message);
+      toast.error(e.message || 'Could not publish.');
     } finally {
       setSaving(false);
     }
