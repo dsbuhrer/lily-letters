@@ -1,22 +1,30 @@
 import { useEffect, useState } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Download, Mail, Check, ExternalLink, User, ArrowRight } from 'lucide-react';
 import { useUiFeedback } from '../context/UiFeedbackContext';
-
-const CANVA_PDF_MOCK_URL = '#download-pdf';
+import { useAuth } from '../context/AuthContext';
+import { downloadOrderLinksPdf } from '../lib/orderDownloads';
 
 export default function OrderConfirmationPage() {
   const { toast } = useUiFeedback();
+  const { signUp, configured, user } = useAuth();
+  const navigate = useNavigate();
   const { state } = useLocation();
   const [showAccountPrompt, setShowAccountPrompt] = useState(false);
   const [accountCreated, setAccountCreated] = useState(false);
   const [password, setPassword] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState('');
 
   useEffect(() => {
+    if (user) {
+      setAccountCreated(true);
+      return undefined;
+    }
     const timer = setTimeout(() => setShowAccountPrompt(true), 1500);
     return () => clearTimeout(timer);
-  }, []);
+  }, [user]);
 
   const order = state || {
     email: 'guest@example.com',
@@ -26,25 +34,63 @@ export default function OrderConfirmationPage() {
     orderId: 'TLLC-DEMO',
   };
 
-  const handleCreateAccount = (e) => {
+  const handleCreateAccount = async (e) => {
     e.preventDefault();
-    setAccountCreated(true);
+    if (!configured) {
+      toast.info('Account system is not configured yet.');
+      return;
+    }
+    setCreating(true);
+    setCreateError('');
+    try {
+      const { session } = await signUp(order.email, password, {
+        firstName: order.firstName,
+      });
+      setAccountCreated(true);
+      if (session) {
+        toast.success('Account created! Your purchases are saved.');
+        setTimeout(() => navigate('/account'), 1500);
+      } else {
+        toast.info('Check your email to confirm your account.');
+      }
+    } catch (err) {
+      setCreateError(err.message || 'Could not create account');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDownload = () => {
+    const mockOrder = {
+      order_number: order.orderId,
+      paid_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      order_items: (order.items || []).map((item) => ({
+        product_name: item.name,
+        canva_link: item.canvaLink || item.canva_link || null,
+      })),
+    };
+
+    const hasLinks = mockOrder.order_items.some((i) => i.canva_link);
+    if (hasLinks) {
+      downloadOrderLinksPdf(mockOrder);
+    } else if (user) {
+      navigate('/account');
+    } else {
+      toast.info('Create an account to access your Canva template links anytime.');
+    }
   };
 
   return (
     <main className="min-h-screen bg-[#f8f5ef] pt-20">
       <div className="max-w-3xl mx-auto px-6 py-16 text-center">
-        {/* Success animation */}
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', damping: 15, stiffness: 200 }}
           className="w-20 h-20 bg-sage rounded-full flex items-center justify-center mx-auto mb-8"
         >
-          <motion.div
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-          >
+          <motion.div initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}>
             <Check size={36} strokeWidth={2} className="text-cream" />
           </motion.div>
         </motion.div>
@@ -67,7 +113,6 @@ export default function OrderConfirmationPage() {
           </p>
         </motion.div>
 
-        {/* Download Card */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -90,7 +135,7 @@ export default function OrderConfirmationPage() {
 
           <div className="bg-cream border border-taupe/30 p-5 mb-6 text-left">
             <p className="font-body text-sm font-medium text-[#2d2020] mb-3">
-              📄 Your Purchase Includes:
+              Your Purchase Includes:
             </p>
             <ul className="space-y-2">
               {order.items.length > 0 ? (
@@ -108,21 +153,20 @@ export default function OrderConfirmationPage() {
           </div>
 
           <p className="font-body text-sm text-[#2d2020]/60 mb-6 leading-relaxed">
-            Click below to download your <strong>PDF file</strong> containing all Canva template links. 
+            Click below to download your file containing all Canva template links.
             Open each link to access your editable templates in Canva (free account required).
           </p>
 
-          <a
-            href={CANVA_PDF_MOCK_URL}
-            onClick={(e) => {
-              e.preventDefault();
-              toast.info('In production, this would download your PDF with all Canva template links.');
-            }}
-            className="btn-primary w-full justify-center"
-          >
+          <button type="button" onClick={handleDownload} className="btn-primary w-full justify-center">
             <Download size={16} strokeWidth={1.5} />
-            Download Your Templates PDF
-          </a>
+            Download Your Templates
+          </button>
+
+          {user && (
+            <Link to="/account" className="btn-secondary w-full justify-center mt-3 inline-flex">
+              Go to My Account
+            </Link>
+          )}
 
           <div className="mt-4 flex items-center justify-center gap-4 text-xs font-body text-[#2d2020]/40">
             <span className="flex items-center gap-1">
@@ -134,7 +178,6 @@ export default function OrderConfirmationPage() {
           </div>
         </motion.div>
 
-        {/* How to use */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -169,8 +212,7 @@ export default function OrderConfirmationPage() {
           </Link>
         </motion.div>
 
-        {/* Create Account Prompt */}
-        {showAccountPrompt && !accountCreated && (
+        {showAccountPrompt && !accountCreated && configured && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -184,9 +226,12 @@ export default function OrderConfirmationPage() {
               </h3>
             </div>
             <p className="font-body text-sm text-[#2d2020]/60 mb-4">
-              Create a free account to access your downloads anytime, track your orders, 
+              Create a free account to access your downloads anytime, track your orders,
               and get exclusive member discounts.
             </p>
+            {createError && (
+              <p className="font-body text-sm text-red-600 mb-3">{createError}</p>
+            )}
             <form onSubmit={handleCreateAccount} className="space-y-3">
               <input
                 type="password"
@@ -200,21 +245,22 @@ export default function OrderConfirmationPage() {
               <p className="font-body text-xs text-[#2d2020]/40">
                 Your email: <strong>{order.email}</strong>
               </p>
-              <button type="submit" className="btn-primary w-full">
+              <button type="submit" className="btn-primary w-full" disabled={creating}>
                 <User size={14} strokeWidth={1.5} />
-                Create Account & Save Downloads
+                {creating ? 'Creating account…' : 'Create Account & Save Downloads'}
               </button>
             </form>
             <button
+              type="button"
               onClick={() => setShowAccountPrompt(false)}
               className="mt-3 font-body text-xs text-[#2d2020]/40 hover:text-[#2d2020] transition-colors w-full text-center"
             >
-              No thanks, I'll download now
+              No thanks, I&apos;ll download now
             </button>
           </motion.div>
         )}
 
-        {accountCreated && (
+        {accountCreated && !user && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -222,12 +268,24 @@ export default function OrderConfirmationPage() {
           >
             <Check size={18} className="text-sage" strokeWidth={2} />
             <p className="font-body text-sm text-[#2d2020]">
-              Account created! You can now access your downloads anytime.
+              Account created! Check your email to confirm, then sign in to access your downloads.
             </p>
           </motion.div>
         )}
 
-        {/* Back to shop */}
+        {accountCreated && user && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mt-8 bg-sage/10 border border-sage/30 p-4 flex items-center gap-3"
+          >
+            <Check size={18} className="text-sage" strokeWidth={2} />
+            <p className="font-body text-sm text-[#2d2020]">
+              Account ready! Your purchases are saved in My Account.
+            </p>
+          </motion.div>
+        )}
+
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

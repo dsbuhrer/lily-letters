@@ -31,7 +31,9 @@ npm install
 cp .env.example .env
 ```
 
-Fill in `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `SITE_URL`.
+Fill in `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `SITE_URL`.
+
+Enable **Email** auth in Supabase Dashboard → Authentication → Providers. Add `http://localhost:5173/**` to redirect URLs for password reset.
 
 3. Apply database migrations (Supabase Dashboard SQL or CLI):
 
@@ -73,6 +75,18 @@ Serves `dist/` and handles API + blog SSR on `PORT` (default 3001).
 | `/admin/posts` | Blog posts |
 | `/admin/products` | Shop products |
 | `/admin/subscribers` | Newsletter emails + CSV export |
+
+## Customer account
+
+| URL | Purpose |
+|-----|---------|
+| `/account/login` | Sign in |
+| `/account/register` | Create account |
+| `/account` | Dashboard — recent orders & quick download |
+| `/account/orders` | Purchase history |
+| `/account/settings` | Edit profile & password reset |
+
+Orders are stored in Supabase (`orders`, `order_items`, `profiles`). Payoneer webhook integration is documented in [`docs/PAYONEER_WEBHOOK.md`](docs/PAYONEER_WEBHOOK.md).
 
 ## Stack
 

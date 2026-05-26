@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Menu, X, Heart } from 'lucide-react';
+import { ShoppingBag, Menu, X, Heart, User } from 'lucide-react';
 import useCartStore from '../store/cartStore';
 import useWishlistStore from '../store/wishlistStore';
+import { useAuth } from '../context/AuthContext';
 
 const navLinks = [
   { to: '/products', label: 'Shop' },
@@ -18,6 +19,7 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { items, openCart, closeCart, isOpen: cartOpen } = useCartStore();
   const { items: wishlistItems } = useWishlistStore();
+  const { user } = useAuth();
   const location = useLocation();
 
   const totalItems = items.length;
@@ -84,6 +86,19 @@ export default function Header() {
 
             {/* Actions */}
             <div className="flex items-center gap-2 sm:gap-4">
+              <NavLink
+                to={user ? '/account' : '/account/login'}
+                onClick={() => setMobileOpen(false)}
+                className={({ isActive }) =>
+                  `hidden sm:flex items-center gap-1.5 font-body text-xs tracking-widest uppercase transition-colors ${
+                    isActive ? 'text-wine' : 'text-[#2d2020] hover:text-wine'
+                  }`
+                }
+                aria-label={user ? 'My account' : 'Sign in'}
+              >
+                <User size={18} strokeWidth={1.5} />
+                {user ? 'Account' : 'Sign in'}
+              </NavLink>
               <NavLink
                 to="/wishlist"
                 onClick={() => setMobileOpen(false)}
@@ -169,6 +184,18 @@ export default function Header() {
                   </NavLink>
                 </motion.div>
               ))}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: navLinks.length * 0.08 }}
+              >
+                <NavLink
+                  to={user ? '/account' : '/account/login'}
+                  className="font-display text-3xl font-light text-[#2d2020] hover:text-wine transition-colors"
+                >
+                  {user ? 'My Account' : 'Sign In'}
+                </NavLink>
+              </motion.div>
             </div>
           </motion.div>
         )}

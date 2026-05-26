@@ -12,6 +12,7 @@ import adminRoutes from './routes/admin.js';
 import productsRoutes, { productAdminRouter } from './routes/products.js';
 import subscribersRoutes from './routes/subscribers.js';
 import contactsRoutes from './routes/contacts.js';
+import ordersRoutes from './routes/orders.js';
 import seoRoutes from './routes/seoRoutes.js';
 import categoriesRoutes from './routes/categories.js';
 import {
@@ -49,6 +50,7 @@ app.use('/api/admin/products', productAdminRouter);
 app.use('/api/products', productsRoutes);
 app.use('/api/subscribers', subscribersRoutes);
 app.use('/api/contacts', contactsRoutes);
+app.use('/api/orders', ordersRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use(seoRoutes);
 

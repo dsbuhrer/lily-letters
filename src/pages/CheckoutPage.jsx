@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, CreditCard, ChevronRight, Check, ShieldCheck, Mail } from 'lucide-react';
 import useCartStore from '../store/cartStore';
 import CheckoutEmailNotice from '../components/CheckoutEmailNotice';
+import api from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 import {
   normalizeEmail,
   isValidEmail,
@@ -15,6 +17,7 @@ const inputClass =
 
 export default function CheckoutPage() {
   const { items, clearCart } = useCartStore();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const subtotal = items.reduce((s, i) => s + i.price, 0);
 
@@ -172,11 +175,38 @@ export default function CheckoutPage() {
     }
   };
 
-  const handlePaymentSubmit = (e) => {
+  const handlePaymentSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // Mock processing
-    setTimeout(() => {
+    try {
+      const payload = {
+        email: info.email,
+        firstName: info.firstName,
+        lastName: info.lastName,
+        items: items.map((item) => ({
+          productId: item.id,
+          name: item.name,
+          price: item.price,
+          slug: item.slug,
+        })),
+        billing: {
+          street: billing.street.trim(),
+          postalCode: billing.postalCode.trim(),
+          city: billing.city.trim(),
+          stateProvince: billing.stateProvince.trim(),
+          country: billing.country,
+        },
+        userId: user?.id,
+      };
+
+      let orderId = `TLLC-${Date.now().toString(36).toUpperCase()}`;
+      try {
+        const result = await api.createOrder(payload);
+        if (result.orderId) orderId = result.orderId;
+      } catch (err) {
+        console.warn('Order persistence failed, continuing with local confirmation:', err);
+      }
+
       clearCart();
       navigate('/order-confirmation', {
         state: {
@@ -184,17 +214,13 @@ export default function CheckoutPage() {
           firstName: info.firstName,
           items,
           total: subtotal,
-          orderId: `TLLC-${Date.now().toString(36).toUpperCase()}`,
-          billing: {
-            street: billing.street.trim(),
-            postalCode: billing.postalCode.trim(),
-            city: billing.city.trim(),
-            stateProvince: billing.stateProvince.trim(),
-            country: billing.country,
-          },
+          orderId,
+          billing: payload.billing,
         },
       });
-    }, 2000);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatCard = (val) => {

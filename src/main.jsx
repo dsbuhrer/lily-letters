@@ -5,14 +5,17 @@ import { HelmetProvider } from 'react-helmet-async';
 import './index.css';
 import App from './App.jsx';
 import { UiFeedbackProvider } from './context/UiFeedbackContext.jsx';
+import { AuthProvider } from './context/AuthContext.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <HelmetProvider>
       <BrowserRouter>
-        <UiFeedbackProvider>
-          <App />
-        </UiFeedbackProvider>
+        <AuthProvider>
+          <UiFeedbackProvider>
+            <App />
+          </UiFeedbackProvider>
+        </AuthProvider>
       </BrowserRouter>
     </HelmetProvider>
   </StrictMode>,

@@ -86,6 +86,9 @@ export const api = {
   submitContact: (payload) =>
     request('/api/contacts', { method: 'POST', body: JSON.stringify(payload) }),
 
+  createOrder: (payload) =>
+    request('/api/orders', { method: 'POST', body: JSON.stringify(payload) }),
+
   getCategories: () => request('/api/categories'),
 
   admin: {

@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom';
 import { Mail, Instagram, Clock, CheckCircle, Loader2 } from 'lucide-react';
 import api from '../lib/api';
 import { validateContactForm, contactFormSummaryError } from '../utils/contactFormValidation';
@@ -21,11 +22,26 @@ const topics = [
 ];
 
 export default function ContactPage() {
+  const [searchParams] = useSearchParams();
   const [form, setForm] = useState({ name: '', email: '', topic: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
+
+  useEffect(() => {
+    const topic = searchParams.get('topic');
+    const order = searchParams.get('order');
+    if (topic || order) {
+      setForm((prev) => ({
+        ...prev,
+        topic: topic ? decodeURIComponent(topic.replace(/\+/g, ' ')) : prev.topic,
+        message: order
+          ? `Order number: ${order}\n\n(Please describe your issue below)\n`
+          : prev.message,
+      }));
+    }
+  }, [searchParams]);
 
   const updateField = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));

@@ -25,6 +25,14 @@ import AdminProductsPage from './pages/admin/AdminProductsPage';
 import AdminProductEditorPage from './pages/admin/AdminProductEditorPage';
 import AdminContactsPage from './pages/admin/AdminContactsPage';
 import AdminSubscribersPage from './pages/admin/AdminSubscribersPage';
+import AccountLayout from './components/account/AccountLayout';
+import AccountGuard from './components/account/AccountGuard';
+import AccountLoginPage from './pages/account/AccountLoginPage';
+import AccountRegisterPage from './pages/account/AccountRegisterPage';
+import AccountDashboardPage from './pages/account/AccountDashboardPage';
+import AccountOrdersPage from './pages/account/AccountOrdersPage';
+import AccountOrderDetailPage from './pages/account/AccountOrderDetailPage';
+import AccountSettingsPage from './pages/account/AccountSettingsPage';
 
 const BlogIndexPage = lazy(() => import('./pages/blog/BlogIndexPage'));
 const BlogPostPage = lazy(() => import('./pages/blog/BlogPostPage'));
@@ -72,6 +80,17 @@ export default function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
+
+          <Route path="/account/login" element={<AccountLoginPage />} />
+          <Route path="/account/register" element={<AccountRegisterPage />} />
+          <Route element={<AccountGuard />}>
+            <Route element={<AccountLayout />}>
+              <Route path="/account" element={<AccountDashboardPage />} />
+              <Route path="/account/orders" element={<AccountOrdersPage />} />
+              <Route path="/account/orders/:orderNumber" element={<AccountOrderDetailPage />} />
+              <Route path="/account/settings" element={<AccountSettingsPage />} />
+            </Route>
+          </Route>
 
           <Route
             path="/blog"
