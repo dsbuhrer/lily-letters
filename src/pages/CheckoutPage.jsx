@@ -18,7 +18,7 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const subtotal = items.reduce((s, i) => s + i.price, 0);
 
-  const [step, setStep] = useState(1); // 1: info, 2: payment
+  const [step, setStep] = useState(1); // 1: contact, 2: billing, 3: payment
   const [loading, setLoading] = useState(false);
 
   const [info, setInfo] = useState({
@@ -26,6 +26,14 @@ export default function CheckoutPage() {
     firstName: '',
     lastName: '',
   });
+  const [billing, setBilling] = useState({
+    street: '',
+    postalCode: '',
+    city: '',
+    stateProvince: '',
+    country: 'US',
+  });
+  const [billingErrors, setBillingErrors] = useState({});
   const [payment, setPayment] = useState({
     cardNumber: '',
     expiry: '',
@@ -90,12 +98,39 @@ export default function CheckoutPage() {
     setEmailError('');
   };
 
-  const proceedToPayment = () => {
+  const goToStep = (nextStep) => {
+    setStep(nextStep);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const proceedToBilling = () => {
     const normalized = normalizeEmail(info.email);
     setInfo((prev) => ({ ...prev, email: normalized }));
-    setStep(2);
     setShowTypoPromptOnSubmit(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    goToStep(2);
+  };
+
+  const validateBilling = () => {
+    const errors = {};
+    const street = billing.street.trim();
+    const postalCode = billing.postalCode.trim();
+    const city = billing.city.trim();
+    const stateProvince = billing.stateProvince.trim();
+    const country = billing.country.trim();
+
+    if (!street) errors.street = 'Please enter your street address.';
+    if (!postalCode) errors.postalCode = 'Please enter your ZIP or postal code.';
+    if (!city) errors.city = 'Please enter your city.';
+    if (!stateProvince) errors.stateProvince = 'Please enter your state or province.';
+    if (!country) errors.country = 'Please select your country.';
+
+    setBillingErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const proceedToPayment = () => {
+    if (!validateBilling()) return;
+    goToStep(3);
   };
 
   const handleInfoSubmit = (e) => {
@@ -118,7 +153,23 @@ export default function CheckoutPage() {
       return;
     }
 
+    proceedToBilling();
+  };
+
+  const handleBillingSubmit = (e) => {
+    e.preventDefault();
     proceedToPayment();
+  };
+
+  const updateBilling = (field, value) => {
+    setBilling((prev) => ({ ...prev, [field]: value }));
+    if (billingErrors[field]) {
+      setBillingErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
   };
 
   const handlePaymentSubmit = (e) => {
@@ -134,6 +185,13 @@ export default function CheckoutPage() {
           items,
           total: subtotal,
           orderId: `TLLC-${Date.now().toString(36).toUpperCase()}`,
+          billing: {
+            street: billing.street.trim(),
+            postalCode: billing.postalCode.trim(),
+            city: billing.city.trim(),
+            stateProvince: billing.stateProvince.trim(),
+            country: billing.country,
+          },
         },
       });
     }, 2000);
@@ -181,34 +239,61 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* Steps indicator */}
-        <div className="flex items-center gap-3 mb-10">
-          {['Contact', 'Payment'].map((label, i) => (
-            <div key={label} className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-body font-medium transition-colors ${
-                    step > i + 1
-                      ? 'bg-sage text-cream'
-                      : step === i + 1
-                      ? 'bg-wine text-cream'
-                      : 'bg-taupe/30 text-[#2d2020]/40'
-                  }`}
-                >
-                  {step > i + 1 ? <Check size={12} strokeWidth={2.5} /> : i + 1}
+        {/* Steps indicator — click completed steps to go back */}
+        <nav aria-label="Checkout progress" className="flex flex-wrap items-center gap-3 mb-10">
+          {['Contact', 'Billing', 'Payment'].map((label, i) => {
+            const targetStep = i + 1;
+            const isComplete = step > targetStep;
+            const isCurrent = step === targetStep;
+            const canNavigateBack = targetStep < step;
+
+            const circleClass = `w-7 h-7 rounded-full flex items-center justify-center text-xs font-body font-medium transition-colors ${
+              isComplete
+                ? 'bg-sage text-cream'
+                : isCurrent
+                  ? 'bg-wine text-cream'
+                  : 'bg-taupe/30 text-[#2d2020]/40'
+            }`;
+
+            const labelClass = `font-body text-sm font-medium transition-colors ${
+              isCurrent ? 'text-wine' : isComplete ? 'text-[#2d2020]/70' : 'text-[#2d2020]/40'
+            }`;
+
+            const stepContent = (
+              <>
+                <div className={circleClass}>
+                  {isComplete ? <Check size={12} strokeWidth={2.5} /> : targetStep}
                 </div>
-                <span
-                  className={`font-body text-sm font-medium ${
-                    step === i + 1 ? 'text-wine' : 'text-[#2d2020]/40'
-                  }`}
-                >
-                  {label}
-                </span>
+                <span className={labelClass}>{label}</span>
+              </>
+            );
+
+            return (
+              <div key={label} className="flex items-center gap-3">
+                {canNavigateBack ? (
+                  <button
+                    type="button"
+                    onClick={() => goToStep(targetStep)}
+                    className="flex items-center gap-2 rounded-sm hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-[#f8f5ef]"
+                    aria-label={`Go back to ${label}`}
+                  >
+                    {stepContent}
+                  </button>
+                ) : (
+                  <div
+                    className="flex items-center gap-2"
+                    aria-current={isCurrent ? 'step' : undefined}
+                  >
+                    {stepContent}
+                  </div>
+                )}
+                {i < 2 && (
+                  <ChevronRight size={14} className="text-taupe" aria-hidden />
+                )}
               </div>
-              {i < 1 && <ChevronRight size={14} className="text-taupe" />}
-            </div>
-          ))}
-        </div>
+            );
+          })}
+        </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
           {/* Form */}
@@ -300,7 +385,7 @@ export default function CheckoutPage() {
                               </button>
                               <button
                                 type="button"
-                                onClick={proceedToPayment}
+                                onClick={proceedToBilling}
                                 className="font-body text-xs px-3 py-1.5 border border-taupe text-[#2d2020]/70 hover:border-wine hover:text-wine transition-colors"
                               >
                                 Keep as entered
@@ -361,7 +446,7 @@ export default function CheckoutPage() {
                         ℹ️ You can create an account after completing your purchase to manage your downloads.
                       </p>
                       <button type="submit" className="btn-primary w-full">
-                        Continue to Payment
+                        Continue to Billing
                         <ChevronRight size={16} strokeWidth={2} />
                       </button>
                     </div>
@@ -371,7 +456,183 @@ export default function CheckoutPage() {
 
               {step === 2 && (
                 <motion.div
-                  key="step2"
+                  key="step2-billing"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                >
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="font-display text-2xl font-light text-wine">
+                      Billing Address
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => goToStep(1)}
+                      className="font-body text-xs text-[#2d2020]/50 hover:text-wine transition-colors"
+                    >
+                      ← Edit Contact
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleBillingSubmit} className="space-y-4" noValidate>
+                    <p className="font-body text-sm text-[#2d2020]/55 -mt-2 mb-2">
+                      Required for card verification. We only ship digital downloads — nothing is mailed to this address.
+                    </p>
+
+                    <div>
+                      <label
+                        htmlFor="billing-street"
+                        className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5"
+                      >
+                        Street *
+                      </label>
+                      <input
+                        id="billing-street"
+                        type="text"
+                        autoComplete="billing street-address"
+                        placeholder="123 Main Street, Apt 4"
+                        value={billing.street}
+                        onChange={(e) => updateBilling('street', e.target.value)}
+                        className={
+                          billingErrors.street ? `${inputClass} input-field-error` : inputClass
+                        }
+                        aria-invalid={Boolean(billingErrors.street)}
+                      />
+                      {billingErrors.street && (
+                        <p className="font-body text-xs text-red-600/90 mt-1.5" role="alert">
+                          {billingErrors.street}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label
+                          htmlFor="billing-postal"
+                          className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5"
+                        >
+                          ZIP / Postal Code *
+                        </label>
+                        <input
+                          id="billing-postal"
+                          type="text"
+                          autoComplete="billing postal-code"
+                          placeholder={billing.country === 'BR' ? '00000-000' : '10001'}
+                          value={billing.postalCode}
+                          onChange={(e) => updateBilling('postalCode', e.target.value)}
+                          className={
+                            billingErrors.postalCode ? `${inputClass} input-field-error` : inputClass
+                          }
+                          aria-invalid={Boolean(billingErrors.postalCode)}
+                        />
+                        {billingErrors.postalCode && (
+                          <p className="font-body text-xs text-red-600/90 mt-1.5" role="alert">
+                            {billingErrors.postalCode}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="billing-city"
+                          className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5"
+                        >
+                          City *
+                        </label>
+                        <input
+                          id="billing-city"
+                          type="text"
+                          autoComplete="billing address-level2"
+                          placeholder="City"
+                          value={billing.city}
+                          onChange={(e) => updateBilling('city', e.target.value)}
+                          className={
+                            billingErrors.city ? `${inputClass} input-field-error` : inputClass
+                          }
+                          aria-invalid={Boolean(billingErrors.city)}
+                        />
+                        {billingErrors.city && (
+                          <p className="font-body text-xs text-red-600/90 mt-1.5" role="alert">
+                            {billingErrors.city}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label
+                          htmlFor="billing-state"
+                          className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5"
+                        >
+                          State / Province *
+                        </label>
+                        <input
+                          id="billing-state"
+                          type="text"
+                          autoComplete="billing address-level1"
+                          placeholder={billing.country === 'US' ? 'NY' : 'State or province'}
+                          value={billing.stateProvince}
+                          onChange={(e) => updateBilling('stateProvince', e.target.value)}
+                          className={
+                            billingErrors.stateProvince ? `${inputClass} input-field-error` : inputClass
+                          }
+                          aria-invalid={Boolean(billingErrors.stateProvince)}
+                        />
+                        {billingErrors.stateProvince && (
+                          <p className="font-body text-xs text-red-600/90 mt-1.5" role="alert">
+                            {billingErrors.stateProvince}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="billing-country"
+                          className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5"
+                        >
+                          Country *
+                        </label>
+                        <select
+                          id="billing-country"
+                          autoComplete="billing country"
+                          value={billing.country}
+                          onChange={(e) => updateBilling('country', e.target.value)}
+                          className={
+                            billingErrors.country ? `${inputClass} input-field-error` : inputClass
+                          }
+                          aria-invalid={Boolean(billingErrors.country)}
+                        >
+                          <option value="US">United States</option>
+                          <option value="CA">Canada</option>
+                          <option value="GB">United Kingdom</option>
+                          <option value="AU">Australia</option>
+                          <option value="BR">Brazil</option>
+                          <option value="MX">Mexico</option>
+                          <option value="DE">Germany</option>
+                          <option value="FR">France</option>
+                          <option value="IT">Italy</option>
+                          <option value="ES">Spain</option>
+                          <option value="PT">Portugal</option>
+                          <option value="OTHER">Other</option>
+                        </select>
+                        {billingErrors.country && (
+                          <p className="font-body text-xs text-red-600/90 mt-1.5" role="alert">
+                            {billingErrors.country}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <button type="submit" className="btn-primary w-full mt-2">
+                      Continue to Payment
+                      <ChevronRight size={16} strokeWidth={2} />
+                    </button>
+                  </form>
+                </motion.div>
+              )}
+
+              {step === 3 && (
+                <motion.div
+                  key="step3-payment"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
@@ -381,10 +642,11 @@ export default function CheckoutPage() {
                       Payment Details
                     </h2>
                     <button
-                      onClick={() => setStep(1)}
+                      type="button"
+                      onClick={() => goToStep(2)}
                       className="font-body text-xs text-[#2d2020]/50 hover:text-wine transition-colors"
                     >
-                      ← Edit Info
+                      ← Edit Billing
                     </button>
                   </div>
 
@@ -407,7 +669,7 @@ export default function CheckoutPage() {
                       </div>
                       <button
                         type="button"
-                        onClick={() => setStep(1)}
+                        onClick={() => goToStep(1)}
                         className="font-body text-xs text-gold hover:text-wine flex-shrink-0 transition-colors"
                       >
                         Change
@@ -574,7 +836,7 @@ export default function CheckoutPage() {
               <div className="mt-4 space-y-1.5">
                 <p className="font-body text-xs text-[#2d2020]/50 flex items-start gap-1.5">
                   <Check size={11} className="text-sage flex-shrink-0 mt-0.5" />
-                  {step === 2 && info.email ? (
+                  {step === 3 && info.email ? (
                     <>
                       Instant download + email sent to{' '}
                       <span className="text-wine font-medium break-all">{info.email}</span>
