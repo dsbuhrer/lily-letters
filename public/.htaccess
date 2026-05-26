@@ -1,0 +1,32 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Serve existing files and directories
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Pre-rendered blog posts (only if static HTML exists)
+  RewriteCond %{DOCUMENT_ROOT}/blog/$1/index.html -f
+  RewriteRule ^blog/([^/]+)/?$ blog/$1/index.html [L]
+
+  # Pre-rendered blog category
+  RewriteCond %{DOCUMENT_ROOT}/blog/category/$1/index.html -f
+  RewriteRule ^blog/category/([^/]+)/?$ blog/category/$1/index.html [L]
+
+  # Pre-rendered blog tag
+  RewriteCond %{DOCUMENT_ROOT}/blog/tag/$1/index.html -f
+  RewriteRule ^blog/tag/([^/]+)/?$ blog/tag/$1/index.html [L]
+
+  # Blog index (static list when built)
+  RewriteCond %{DOCUMENT_ROOT}/blog/index.html -f
+  RewriteRule ^blog/?$ blog/index.html [L]
+
+  # Pre-rendered product pages
+  RewriteCond %{DOCUMENT_ROOT}/products/$1/index.html -f
+  RewriteRule ^products/([^/]+)/?$ products/$1/index.html [L]
+
+  # SPA fallback (new posts before rebuild finishes still work via Supabase)
+  RewriteRule ^ index.html [L]
+</IfModule>

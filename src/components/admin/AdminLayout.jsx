@@ -1,6 +1,6 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, FileText, Package, Mail, MessageSquare, LogOut } from 'lucide-react';
-import api from '../../lib/api';
+import { useAdminAuth } from '../../context/AdminAuthContext';
 
 const links = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -12,9 +12,10 @@ const links = [
 
 export default function AdminLayout() {
   const navigate = useNavigate();
+  const { logout: adminLogout } = useAdminAuth();
 
   const logout = async () => {
-    await api.logout();
+    await adminLogout();
     navigate('/admin/login');
   };
 

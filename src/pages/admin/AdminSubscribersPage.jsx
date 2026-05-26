@@ -43,17 +43,29 @@ export default function AdminSubscribersPage() {
     <div className="p-8">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <h1 className="font-display text-3xl text-wine">Newsletter subscribers</h1>
-        <a
-          href="/api/subscribers/admin/export"
+        <button
+          type="button"
           className="btn-secondary inline-flex items-center gap-2"
-          onClick={(e) => {
-            e.preventDefault();
-            window.open('/api/subscribers/admin/export', '_blank');
+          onClick={() => {
+            const header = 'email,source,consent_at,created_at\n';
+            const rows = sortedSubscribers
+              .map(
+                (s) =>
+                  `${s.email},${s.source},${s.consent_at || ''},${s.created_at || ''}`,
+              )
+              .join('\n');
+            const blob = new Blob([header + rows], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'subscribers.csv';
+            a.click();
+            URL.revokeObjectURL(url);
           }}
         >
           <Download size={16} />
           Export CSV
-        </a>
+        </button>
       </div>
 
       <div className="flex flex-wrap items-center gap-4 mb-6">

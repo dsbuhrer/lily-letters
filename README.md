@@ -1,21 +1,21 @@
 # Lily Letters Co.
 
-Wedding stationery shop with editorial blog, custom CMS, and SEO/AEO-ready server rendering.
+Wedding stationery shop with editorial blog, Supabase CMS, and SEO-ready static pre-render for Apache/cPanel hosting.
 
 ## Features
 
-- Product catalog (API + static fallback)
-- Cart, wishlist, checkout flow
-- **Blog** with SSR (`/blog/*`) — meta tags, JSON-LD, FAQ schema
-- **CMS** at `/admin` — posts (Tiptap), products, newsletter subscribers
-- Newsletter signup (footer + blog) → PostgreSQL
-- Dynamic `sitemap.xml`, `rss.xml`, `robots.txt`, `llms.txt`
+- Product catalog (Supabase + static fallback)
+- Cart, wishlist, checkout via Edge Function
+- **Blog** with pre-rendered HTML (`/blog/*`) — meta tags, JSON-LD, FAQ schema
+- **CMS** at `/admin` — Supabase Auth + `staff_roles`, posts (Tiptap), products, subscribers
+- Newsletter signup → PostgreSQL
+- `sitemap.xml`, `rss.xml`, `robots.txt`, `llms.txt` generated at build time
 
 ## Requirements
 
 - Node.js 18+
-- [Supabase](https://supabase.com) project (PostgreSQL + Storage)
-- Optional: [Supabase CLI](https://supabase.com/docs/guides/cli) for migrations
+- [Supabase](https://supabase.com) project (PostgreSQL, Auth, Storage, Edge Functions)
+- [Supabase CLI](https://supabase.com/docs/guides/cli) recommended for migrations and function deploy
 
 ## Setup
 
@@ -31,50 +31,82 @@ npm install
 cp .env.example .env
 ```
 
-Fill in `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `SITE_URL`.
+Fill in `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `SITE_URL`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD`.
 
-Enable **Email** auth in Supabase Dashboard → Authentication → Providers. Add `http://localhost:5173/**` to redirect URLs for password reset.
+Enable **Email** auth in Supabase Dashboard → Authentication → Providers. Add redirect URLs (e.g. `http://localhost:5173/**` and your production domain).
 
-3. Apply database migrations (Supabase Dashboard SQL or CLI):
+3. Apply database migrations:
 
 ```bash
 supabase db push
 # or run SQL files in supabase/migrations/ manually
 ```
 
-4. Seed admin user, categories, products, and blog posts:
+4. Seed categories, products, blog posts, and admin user:
 
 ```bash
 npm run seed
 ```
 
-5. Development (Vite + API on port 3001):
+This creates a Supabase Auth user (`ADMIN_EMAIL` / `ADMIN_PASSWORD`) and a row in `staff_roles` with role `admin`.
+
+5. Deploy Edge Functions (checkout, SEO, Payoneer stub, auto-deploy):
 
 ```bash
-npm run dev:full
+supabase functions deploy create-order
+supabase functions deploy generate-post-seo
+supabase functions deploy payoneer-webhook
+supabase functions deploy trigger-rebuild
+```
+
+Set secrets in Supabase Dashboard → Edge Functions → Secrets: `GEMINI_API_KEY` (optional), `MOCK_CHECKOUT` (`false` when Payoneer is live).
+
+**Auto-deploy on blog publish/edit:** configure GitHub Actions + Database Webhook — see [`docs/AUTO_DEPLOY.md`](docs/AUTO_DEPLOY.md).
+
+6. Development (Vite only):
+
+```bash
+npm run dev
 ```
 
 - Store & CMS: http://localhost:5173
-- API / blog SSR (production-like): http://localhost:3001
 
-## Production
+## Production build & cPanel deploy
 
 ```bash
 npm run build
-npm run start
 ```
 
-Serves `dist/` and handles API + blog SSR on `PORT` (default 3001).
+This runs `vite build` then `scripts/prerender.mjs`, which needs `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SITE_URL` in `.env` (build machine only — never commit service role to the client).
+
+Upload the entire **`dist/`** folder to `public_html` on cPanel, or use **automatic FTP deploy** when a post is published or edited (see [`docs/AUTO_DEPLOY.md`](docs/AUTO_DEPLOY.md)).
+
+The included `.htaccess` serves pre-rendered blog/product pages when those files exist and falls back to SPA routing otherwise.
+
+### Build-time vs runtime env
+
+| Variable | Where |
+|----------|--------|
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | Embedded in JS at **build** — required for login and data |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Build only** (prerender + seed), never in browser |
+| Edge Function secrets | Supabase Dashboard |
 
 ## CMS
 
 | URL | Purpose |
 |-----|---------|
-| `/admin/login` | Admin login |
+| `/admin/login` | Admin login (Supabase Auth) |
 | `/admin` | Dashboard |
 | `/admin/posts` | Blog posts |
 | `/admin/products` | Shop products |
-| `/admin/subscribers` | Newsletter emails + CSV export |
+| `/admin/subscribers` | Newsletter emails + CSV export (browser) |
+
+Admin access requires a user in `staff_roles` with `role = 'admin'`. Create manually in SQL if needed:
+
+```sql
+INSERT INTO staff_roles (user_id, role)
+VALUES ('<auth.users uuid>', 'admin');
+```
 
 ## Customer account
 
@@ -91,16 +123,15 @@ Orders are stored in Supabase (`orders`, `order_items`, `profiles`). Payoneer we
 ## Stack
 
 - **Frontend:** React 18, Vite 5, React Router, Tailwind, Zustand, Tiptap (admin)
-- **Server:** Express, JWT auth, Sharp → WebP uploads
-- **Data:** Supabase PostgreSQL + Storage (`blog-images`, `product-images`)
+- **Backend:** Supabase (Postgres + RLS, Auth, Storage, Edge Functions)
+- **SEO:** Build-time pre-render (`scripts/prerender.mjs`)
 
 ## Scripts
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Vite only |
-| `npm run dev:server` | Express API only |
-| `npm run dev:full` | Vite + Express |
-| `npm run build` | Production frontend build |
-| `npm run start` | Production server |
-| `npm run seed` | Seed database |
+| `npm run dev` | Vite dev server |
+| `npm run build` | Vite build + SEO pre-render |
+| `npm run build:seo` | Re-run pre-render only (needs existing `dist/`) |
+| `npm run seed` | Seed database + admin auth |
+| `npm run preview` | Preview production build locally |

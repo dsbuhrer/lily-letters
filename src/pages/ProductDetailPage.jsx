@@ -9,6 +9,7 @@ import { useProduct, useProducts } from '../hooks/useProducts';
 import useCartStore from '../store/cartStore';
 import ProductCard from '../components/ProductCard';
 import WishlistButton from '../components/WishlistButton';
+import SeoHead from '../components/seo/SeoHead';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -44,6 +45,23 @@ export default function ProductDetailPage() {
     .filter((p) => p.id !== product.id && p.category === product.category)
     .slice(0, 4);
 
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const productUrl = `${origin}/products/${product.slug || product.id}`;
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description || product.subtitle,
+    image: product.images?.[0],
+    offers: {
+      '@type': 'Offer',
+      price: product.price,
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock',
+      url: productUrl,
+    },
+  };
+
   const handleAddToCart = () => {
     addItem(product);
     setAdded(true);
@@ -59,6 +77,19 @@ export default function ProductDetailPage() {
     setSelectedImg((i) => (i === product.images.length - 1 ? 0 : i + 1));
 
   return (
+    <>
+      <SeoHead
+        title={`${product.name} | The Lily Letters Co.`}
+        description={
+          product.description?.slice(0, 155) ||
+          product.subtitle ||
+          `Editable wedding template — ${product.name}. Instant Canva download.`
+        }
+        canonical={productUrl}
+        ogImage={product.images?.[0]}
+        type="product"
+        jsonLd={productJsonLd}
+      />
     <main className="min-h-screen bg-cream pt-20">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
@@ -294,5 +325,6 @@ export default function ProductDetailPage() {
         )}
       </div>
     </main>
+    </>
   );
 }

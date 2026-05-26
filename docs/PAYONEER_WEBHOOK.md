@@ -4,20 +4,22 @@ This document defines the contract between Payoneer payment events and the Lily 
 
 ## Overview
 
-Today, mock checkout persists orders via `POST /api/orders` with `payment_provider: 'mock'` and `status: 'paid'`. Payoneer will replace this flow:
+Today, mock checkout calls the Supabase Edge Function `create-order` with `payment_provider: 'mock'` and `status: 'paid'` when `MOCK_CHECKOUT` is not `false`. Payoneer will replace this flow:
 
-1. Checkout creates an order with `status: 'pending'`
+1. Checkout invokes `create-order` with `status: 'pending'`
 2. User completes payment on Payoneer
-3. Payoneer sends webhook to Express
+3. Payoneer sends webhook to the Edge Function
 4. Webhook updates order to `status: 'paid'` and sets download expiry
 
-## Endpoint (to implement)
+## Endpoint
 
 ```
-POST /api/webhooks/payoneer
+POST https://<project-ref>.supabase.co/functions/v1/payoneer-webhook
 ```
 
-- Verify Payoneer signature (HMAC or documented auth header)
+Implemented as a stub in [`supabase/functions/payoneer-webhook/`](../supabase/functions/payoneer-webhook/).
+
+- Verify Payoneer signature (HMAC or documented auth header) using `PAYONEER_WEBHOOK_SECRET`
 - Idempotent: use `payoneer_payment_id` as unique key
 - Return `200` quickly; heavy work async if needed
 
@@ -34,10 +36,10 @@ POST /api/webhooks/payoneer
 | `orders.user_id` | Link if `auth.users` exists for `orders.email` |
 | `order_items.canva_link` | Snapshot from `products.canva_link` at purchase time |
 
-## Idempotent upsert pattern
+## Idempotent update pattern
 
-```javascript
-// Pseudocode — server/routes/webhooks/payoneer.js
+```typescript
+// supabase/functions/payoneer-webhook/index.ts
 const paymentId = payload.transaction_id;
 
 const { data: existing } = await supabase
@@ -47,7 +49,7 @@ const { data: existing } = await supabase
   .maybeSingle();
 
 if (existing?.status === 'paid') {
-  return res.status(200).json({ ok: true, duplicate: true });
+  return new Response(JSON.stringify({ ok: true, duplicate: true }), { status: 200 });
 }
 
 if (payload.event === 'payment.confirmed') {
@@ -71,28 +73,31 @@ SET user_id = (SELECT id FROM auth.users WHERE lower(email) = lower(orders.email
 WHERE payoneer_payment_id = $1 AND user_id IS NULL;
 ```
 
-Or call the existing `claim_orders_by_email()` logic server-side when user later signs up.
+Or rely on `claim_orders_by_email()` when the user later signs up.
 
 ## Checkout flow changes
 
-Replace mock `POST /api/orders` paid insert with:
+Replace mock `create-order` paid insert with:
 
 1. Create order `status: 'pending'`, store Payoneer session/reference
 2. Redirect user to Payoneer hosted checkout
 3. On return URL, show "processing" state until webhook confirms
 
-## Environment variables (future)
+Set `MOCK_CHECKOUT=false` in Edge Function secrets when going live.
+
+## Environment variables (Supabase secrets)
 
 ```env
 PAYONEER_API_KEY=
 PAYONEER_WEBHOOK_SECRET=
 PAYONEER_MERCHANT_ID=
+MOCK_CHECKOUT=false
 ```
 
 ## Security
 
 - Never expose Payoneer secrets to the browser
-- Webhook route uses `service_role` Supabase client only
+- Webhook uses service role Supabase client only inside the Edge Function
 - Validate webhook signature before any DB write
 - Log failed verifications without leaking payload secrets
 
@@ -108,5 +113,5 @@ PAYONEER_MERCHANT_ID=
 ## Related files
 
 - Schema: [`supabase/migrations/20260526000001_customer_accounts.sql`](../supabase/migrations/20260526000001_customer_accounts.sql)
-- Mock orders API: [`server/routes/orders.js`](../server/routes/orders.js)
+- Checkout: [`supabase/functions/create-order/`](../supabase/functions/create-order/) + [`src/lib/supabase/orders.js`](../src/lib/supabase/orders.js)
 - Customer panel: [`src/pages/account/`](../src/pages/account/)

@@ -1,0 +1,11 @@
+[functions.create-order]
+verify_jwt = false
+
+[functions.generate-post-seo]
+verify_jwt = true
+
+[functions.payoneer-webhook]
+verify_jwt = false
+
+[functions.trigger-rebuild]
+verify_jwt = false

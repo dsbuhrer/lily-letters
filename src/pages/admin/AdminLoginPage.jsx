@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../lib/api';
+import { useAdminAuth } from '../../context/AdminAuthContext';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -8,13 +8,14 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login, configured } = useAdminAuth();
 
   const submit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
-      await api.login(email, password);
+      await login(email, password);
       navigate('/admin');
     } catch (err) {
       setError(err.message || 'Login failed');
@@ -22,6 +23,16 @@ export default function AdminLoginPage() {
       setLoading(false);
     }
   };
+
+  if (!configured) {
+    return (
+      <div className="min-h-screen bg-cream flex items-center justify-center px-6">
+        <p className="text-sm text-[#2d2020]/70 text-center max-w-md">
+          Configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env before using the CMS.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-cream flex items-center justify-center px-6">
