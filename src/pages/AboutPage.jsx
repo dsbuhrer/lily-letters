@@ -69,7 +69,7 @@ export default function AboutPage() {
           <motion.div {...fadeUp} className="relative">
             <div className="aspect-[3/4] overflow-hidden">
               <img
-                src="https://images.unsplash.com/photo-1550005809-91ad75fb315f?w=700&q=80"
+                src="/images/about/story-flatlay.jpg"
                 alt="Wedding stationery flat lay"
                 className="w-full h-full object-cover"
               />

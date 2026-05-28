@@ -78,7 +78,7 @@ function postTemplate({ title, slug, categorySlug, excerpt, directAnswer, sectio
     author_bio: 'Curating elegant, editable wedding stationery for modern couples.',
     reading_time_minutes: readingTime(fullContent),
     published_at: new Date().toISOString(),
-    hero_image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80',
+    hero_image: '/images/blog/hero-default.jpg',
     hero_alt: title,
   };
 }

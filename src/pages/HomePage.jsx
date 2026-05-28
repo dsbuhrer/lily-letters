@@ -48,21 +48,21 @@ const testimonials = [
     location: 'Brooklyn, NY',
     text: 'These templates are absolutely gorgeous! I customized our garden suite in under an hour. Everyone at our wedding kept asking where we got our invitations.',
     rating: 5,
-    image: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=100&h=100&fit=crop',
+    image: '/images/home/testimonial-1.jpg',
   },
   {
     name: 'Emily & Marcus',
     location: 'Austin, TX',
     text: 'The Celestial Suite was perfect for our night wedding. The download was instant and the Canva templates were so easy to edit. Worth every penny!',
     rating: 5,
-    image: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=100&h=100&fit=crop',
+    image: '/images/home/testimonial-2.jpg',
   },
   {
     name: 'Olivia & Chen',
     location: 'Seattle, WA',
     text: 'I was nervous about DIY stationery but The Lily Letters Co made it completely stress-free. The templates are beautiful and so professional looking.',
     rating: 5,
-    image: 'https://images.unsplash.com/photo-1511285605577-4d62fb50d2f7?w=100&h=100&fit=crop',
+    image: '/images/home/testimonial-3.jpg',
   },
 ];
 
@@ -90,7 +90,7 @@ export default function HomePage() {
             className="absolute inset-0 bg-cover bg-center"
             style={{
               backgroundImage:
-                'url(https://images.unsplash.com/photo-1606800052052-a08af7148866?w=1600&q=85)',
+                'url(/images/banner.jpg)',
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-wine/70 via-wine/50 to-cream/95" />
@@ -283,7 +283,7 @@ export default function HomePage() {
           className="absolute inset-0 bg-cover bg-center"
           style={{
             backgroundImage:
-              'url(https://images.unsplash.com/photo-1523438885200-e635ba2c371e?w=1600&q=80)',
+              'url(/images/home/brand-story.jpg)',
           }}
         />
         <div className="absolute inset-0 bg-[#4c2233]/70" />
