@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Heart, Leaf, Download, Sparkles, ArrowRight, Star } from 'lucide-react';
+import { Heart, Leaf, Download, Sparkles, ArrowRight } from 'lucide-react';
 
 const values = [
   {
@@ -15,7 +15,7 @@ const values = [
   },
   {
     icon: Download,
-    title: 'Made for DIY Creators',
+    title: 'Designed to Customize',
     body: 'Templates live on Canva so you can access, personalize, and print from anywhere — no design skills required.',
   },
   {
@@ -31,6 +31,26 @@ const fadeUp = {
   viewport: { once: true },
   transition: { duration: 0.6 },
 };
+
+function StoryBlock({ imageSrc, imageAlt, imageAspect, children }) {
+  return (
+    <motion.div
+      {...fadeUp}
+      className="flex flex-col md:flex-row md:items-stretch gap-10 md:gap-14"
+    >
+      <div
+        className={`w-full md:w-[16.8rem] flex-shrink-0 overflow-hidden ${imageAspect} md:aspect-auto`}
+      >
+        <img
+          src={imageSrc}
+          alt={imageAlt}
+          className="w-full h-full object-cover"
+        />
+      </div>
+      <div className="flex-1 min-w-0">{children}</div>
+    </motion.div>
+  );
+}
 
 export default function AboutPage() {
   return (
@@ -56,50 +76,96 @@ export default function AboutPage() {
             transition={{ delay: 0.2 }}
             className="font-body text-base text-[#2d2020]/60 leading-relaxed max-w-xl mx-auto"
           >
-            The Lily Letters Co is a creative studio dedicated to making your most 
-            meaningful celebrations look as beautiful as they feel — through 
+            The Lily Letters Co is a creative studio dedicated to making your most
+            meaningful celebrations look as beautiful as they feel — through
             thoughtfully illustrated, fully editable digital templates.
           </motion.p>
         </div>
       </section>
 
-      {/* Story */}
+      {/* Meet Our Story */}
       <section className="py-20">
-        <div className="max-w-5xl mx-auto px-6 grid md:grid-cols-2 gap-14 items-center">
-          <motion.div {...fadeUp} className="relative">
-            <div className="aspect-[3/4] overflow-hidden">
-              <img
-                src="/images/about/story-flatlay.jpg"
-                alt="Wedding stationery flat lay"
-                className="w-full h-full object-cover"
-              />
-            </div>
+        <div className="max-w-5xl mx-auto px-6">
+          <motion.div {...fadeUp} className="text-center mb-14">
+            <p className="section-subtitle mb-3">Meet Our Story</p>
+            <h2 className="section-heading">The Heart Behind the Brand</h2>
           </motion.div>
 
-          <motion.div {...fadeUp} transition={{ delay: 0.2 }}>
-            <p className="section-subtitle mb-4">Hi there!</p>
-            <h2 className="font-display text-3xl font-light text-wine mb-6 leading-snug">
-              I'm Gau, the Designer Behind the Letters
-            </h2>
-            <div className="space-y-4 font-body text-sm text-[#2d2020]/65 leading-relaxed">
-              <p>
-                I'm a graphic designer and illustrator with a deep love for watercolor painting 
-                and vintage line art. My work draws inspiration from timeless elegance, nature, 
-                fairy tales, vintage architecture, and the aesthetics that make each era beautiful 
-                in its own way.
+          <div className="space-y-16 md:space-y-20">
+            <StoryBlock
+              imageSrc="/images/about/gau.jpg"
+              imageAlt="Gau, founder of The Lily Letters Co"
+              imageAspect="aspect-square"
+            >
+              <h3 className="font-display text-3xl font-light text-wine mb-1">Gau</h3>
+              <p className="font-body text-sm text-gold uppercase tracking-wider mb-5">
+                Founder, Designer & Illustrator
               </p>
-              <p>
-                The Lily Letters Co is where I share that creativity with you. Here you'll find 
-                editable digital design files for weddings, baby showers, birthdays, and all the 
-                moments worth celebrating — hosted on Canva, so you can personalize everything 
-                with ease, no design background needed.
+              <div className="space-y-4 font-body text-sm text-[#2d2020]/60 leading-relaxed mb-8">
+                <p>
+                  I've always believed that the details are what make a celebration truly
+                  memorable — and beautiful stationery is one of the first things your guests
+                  see and touch. That belief is what led me to start The Lily Letters Co.
+                </p>
+                <p>
+                  Drawing from my background in graphic design and illustration, I create each
+                  collection with intention: watercolor textures that feel hand-painted,
+                  vintage line art that tells a story, and elegant compositions inspired by
+                  nature, architecture, and the aesthetics I find endlessly beautiful.
+                </p>
+                <p>
+                  If you ever have a question or need help with anything, don't hesitate to
+                  reach out — I'm always happy to help. It's truly an honor to have my work
+                  be part of your unforgettable moments.
+                </p>
+              </div>
+            </StoryBlock>
+
+            <StoryBlock
+              imageSrc="/images/about/studio.jpg"
+              imageAlt="The Lily Letters Co wedding stationery styled with flowers and fabric"
+              imageAspect="aspect-[3/4]"
+            >
+              <h3 className="font-display text-3xl font-light text-wine mb-1">The Studio</h3>
+              <p className="font-body text-sm text-gold uppercase tracking-wider mb-5">
+                Inspired by Beautiful Details
               </p>
-              <p>
-                If you're in your DIY era, you're in the right place. I truly love knowing 
-                that my work gets to be a small part of your most unforgettable moments.
-              </p>
-            </div>
-          </motion.div>
+              <div className="space-y-4 font-body text-sm text-[#2d2020]/60 leading-relaxed">
+                <p>
+                  The studio started from my love for detailed line-art illustrations, soft
+                  colors, vintage inspiration, and designs that make special moments feel even
+                  more meaningful.
+                </p>
+                <p>
+                  The name The Lily Letters Co was inspired by handwritten love letters:
+                  romantic, personal, and timeless, just like the moments this studio was
+                  created to celebrate.
+                </p>
+                <p>
+                  For me, lilies have always been connected to celebrations and the classic
+                  beauty behind them. They became the perfect symbol for the studio and the
+                  aesthetic that inspires each collection. &ldquo;Letters&rdquo; represents
+                  heartfelt words, elegant stationery, and thoughtful details designed to tell
+                  a story.
+                </p>
+                <p>
+                  Together, the name reflects the idea of creating beautiful pieces that feel
+                  personal, romantic, and made to be remembered.
+                </p>
+                <p>
+                  Every template and illustration is created by me, inspired by watercolor
+                  textures, timeless typography, nature, old-world charm, and modern wedding
+                  trends. I love mixing traditional designs with contemporary elements that
+                  still feel warm, personal, and easy to use.
+                </p>
+                <p>
+                  The Lily Letters Co is for brides, creatives, and anyone who enjoys turning
+                  special moments into something beautiful. New collections are always being
+                  added.
+                </p>
+              </div>
+            </StoryBlock>
+          </div>
         </div>
       </section>
 
@@ -128,56 +194,6 @@ export default function AboutPage() {
               </motion.div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Meet the Maker */}
-      <section className="py-20">
-        <div className="max-w-4xl mx-auto px-6">
-          <motion.div {...fadeUp} className="text-center mb-14">
-            <p className="section-subtitle mb-3">Meet the Maker</p>
-            <h2 className="section-heading">The Heart Behind the Brand</h2>
-          </motion.div>
-          <motion.div {...fadeUp} className="flex flex-col md:flex-row gap-10 items-center">
-            <div className="w-48 h-48 md:w-64 md:h-64 flex-shrink-0 overflow-hidden rounded-full">
-              <img
-                src="/gau.jpg"
-                alt="Gau, founder of The Lily Letters Co"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div>
-              <h3 className="font-display text-3xl font-light text-wine mb-1">Gau</h3>
-              <p className="font-body text-sm text-gold uppercase tracking-wider mb-5">
-                Founder, Designer & Illustrator
-              </p>
-              <div className="space-y-3 font-body text-sm text-[#2d2020]/60 leading-relaxed mb-8">
-                <p>
-                  I've always believed that the details are what make a celebration truly 
-                  memorable — and beautiful stationery is one of the first things your guests 
-                  see and touch. That belief is what led me to start The Lily Letters Co.
-                </p>
-                <p>
-                  Drawing from my background in graphic design and illustration, I create each 
-                  collection with intention: watercolor textures that feel hand-painted, 
-                  vintage line art that tells a story, and elegant compositions inspired by 
-                  nature, architecture, and the aesthetics I find endlessly beautiful.
-                </p>
-                <p>
-                  If you ever have a question or need a hand with anything, don't hesitate to 
-                  reach out — I'm always happy to help. It's truly an honor to have my work 
-                  be part of your unforgettable moments.
-                </p>
-              </div>
-              {/* Signature */}
-              <div className="border-t border-taupe/30 pt-6">
-                <p className="font-script text-3xl text-wine leading-none mb-1">Gau</p>
-                <p className="font-body text-xs text-[#2d2020]/40 tracking-wider uppercase">
-                  The Lily Letters Co.
-                </p>
-              </div>
-            </div>
-          </motion.div>
         </div>
       </section>
 
