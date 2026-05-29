@@ -20,25 +20,28 @@ export default function ShareButtons({ title, url, image }) {
   };
 
   return (
-    <div className="flex items-center gap-4">
-      <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Share</span>
+    <div className="flex items-center gap-3">
+      <span className="text-xs uppercase tracking-widest text-[#2d2020]/45 font-body">Share</span>
       <a
         href={pinterestUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="p-2 border border-taupe text-wine hover:bg-wine hover:text-cream transition-colors"
+        className="flex h-10 w-10 items-center justify-center bg-white text-wine shadow-sm ring-1 ring-wine/10 hover:bg-wine hover:text-cream hover:ring-wine transition-all duration-300"
         aria-label="Pin on Pinterest"
       >
-        <PinterestIcon size={18} />
+        <PinterestIcon size={16} />
       </a>
       <button
         type="button"
         onClick={copy}
-        className="p-2 border border-taupe text-wine hover:bg-wine hover:text-cream transition-colors"
+        className="flex h-10 w-10 items-center justify-center bg-white text-wine shadow-sm ring-1 ring-wine/10 hover:bg-wine hover:text-cream hover:ring-wine transition-all duration-300"
         aria-label="Copy link"
       >
-        {copied ? <Check size={18} /> : <Link2 size={18} />}
+        {copied ? <Check size={16} /> : <Link2 size={16} strokeWidth={1.5} />}
       </button>
+      {copied && (
+        <span className="text-xs font-body text-sage animate-fade-in">Link copied!</span>
+      )}
     </div>
   );
 }
