@@ -1,8 +1,19 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { getSupabaseClient, isSupabaseConfigured } from '../lib/supabaseClient';
-import { checkIsAdmin } from '../lib/supabase/admin';
+import { checkIsAdmin } from '../lib/supabase/adminAuth';
 
 const AdminAuthContext = createContext(null);
+
+const ADMIN_REFRESH_TIMEOUT_MS = 10_000;
+
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Admin auth timeout')), ms);
+    }),
+  ]);
+}
 
 export function AdminAuthProvider({ children }) {
   const supabase = getSupabaseClient();
@@ -15,17 +26,20 @@ export function AdminAuthProvider({ children }) {
       setIsAdmin(false);
       return false;
     }
-    const { data: { session: current } } = await supabase.auth.getSession();
-    setSession(current);
-    if (!current) {
-      setIsAdmin(false);
-      return false;
-    }
     try {
-      const ok = await checkIsAdmin();
+      const {
+        data: { session: current },
+      } = await withTimeout(supabase.auth.getSession(), ADMIN_REFRESH_TIMEOUT_MS);
+      setSession(current);
+      if (!current) {
+        setIsAdmin(false);
+        return false;
+      }
+      const ok = await withTimeout(checkIsAdmin(), ADMIN_REFRESH_TIMEOUT_MS);
       setIsAdmin(ok);
       return ok;
-    } catch {
+    } catch (err) {
+      console.warn('refreshAdmin:', err);
       setIsAdmin(false);
       return false;
     }
@@ -36,8 +50,12 @@ export function AdminAuthProvider({ children }) {
       setLoading(false);
       return undefined;
     }
-    refreshAdmin().finally(() => setLoading(false));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+    refreshAdmin()
+      .catch((err) => console.warn('refreshAdmin:', err))
+      .finally(() => setLoading(false));
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
       refreshAdmin();
     });
     return () => subscription.unsubscribe();

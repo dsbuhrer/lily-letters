@@ -33,13 +33,6 @@ function preparePostRow(body, existingSlug) {
   };
 }
 
-export async function checkIsAdmin() {
-  const supabase = requireSupabase();
-  const { data, error } = await supabase.rpc('is_admin');
-  if (error) throw new Error(error.message);
-  return !!data;
-}
-
 export async function getStats() {
   const supabase = requireSupabase();
   const [drafts, published, subs, contacts, contactsUnread] = await Promise.all([

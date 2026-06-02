@@ -18,13 +18,6 @@ import WishlistPage from './pages/WishlistPage';
 import AdminLayout from './components/admin/AdminLayout';
 import AdminGuard from './components/admin/AdminGuard';
 import AdminLoginPage from './pages/admin/AdminLoginPage';
-import AdminDashboardPage from './pages/admin/AdminDashboardPage';
-import AdminPostsPage from './pages/admin/AdminPostsPage';
-import AdminPostEditorPage from './pages/admin/AdminPostEditorPage';
-import AdminProductsPage from './pages/admin/AdminProductsPage';
-import AdminProductEditorPage from './pages/admin/AdminProductEditorPage';
-import AdminContactsPage from './pages/admin/AdminContactsPage';
-import AdminSubscribersPage from './pages/admin/AdminSubscribersPage';
 import AccountLayout from './components/account/AccountLayout';
 import AccountGuard from './components/account/AccountGuard';
 import AccountLoginPage from './pages/account/AccountLoginPage';
@@ -40,6 +33,14 @@ const BlogPostPage = lazy(() => import('./pages/blog/BlogPostPage'));
 const BlogCategoryPage = lazy(() => import('./pages/blog/BlogCategoryPage'));
 const BlogSearchPage = lazy(() => import('./pages/blog/BlogSearchPage'));
 const BlogTagPage = lazy(() => import('./pages/blog/BlogTagPage'));
+
+const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'));
+const AdminPostsPage = lazy(() => import('./pages/admin/AdminPostsPage'));
+const AdminPostEditorPage = lazy(() => import('./pages/admin/AdminPostEditorPage'));
+const AdminProductsPage = lazy(() => import('./pages/admin/AdminProductsPage'));
+const AdminProductEditorPage = lazy(() => import('./pages/admin/AdminProductEditorPage'));
+const AdminContactsPage = lazy(() => import('./pages/admin/AdminContactsPage'));
+const AdminSubscribersPage = lazy(() => import('./pages/admin/AdminSubscribersPage'));
 
 const HIDE_LAYOUT = ['/checkout', '/order-confirmation', '/admin'];
 
@@ -138,14 +139,63 @@ export default function App() {
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route element={<AdminGuard />}>
             <Route element={<AdminLayout />}>
-              <Route path="/admin" element={<AdminDashboardPage />} />
-              <Route path="/admin/posts" element={<AdminPostsPage />} />
-              <Route path="/admin/posts/:id" element={<AdminPostEditorPage />} />
-              <Route path="/admin/products" element={<AdminProductsPage />} />
-              <Route path="/admin/products/:id" element={<AdminProductEditorPage />} />
-              <Route path="/admin/contacts" element={<AdminContactsPage />} />
+              <Route
+                path="/admin"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <AdminDashboardPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/admin/posts"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <AdminPostsPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/admin/posts/:id"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <AdminPostEditorPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/admin/products"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <AdminProductsPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/admin/products/:id"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <AdminProductEditorPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/admin/contacts"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <AdminContactsPage />
+                  </Suspense>
+                }
+              />
               <Route path="/admin/leads" element={<Navigate to="/admin/contacts" replace />} />
-              <Route path="/admin/subscribers" element={<AdminSubscribersPage />} />
+              <Route
+                path="/admin/subscribers"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <AdminSubscribersPage />
+                  </Suspense>
+                }
+              />
             </Route>
           </Route>
 
