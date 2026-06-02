@@ -35,13 +35,20 @@ export default function Header() {
     setMobileOpen(false);
   }, [location.pathname]);
 
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileOpen]);
+
   const handleOpenCart = () => {
     setMobileOpen(false);
     openCart();
   };
 
   const headerBg = scrolled
-    ? 'bg-cream/95 backdrop-blur-md shadow-sm'
+    ? 'bg-cream/95 backdrop-blur-md shadow-soft border-b border-taupe/25'
     : 'bg-cream border-b border-taupe/30';
 
   return (
@@ -54,8 +61,7 @@ export default function Header() {
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-3 group">
+            <Link to="/" className="flex items-center gap-3 group shrink-0">
               <motion.img
                 src="/logos/logo-horizontal.svg"
                 alt="The Lily Letters Co"
@@ -65,18 +71,13 @@ export default function Header() {
               />
             </Link>
 
-            {/* Desktop Nav */}
-            <nav className="hidden md:flex items-center gap-8">
+            <nav className="hidden md:flex items-center gap-8" aria-label="Main">
               {navLinks.map((link) => (
                 <NavLink
                   key={link.to}
                   to={link.to}
                   className={({ isActive }) =>
-                    `font-body text-sm tracking-widest uppercase transition-colors duration-200 pb-0.5 ${
-                      isActive
-                        ? 'text-wine border-b border-wine'
-                        : 'text-[#2d2020] hover:text-wine'
-                    }`
+                    `nav-link ${isActive ? 'nav-link-active' : ''}`
                   }
                 >
                   {link.label}
@@ -84,14 +85,13 @@ export default function Header() {
               ))}
             </nav>
 
-            {/* Actions */}
-            <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-1 sm:gap-2">
               <NavLink
                 to={user ? '/account' : '/account/login'}
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) =>
-                  `hidden sm:flex items-center gap-1.5 font-body text-xs tracking-widest uppercase transition-colors ${
-                    isActive ? 'text-wine' : 'text-[#2d2020] hover:text-wine'
+                  `hidden sm:inline-flex items-center gap-1.5 px-2 py-1.5 font-body text-xs tracking-widest uppercase transition-colors focus-visible:outline-offset-2 ${
+                    isActive ? 'text-wine' : 'text-ink hover:text-wine'
                   }`
                 }
                 aria-label={user ? 'My account' : 'Sign in'}
@@ -103,9 +103,7 @@ export default function Header() {
                 to="/wishlist"
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) =>
-                  `relative p-2 transition-colors ${
-                    isActive ? 'text-wine' : 'text-[#2d2020] hover:text-wine'
-                  }`
+                  `icon-btn relative ${isActive ? 'text-wine' : ''}`
                 }
                 aria-label="View wishlist"
               >
@@ -115,7 +113,7 @@ export default function Header() {
                     key={wishlistCount}
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute -top-1 -right-1 bg-gold text-cream text-xs w-5 h-5 rounded-full flex items-center justify-center font-body font-medium"
+                    className="absolute -top-0.5 -right-0.5 bg-gold text-cream text-[10px] min-w-[1.25rem] h-5 px-1 rounded-full flex items-center justify-center font-body font-medium shadow-soft"
                   >
                     {wishlistCount}
                   </motion.span>
@@ -124,7 +122,7 @@ export default function Header() {
               <button
                 type="button"
                 onClick={handleOpenCart}
-                className="relative p-2 text-[#2d2020] hover:text-wine transition-colors"
+                className="icon-btn relative"
                 aria-label="Open cart"
                 aria-expanded={cartOpen}
               >
@@ -134,18 +132,19 @@ export default function Header() {
                     key={totalItems}
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute -top-1 -right-1 bg-wine text-cream text-xs w-5 h-5 rounded-full flex items-center justify-center font-body font-medium"
+                    className="absolute -top-0.5 -right-0.5 bg-wine text-cream text-[10px] min-w-[1.25rem] h-5 px-1 rounded-full flex items-center justify-center font-body font-medium shadow-soft"
                   >
                     {totalItems}
                   </motion.span>
                 )}
               </button>
 
-              {/* Mobile menu toggle */}
               <button
-                className="md:hidden p-2 text-[#2d2020] hover:text-wine transition-colors"
+                type="button"
+                className="icon-btn md:hidden"
                 onClick={() => setMobileOpen(!mobileOpen)}
-                aria-label="Toggle menu"
+                aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+                aria-expanded={mobileOpen}
               >
                 {mobileOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
               </button>
@@ -154,29 +153,31 @@ export default function Header() {
         </div>
       </motion.header>
 
-      {/* Mobile Nav */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 bg-cream pt-20"
+            className="fixed inset-0 z-40 bg-cream/98 backdrop-blur-md pt-20"
           >
-            <div className="flex flex-col items-center justify-center h-full gap-8">
+            <nav
+              className="flex flex-col items-center justify-center min-h-[calc(100vh-5rem)] gap-8 px-6"
+              aria-label="Mobile"
+            >
               {navLinks.map((link, i) => (
                 <motion.div
                   key={link.to}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.08 }}
+                  transition={{ delay: i * 0.06 }}
                 >
                   <NavLink
                     to={link.to}
                     className={({ isActive }) =>
-                      `font-display text-3xl font-light transition-colors ${
-                        isActive ? 'text-wine' : 'text-[#2d2020] hover:text-wine'
+                      `font-display text-3xl font-light transition-colors focus-visible:outline-offset-4 ${
+                        isActive ? 'text-wine' : 'text-ink hover:text-wine'
                       }`
                     }
                   >
@@ -185,18 +186,18 @@ export default function Header() {
                 </motion.div>
               ))}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: navLinks.length * 0.08 }}
+                transition={{ delay: navLinks.length * 0.06 }}
               >
                 <NavLink
                   to={user ? '/account' : '/account/login'}
-                  className="font-display text-3xl font-light text-[#2d2020] hover:text-wine transition-colors"
+                  className="font-display text-3xl font-light text-ink hover:text-wine transition-colors"
                 >
                   {user ? 'My Account' : 'Sign In'}
                 </NavLink>
               </motion.div>
-            </div>
+            </nav>
           </motion.div>
         )}
       </AnimatePresence>

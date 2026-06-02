@@ -37,13 +37,20 @@ export function AuthProvider({ children }) {
       return undefined;
     }
 
-    supabase.auth.getSession().then(({ data: { session: current } }) => {
-      setSession(current);
-      if (current?.user) {
-        fetchProfile(current.user.id);
-      }
-      setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data: { session: current } }) => {
+        setSession(current);
+        if (current?.user) {
+          fetchProfile(current.user.id);
+        }
+      })
+      .catch((err) => {
+        console.warn('getSession:', err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
 
     const {
       data: { subscription },

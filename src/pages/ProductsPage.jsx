@@ -88,7 +88,7 @@ export default function ProductsPage() {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <p className="section-subtitle mb-3">The Lily Letters Co</p>
             <h1 className="section-heading">Wedding Templates</h1>
-            <p className="font-body text-sm text-[#2d2020]/60 mt-3 max-w-md mx-auto">
+            <p className="font-body text-sm text-ink-muted mt-3 max-w-md mx-auto">
               {products.length} beautifully crafted, editable stationery designs for your perfect day
             </p>
           </motion.div>
@@ -119,13 +119,13 @@ export default function ProductsPage() {
             {/* Mobile: filter button */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden flex items-center gap-2 px-4 py-2 border border-taupe text-xs font-body font-medium tracking-wider uppercase text-[#2d2020]/70 hover:border-wine hover:text-wine transition-colors"
+              className="lg:hidden flex items-center gap-2 px-4 py-2 border border-taupe text-xs font-body font-medium tracking-wider uppercase text-ink-muted hover:border-wine hover:text-wine transition-colors"
             >
               <SlidersHorizontal size={14} />
               {activeCategoryLabel}
             </button>
 
-            <span className="font-body text-sm text-[#2d2020]/50 hidden sm:block ml-auto">
+            <span className="font-body text-sm text-ink-subtle hidden sm:block ml-auto">
               {filtered.length} results
             </span>
 
@@ -185,7 +185,7 @@ export default function ProductsPage() {
                   return (
                     <p
                       key={`group-${idx}`}
-                      className="font-body text-[10px] font-semibold tracking-[0.15em] uppercase text-[#2d2020]/40 pt-5 pb-1.5 first:pt-0"
+                      className="font-body text-[10px] font-semibold tracking-[0.15em] uppercase text-ink-faint pt-5 pb-1.5 first:pt-0"
                     >
                       {item.label}
                     </p>
@@ -205,7 +205,7 @@ export default function ProductsPage() {
                       ${isSubItem ? 'pl-4' : ''}
                       ${isActive
                         ? 'text-wine font-medium bg-wine/5'
-                        : 'text-[#2d2020]/70 hover:text-wine hover:bg-wine/5'
+                        : 'text-ink-muted hover:text-wine hover:bg-wine/5'
                       }
                     `}
                   >
@@ -213,7 +213,7 @@ export default function ProductsPage() {
                       {isSubItem && <span className="text-taupe mr-1">—</span>}
                       {item.label}
                     </span>
-                    <span className="font-body text-xs text-[#2d2020]/35 ml-2">{count}</span>
+                    <span className="font-body text-xs text-ink-faint ml-2">{count}</span>
                   </button>
                 );
               })}
@@ -242,8 +242,8 @@ export default function ProductsPage() {
                   animate={{ opacity: 1 }}
                   className="flex flex-col items-center justify-center py-24 gap-4"
                 >
-                  <p className="font-display text-2xl text-[#2d2020]/40 font-light">No templates found</p>
-                  <p className="font-body text-sm text-[#2d2020]/30">Try adjusting your search or category</p>
+                  <p className="font-display text-2xl text-ink-faint font-light">No templates found</p>
+                  <p className="font-body text-sm text-ink/30">Try adjusting your search or category</p>
                   <button onClick={() => { setSearch(''); setCategory('all'); }} className="btn-secondary mt-2">
                     Clear Filters
                   </button>

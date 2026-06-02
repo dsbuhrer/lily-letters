@@ -54,7 +54,7 @@ export default function ProductCard({ product, index = 0 }) {
 
       <div
 
-        className="relative overflow-hidden bg-white shrink-0"
+        className="relative overflow-hidden bg-white shrink-0 ring-1 ring-taupe/25 shadow-soft"
 
         onMouseEnter={() => {
 
@@ -200,7 +200,7 @@ export default function ProductCard({ product, index = 0 }) {
 
           </p>
 
-          <h3 className="font-display text-sm sm:text-lg font-light text-[#2d2020] leading-snug group-hover:text-wine transition-colors line-clamp-2 min-h-[2.5rem] sm:min-h-[3.25rem]">
+          <h3 className="font-display text-sm sm:text-lg font-light text-ink leading-snug group-hover:text-wine transition-colors line-clamp-2 min-h-[2.5rem] sm:min-h-[3.25rem]">
 
             {product.name}
 
@@ -232,7 +232,7 @@ export default function ProductCard({ product, index = 0 }) {
 
             </div>
 
-            <span className="font-body text-xs text-[#2d2020]/50 hidden sm:inline">
+            <span className="font-body text-xs text-ink-subtle hidden sm:inline">
 
               ({product.reviews})
 
@@ -244,7 +244,7 @@ export default function ProductCard({ product, index = 0 }) {
 
             {product.originalPrice && (
 
-              <span className="font-body text-xs text-[#2d2020]/40 line-through hidden sm:inline">
+              <span className="font-body text-xs text-ink-faint line-through hidden sm:inline">
 
                 ${product.originalPrice.toFixed(2)}
 

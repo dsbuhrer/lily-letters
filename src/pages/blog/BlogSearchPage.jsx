@@ -63,13 +63,13 @@ export default function BlogSearchPage() {
         </form>
 
         {q.trim() ? (
-          <p className="font-body text-sm text-[#2d2020]/60 mb-10">
+          <p className="font-body text-sm text-ink-muted mb-10">
             {loading
               ? 'Searching…'
               : `${posts.length} result${posts.length !== 1 ? 's' : ''} for “${q}”`}
           </p>
         ) : (
-          <p className="font-body text-sm text-[#2d2020]/60 mb-10">
+          <p className="font-body text-sm text-ink-muted mb-10">
             Enter a term above to search the blog.
           </p>
         )}
@@ -81,7 +81,7 @@ export default function BlogSearchPage() {
         </div>
 
         {!loading && posts.length === 0 && q.trim() && (
-          <p className="text-[#2d2020]/50 font-body text-sm">
+          <p className="text-ink-subtle font-body text-sm">
             No matches for this term. Try another keyword or{' '}
             <Link to="/blog" className="text-wine underline">
               browse all articles

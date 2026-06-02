@@ -23,7 +23,7 @@ export default function ProductDetailPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-cream pt-24 flex items-center justify-center">
-        <p className="font-body text-sm text-[#2d2020]/50">Loading…</p>
+        <p className="font-body text-sm text-ink-subtle">Loading…</p>
       </main>
     );
   }
@@ -93,7 +93,7 @@ export default function ProductDetailPage() {
     <main className="min-h-screen bg-cream pt-20">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 mb-8 font-body text-xs text-[#2d2020]/40">
+        <nav className="flex items-center gap-2 mb-8 font-body text-xs text-ink-faint">
           <Link to="/" className="hover:text-wine transition-colors">Home</Link>
           <span>/</span>
           <Link to="/products" className="hover:text-wine transition-colors">Templates</Link>
@@ -180,7 +180,7 @@ export default function ProductDetailPage() {
               <h1 className="font-display text-4xl font-light text-wine leading-tight mb-1">
                 {product.name}
               </h1>
-              <p className="font-body text-sm text-[#2d2020]/50 mb-1">
+              <p className="font-body text-sm text-ink-subtle mb-1">
                 {product.subtitle}
               </p>
               {product.collection && (
@@ -202,7 +202,7 @@ export default function ProductDetailPage() {
                   ))}
                 </div>
                 <span className="font-body text-sm text-gold">{product.rating}</span>
-                <span className="font-body text-sm text-[#2d2020]/40">
+                <span className="font-body text-sm text-ink-faint">
                   ({product.reviews} reviews)
                 </span>
               </div>
@@ -213,7 +213,7 @@ export default function ProductDetailPage() {
                   ${product.price}
                 </span>
                 {product.originalPrice && (
-                  <span className="font-body text-xl text-[#2d2020]/30 line-through">
+                  <span className="font-body text-xl text-ink/30 line-through">
                     ${product.originalPrice}
                   </span>
                 )}
@@ -224,7 +224,7 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              <p className="font-body text-sm text-[#2d2020]/70 leading-relaxed mb-6">
+              <p className="font-body text-sm text-ink-muted leading-relaxed mb-6">
                 {product.description}
               </p>
 
@@ -235,7 +235,7 @@ export default function ProductDetailPage() {
                 </h3>
                 <ul className="space-y-1.5">
                   {product.includes.map((item) => (
-                    <li key={item} className="flex items-center gap-2 font-body text-sm text-[#2d2020]/70">
+                    <li key={item} className="flex items-center gap-2 font-body text-sm text-ink-muted">
                       <Check size={14} className="text-sage flex-shrink-0" strokeWidth={2} />
                       {item}
                     </li>
@@ -252,7 +252,7 @@ export default function ProductDetailPage() {
                   {product.colors.map((color) => (
                     <span
                       key={color}
-                      className="font-body text-xs text-[#2d2020]/60 border border-taupe px-3 py-1"
+                      className="font-body text-xs text-ink-muted border border-taupe px-3 py-1"
                     >
                       {color}
                     </span>
@@ -262,15 +262,15 @@ export default function ProductDetailPage() {
 
               {/* Features */}
               <div className="flex flex-wrap gap-4 mb-8 py-4 border-y border-taupe/30">
-                <div className="flex items-center gap-1.5 text-xs font-body text-[#2d2020]/60">
+                <div className="flex items-center gap-1.5 text-xs font-body text-ink-muted">
                   <Download size={14} className="text-gold" strokeWidth={1.5} />
                   Instant Digital Download
                 </div>
-                <div className="flex items-center gap-1.5 text-xs font-body text-[#2d2020]/60">
+                <div className="flex items-center gap-1.5 text-xs font-body text-ink-muted">
                   <Check size={14} className="text-gold" strokeWidth={1.5} />
                   Editable in Free Canva
                 </div>
-                <div className="flex items-center gap-1.5 text-xs font-body text-[#2d2020]/60">
+                <div className="flex items-center gap-1.5 text-xs font-body text-ink-muted">
                   <Check size={14} className="text-gold" strokeWidth={1.5} />
                   Print at Home or Anywhere
                 </div>
@@ -302,7 +302,7 @@ export default function ProductDetailPage() {
                 <WishlistButton product={product} variant="detail" />
               </div>
 
-              <p className="font-body text-xs text-[#2d2020]/40 mt-3 flex items-center gap-1">
+              <p className="font-body text-xs text-ink-faint mt-3 flex items-center gap-1">
                 <Check size={12} className="text-sage" />
                 Secure checkout · Instant PDF with all Canva links
               </p>

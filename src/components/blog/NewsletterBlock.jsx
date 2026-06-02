@@ -44,7 +44,7 @@ export default function NewsletterBlock({ source = 'blog', variant = 'light' }) 
         <h2 className={`font-display text-2xl md:text-3xl font-light mb-2 ${dark ? 'text-cream' : 'text-wine'}`}>
           Get wedding styling tips in your inbox
         </h2>
-        <p className={`text-sm mb-6 max-w-md mx-auto leading-relaxed ${dark ? 'text-cream/70' : 'text-[#2d2020]/55'}`}>
+        <p className={`text-sm mb-6 max-w-md mx-auto leading-relaxed ${dark ? 'text-cream/70' : 'text-ink-muted'}`}>
           Exclusive offers, new template launches, and inspiration for your celebration.
         </p>
         <form onSubmit={submit} className="flex flex-col sm:flex-row gap-0 max-w-md mx-auto overflow-hidden shadow-sm">
@@ -57,7 +57,7 @@ export default function NewsletterBlock({ source = 'blog', variant = 'light' }) 
             className={`flex-1 px-5 py-3.5 text-sm font-body border-0 focus:outline-none ${
               dark
                 ? 'bg-cream/10 text-cream placeholder-cream/40'
-                : 'bg-cream/80 text-[#2d2020] placeholder-[#a89c96]'
+                : 'bg-cream/80 text-ink placeholder-[#a89c96]'
             }`}
           />
           <button

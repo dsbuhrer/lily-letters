@@ -8,7 +8,7 @@ export default function AccountGuard() {
   if (!configured) {
     return (
       <div className="min-h-screen bg-cream flex items-center justify-center px-6">
-        <p className="font-body text-sm text-[#2d2020]/60 text-center max-w-md">
+        <p className="font-body text-sm text-ink-muted text-center max-w-md">
           Customer accounts are not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to
           your environment.
         </p>
@@ -19,7 +19,7 @@ export default function AccountGuard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-cream flex items-center justify-center">
-        <p className="font-body text-sm text-[#2d2020]/50">Loading…</p>
+        <p className="font-body text-sm text-ink-subtle">Loading…</p>
       </div>
     );
   }

@@ -31,11 +31,11 @@ export default function BlogCard({ post, featured = false }) {
             <h2 className="font-display text-3xl md:text-4xl font-light text-wine leading-tight text-balance group-hover:text-[#3a1926] transition-colors">
               {post.title}
             </h2>
-            <p className="mt-4 font-body text-sm text-[#2d2020]/65 leading-relaxed line-clamp-3">
+            <p className="mt-4 font-body text-sm text-ink-muted leading-relaxed line-clamp-3">
               {post.excerpt}
             </p>
             <div className="mt-6 flex items-center justify-between gap-4">
-              <span className="inline-flex items-center gap-1.5 text-xs text-[#2d2020]/45 font-body">
+              <span className="inline-flex items-center gap-1.5 text-xs text-ink-subtle font-body">
                 <Clock size={13} strokeWidth={1.5} />
                 {post.reading_time_minutes || 5} min read
               </span>
@@ -72,10 +72,10 @@ export default function BlogCard({ post, featured = false }) {
           <h2 className="font-display text-xl md:text-2xl font-light text-wine leading-snug text-balance group-hover:text-[#3a1926] transition-colors">
             {post.title}
           </h2>
-          <p className="mt-2.5 font-body text-sm text-[#2d2020]/60 leading-relaxed line-clamp-2 flex-1">
+          <p className="mt-2.5 font-body text-sm text-ink-muted leading-relaxed line-clamp-2 flex-1">
             {post.excerpt}
           </p>
-          <p className="mt-4 inline-flex items-center gap-1.5 text-xs text-[#2d2020]/40 font-body">
+          <p className="mt-4 inline-flex items-center gap-1.5 text-xs text-ink-faint font-body">
             <Clock size={12} strokeWidth={1.5} />
             {post.reading_time_minutes || 5} min read
           </p>

@@ -27,7 +27,7 @@ export default function ShopTheLook({ products = [] }) {
   return (
     <section className="mt-12">
       <h2 className="font-display text-3xl text-wine mb-2">Shop the look</h2>
-      <p className="font-body text-sm text-[#2d2020]/60 mb-6">
+      <p className="font-body text-sm text-ink-muted mb-6">
         Editable Canva templates to match this inspiration.
       </p>
       {isCarousel ? (

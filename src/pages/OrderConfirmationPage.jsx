@@ -83,7 +83,7 @@ export default function OrderConfirmationPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f8f5ef] pt-20">
+    <main className="min-h-screen bg-cream pt-20">
       <div className="max-w-3xl mx-auto px-6 py-16 text-center">
         <motion.div
           initial={{ scale: 0 }}
@@ -105,10 +105,10 @@ export default function OrderConfirmationPage() {
           <h1 className="font-display text-4xl md:text-5xl font-light text-wine mb-3">
             Thank You, {order.firstName}!
           </h1>
-          <p className="font-body text-sm text-[#2d2020]/60 mb-2">
+          <p className="font-body text-sm text-ink-muted mb-2">
             Order <span className="font-medium text-wine">{order.orderId}</span>
           </p>
-          <p className="font-body text-sm text-[#2d2020]/50">
+          <p className="font-body text-sm text-ink-subtle">
             A confirmation and your download link have been sent to{' '}
             <span className="text-wine font-medium">{order.email}</span>
           </p>
@@ -118,7 +118,7 @@ export default function OrderConfirmationPage() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="mt-10 bg-white border border-taupe/30 p-8"
+          className="mt-10 panel-elevated panel-padding text-left"
         >
           <div className="flex items-center justify-center gap-3 mb-6">
             <div className="w-12 h-12 bg-wine/10 flex items-center justify-center">
@@ -128,32 +128,32 @@ export default function OrderConfirmationPage() {
               <h2 className="font-display text-xl font-light text-wine">
                 Your Templates Are Ready
               </h2>
-              <p className="font-body text-xs text-[#2d2020]/50">
+              <p className="font-body text-xs text-ink-subtle">
                 Instant download available
               </p>
             </div>
           </div>
 
           <div className="bg-cream border border-taupe/30 p-5 mb-6 text-left">
-            <p className="font-body text-sm font-medium text-[#2d2020] mb-3">
+            <p className="font-body text-sm font-medium text-ink mb-3">
               Your Purchase Includes:
             </p>
             <ul className="space-y-2">
               {order.items.length > 0 ? (
                 order.items.map((item) => (
-                  <li key={item.id} className="flex items-center gap-2 font-body text-sm text-[#2d2020]/70">
+                  <li key={item.id} className="flex items-center gap-2 font-body text-sm text-ink-muted">
                     <Check size={12} className="text-sage flex-shrink-0" />
                     <span>{item.name}</span>
                     <span className="text-gold">— Canva Template Link</span>
                   </li>
                 ))
               ) : (
-                <li className="font-body text-sm text-[#2d2020]/70">Your template(s) — Canva Links PDF</li>
+                <li className="font-body text-sm text-ink-muted">Your template(s) — Canva Links PDF</li>
               )}
             </ul>
           </div>
 
-          <p className="font-body text-sm text-[#2d2020]/60 mb-6 leading-relaxed">
+          <p className="font-body text-sm text-ink-muted mb-6 leading-relaxed">
             Click below to download your file containing all Canva template links.
             Open each link to access your editable templates in Canva (free account required).
           </p>
@@ -169,7 +169,7 @@ export default function OrderConfirmationPage() {
             </Link>
           )}
 
-          <div className="mt-4 flex items-center justify-center gap-4 text-xs font-body text-[#2d2020]/40">
+          <div className="mt-4 flex items-center justify-center gap-4 text-xs font-body text-ink-faint">
             <span className="flex items-center gap-1">
               <Mail size={11} />
               Also sent to your email
@@ -183,7 +183,7 @@ export default function OrderConfirmationPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="mt-8 bg-white border border-taupe/30 p-6 text-left"
+          className="mt-8 panel panel-padding text-left"
         >
           <h3 className="font-display text-lg font-light text-wine mb-4">
             How to Use Your Templates
@@ -200,7 +200,7 @@ export default function OrderConfirmationPage() {
                 <span className="w-6 h-6 rounded-full bg-wine/10 text-wine flex items-center justify-center font-body text-xs font-medium flex-shrink-0 mt-0.5">
                   {i + 1}
                 </span>
-                <p className="font-body text-sm text-[#2d2020]/70">{step}</p>
+                <p className="font-body text-sm text-ink-muted">{step}</p>
               </div>
             ))}
           </div>
@@ -226,7 +226,7 @@ export default function OrderConfirmationPage() {
                 Save Your Downloads
               </h3>
             </div>
-            <p className="font-body text-sm text-[#2d2020]/60 mb-4">
+            <p className="font-body text-sm text-ink-muted mb-4">
               Create a free account to access your downloads anytime, track your orders,
               and get exclusive member discounts.
             </p>
@@ -243,7 +243,7 @@ export default function OrderConfirmationPage() {
                 minLength={8}
                 className="input-field"
               />
-              <p className="font-body text-xs text-[#2d2020]/40">
+              <p className="font-body text-xs text-ink-faint">
                 Your email: <strong>{order.email}</strong>
               </p>
               <button type="submit" className="btn-primary w-full" disabled={creating}>
@@ -254,7 +254,7 @@ export default function OrderConfirmationPage() {
             <button
               type="button"
               onClick={() => setShowAccountPrompt(false)}
-              className="mt-3 font-body text-xs text-[#2d2020]/40 hover:text-[#2d2020] transition-colors w-full text-center"
+              className="mt-3 font-body text-xs text-ink-faint hover:text-ink transition-colors w-full text-center"
             >
               No thanks, I&apos;ll download now
             </button>
@@ -268,7 +268,7 @@ export default function OrderConfirmationPage() {
             className="mt-8 bg-sage/10 border border-sage/30 p-4 flex items-center gap-3"
           >
             <Check size={18} className="text-sage" strokeWidth={2} />
-            <p className="font-body text-sm text-[#2d2020]">
+            <p className="font-body text-sm text-ink">
               Account created! Check your email to confirm, then sign in to access your downloads.
             </p>
           </motion.div>
@@ -281,7 +281,7 @@ export default function OrderConfirmationPage() {
             className="mt-8 bg-sage/10 border border-sage/30 p-4 flex items-center gap-3"
           >
             <Check size={18} className="text-sage" strokeWidth={2} />
-            <p className="font-body text-sm text-[#2d2020]">
+            <p className="font-body text-sm text-ink">
               Account ready! Your purchases are saved in My Account.
             </p>
           </motion.div>

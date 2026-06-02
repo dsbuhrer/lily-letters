@@ -46,13 +46,13 @@ export default function AdminProductsPage() {
   }, [products, search, sort]);
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between mb-8">
-        <h1 className="font-display text-3xl text-wine">Products</h1>
+    <div className="admin-page">
+      <header className="admin-page-header">
+        <h1 className="page-title">Products</h1>
         <Link to="/admin/products/new" className="btn-primary">
           Add product
         </Link>
-      </div>
+      </header>
 
       <AdminListToolbar
         search={search}
@@ -65,51 +65,51 @@ export default function AdminProductsPage() {
         totalCount={products.length}
       />
 
-      <div className="bg-white/80 border border-taupe overflow-x-auto">
-        <table className="w-full text-sm min-w-[480px]">
-          <thead className="bg-cream border-b border-taupe">
+      <div className="table-shell overflow-x-auto">
+        <table className="data-table min-w-[480px]">
+          <thead>
             <tr>
-              <th className="text-left p-4">ID</th>
-              <th className="text-left p-4">Name</th>
-              <th className="text-left p-4">Category</th>
-              <th className="text-left p-4">Price</th>
-              <th className="p-4" />
+              <th>ID</th>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th className="text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredProducts.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-[#2d2020]/50">
+                <td colSpan={5} className="data-table-empty">
                   {products.length === 0 ? 'No products yet.' : 'No products match your search.'}
                 </td>
               </tr>
             ) : (
               filteredProducts.map((p) => (
-                <tr key={p.id} className="border-b border-taupe/40">
-                  <td className="p-4">{p.id}</td>
-                  <td className="p-4">
+                <tr key={p.id}>
+                  <td className="tabular-nums text-ink-subtle">{p.id}</td>
+                  <td>
                     <div className="flex items-center gap-3">
                       {p.images?.[0] && (
-                        <img src={p.images[0]} alt="" className="w-10 h-10 object-cover border border-taupe/50" />
+                        <img src={p.images[0]} alt="" className="w-10 h-10 object-cover ring-1 ring-taupe/50" />
                       )}
-                      {p.name}
+                      <span className="font-medium text-ink">{p.name}</span>
                     </div>
                   </td>
-                  <td className="p-4 text-[#2d2020]/70">{getCategoryLabel(p.category)}</td>
-                  <td className="p-4">${p.price}</td>
-                  <td className="p-4 text-right">
-                    <div className="flex flex-wrap items-center justify-end gap-3">
+                  <td>{getCategoryLabel(p.category)}</td>
+                  <td className="font-medium text-wine tabular-nums">${p.price}</td>
+                  <td className="text-right">
+                    <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1">
                       {p.active !== false && (p.slug || p.id) && (
                         <a
                           href={`/products/${p.slug || p.id}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[#2d2020]/70 text-xs font-medium hover:underline"
+                          className="table-action-muted"
                         >
                           View
                         </a>
                       )}
-                      <Link to={`/admin/products/${p.id}`} className="text-wine text-xs font-medium hover:underline">
+                      <Link to={`/admin/products/${p.id}`} className="table-action">
                         Edit
                       </Link>
                     </div>

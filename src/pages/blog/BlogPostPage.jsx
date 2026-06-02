@@ -76,7 +76,7 @@ export default function BlogPostPage() {
           <h1 className="font-display text-3xl text-wine mb-4">
             {error === 'config' ? 'Blog unavailable' : 'Article not found'}
           </h1>
-          <p className="font-body text-sm text-[#2d2020]/60 mb-6">
+          <p className="font-body text-sm text-ink-muted mb-6">
             {error === 'config'
               ? 'Supabase is not configured in this build. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY, then rebuild.'
               : 'This article may have been removed or the link is incorrect.'}
@@ -162,17 +162,17 @@ export default function BlogPostPage() {
           <motion.div
             {...fadeUp}
             transition={{ delay: 0.1 }}
-            className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-body text-[#2d2020]/60"
+            className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-body text-ink-muted"
           >
             <span className="inline-flex items-center gap-1.5">
               <Clock size={14} strokeWidth={1.5} className="text-gold" />
               {post.reading_time_minutes} min read
             </span>
-            <span className="text-[#2d2020]/25" aria-hidden>
+            <span className="text-ink/25" aria-hidden>
               ·
             </span>
             <span>{post.author_name}</span>
-            <span className="text-[#2d2020]/25" aria-hidden>
+            <span className="text-ink/25" aria-hidden>
               ·
             </span>
             <span className="inline-flex items-center gap-1.5">
@@ -194,7 +194,7 @@ export default function BlogPostPage() {
                 {...fadeUp}
                 className="blog-quick-answer bg-white/60 border border-gold/70 p-5 md:p-6 mb-8"
               >
-                <p className="text-base font-body text-[#2d2020] leading-relaxed">
+                <p className="text-base font-body text-ink leading-relaxed">
                   <strong className="text-wine font-medium">Quick answer:</strong>{' '}
                   {post.direct_answer}
                 </p>
@@ -205,11 +205,11 @@ export default function BlogPostPage() {
               <motion.div
                 {...fadeUp}
                 transition={{ delay: 0.05 }}
-                className="prose-blog font-body text-[#2d2020] leading-relaxed bg-white p-6 md:p-10 shadow-[0_4px_24px_-8px_rgba(76,34,51,0.08)] ring-1 ring-wine/5"
+                className="prose-blog font-body text-ink leading-relaxed bg-white p-6 md:p-10 shadow-[0_4px_24px_-8px_rgba(76,34,51,0.08)] ring-1 ring-wine/5"
                 dangerouslySetInnerHTML={{ __html: preparedContent }}
               />
             ) : (
-              <p className="font-body text-sm text-[#2d2020]/50">Article content is not available.</p>
+              <p className="font-body text-sm text-ink-subtle">Article content is not available.</p>
             )}
 
             <BlogFaq faq={post.faq} />

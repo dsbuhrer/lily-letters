@@ -33,7 +33,7 @@ export default function BlogAuthorCard({
           <p className="mt-3 font-display text-xl md:text-2xl font-light text-wine leading-tight">
             {brandName}
           </p>
-          <p className="mt-2 font-body text-sm text-[#2d2020]/65 leading-relaxed max-w-xl">
+          <p className="mt-2 font-body text-sm text-ink-muted leading-relaxed max-w-xl">
             {displayBio}
           </p>
         </div>
@@ -48,7 +48,7 @@ export default function BlogAuthorCard({
             <li key={tag.slug}>
               <Link
                 to={`/blog/tag/${tag.slug}`}
-                className="inline-block px-3 py-1.5 rounded-full bg-cream text-xs font-body font-medium tracking-wide text-[#2d2020]/70 hover:bg-sage/15 hover:text-sage transition-colors"
+                className="inline-block px-3 py-1.5 rounded-full bg-cream text-xs font-body font-medium tracking-wide text-ink-muted hover:bg-sage/15 hover:text-sage transition-colors"
               >
                 #{tag.name}
               </Link>

@@ -22,7 +22,7 @@ export default function AdminListToolbar({
   return (
     <div className="flex flex-wrap items-center gap-4 mb-6">
       <div className="relative flex-1 min-w-[200px] max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#2d2020]/40 pointer-events-none" size={18} />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint pointer-events-none" size={18} />
         <input
           type="search"
           className="input-field pl-10 w-full"
@@ -32,7 +32,7 @@ export default function AdminListToolbar({
           aria-label="Search list"
         />
       </div>
-      <label className="flex items-center gap-2 text-sm text-[#2d2020]/60 shrink-0">
+      <label className="flex items-center gap-2 text-sm text-ink-muted shrink-0">
         <span className="sr-only">Sort by</span>
         <select className="input-field w-52" value={sort} onChange={(e) => onSortChange(e.target.value)}>
           {sortOptions.map((opt) => (
@@ -42,7 +42,7 @@ export default function AdminListToolbar({
           ))}
         </select>
       </label>
-      {showCount && <p className="text-sm text-[#2d2020]/60 ml-auto">{countLabel}</p>}
+      {showCount && <p className="text-sm text-ink-muted ml-auto tabular-nums">{countLabel}</p>}
     </div>
   );
 }

@@ -53,7 +53,7 @@ export default function AccountLoginPage() {
   if (!configured) {
     return (
       <main className="min-h-screen bg-cream pt-24 flex items-center justify-center px-6">
-        <p className="font-body text-sm text-[#2d2020]/60 text-center">
+        <p className="font-body text-sm text-ink-muted text-center">
           Customer accounts are not configured yet.
         </p>
       </main>
@@ -63,25 +63,25 @@ export default function AccountLoginPage() {
   return (
     <main className="min-h-screen bg-cream pt-24 flex items-center justify-center px-6 pb-12">
       <div className="w-full max-w-md">
-        <form onSubmit={submit} className="bg-white/80 border border-taupe p-8 shadow-sm">
+        <form onSubmit={submit} className="auth-panel">
           <p className="section-subtitle mb-2 text-center">My Account</p>
           <h1 className="font-display text-3xl text-wine text-center mb-2">Sign in</h1>
-          <p className="font-body text-sm text-[#2d2020]/50 text-center mb-8">
+          <p className="page-lead text-center mx-auto mb-8">
             Access your purchases and downloads
           </p>
 
-          {error && <p className="text-red-600 text-sm mb-4 text-center">{error}</p>}
+          {error && <p className="form-error mb-4">{error}</p>}
           {resetSent && (
-            <p className="text-sage text-sm mb-4 text-center">
+            <p className="form-success text-center mb-4">
               Password reset email sent. Check your inbox.
             </p>
           )}
 
           <label className="block mb-4">
-            <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Email</span>
+            <span className="form-label">Email</span>
             <input
               type="email"
-              className="input-field mt-1"
+              className="input-field"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -89,10 +89,10 @@ export default function AccountLoginPage() {
             />
           </label>
           <label className="block mb-4">
-            <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Password</span>
+            <span className="form-label">Password</span>
             <input
               type="password"
-              className="input-field mt-1"
+              className="input-field"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -109,7 +109,7 @@ export default function AccountLoginPage() {
           </button>
         </form>
 
-        <p className="font-body text-sm text-center text-[#2d2020]/50 mt-6">
+        <p className="font-body text-sm text-center text-ink-subtle mt-6">
           Don&apos;t have an account?{' '}
           <Link to="/account/register" className="text-wine hover:underline">
             Create one

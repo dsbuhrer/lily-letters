@@ -50,14 +50,14 @@ export default function AccountSettingsPage() {
 
   return (
     <div className="space-y-8">
-      <section className="bg-white border border-taupe/30 p-6">
+      <section className="panel panel-padding">
         <h2 className="font-display text-xl text-wine mb-6">Profile</h2>
         <form onSubmit={handleSave} className="space-y-4 max-w-md">
           <label className="block">
-            <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Email</span>
+            <span className="form-label">Email</span>
             <input
               type="email"
-              className="input-field mt-1 bg-[#f8f5ef] cursor-not-allowed"
+              className="input-field mt-1 bg-cream/80 cursor-not-allowed"
               value={user?.email || ''}
               disabled
             />
@@ -65,7 +65,7 @@ export default function AccountSettingsPage() {
 
           <div className="grid sm:grid-cols-2 gap-4">
             <label className="block">
-              <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">First name</span>
+              <span className="form-label">First name</span>
               <input
                 type="text"
                 className="input-field mt-1"
@@ -74,7 +74,7 @@ export default function AccountSettingsPage() {
               />
             </label>
             <label className="block">
-              <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Last name</span>
+              <span className="form-label">Last name</span>
               <input
                 type="text"
                 className="input-field mt-1"
@@ -85,7 +85,7 @@ export default function AccountSettingsPage() {
           </div>
 
           <label className="block">
-            <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Phone</span>
+            <span className="form-label">Phone</span>
             <input
               type="tel"
               className="input-field mt-1"
@@ -102,7 +102,7 @@ export default function AccountSettingsPage() {
               onChange={(e) => setMarketingConsent(e.target.checked)}
               className="mt-1 accent-wine"
             />
-            <span className="font-body text-sm text-[#2d2020]/70">
+            <span className="font-body text-sm text-ink-muted">
               Send me wedding tips, new templates, and exclusive offers
             </span>
           </label>
@@ -113,9 +113,9 @@ export default function AccountSettingsPage() {
         </form>
       </section>
 
-      <section className="bg-white border border-taupe/30 p-6">
+      <section className="panel panel-padding">
         <h2 className="font-display text-xl text-wine mb-2">Password</h2>
-        <p className="font-body text-sm text-[#2d2020]/60 mb-4">
+        <p className="font-body text-sm text-ink-muted mb-4">
           We&apos;ll email you a link to choose a new password.
         </p>
         <button type="button" onClick={handlePasswordReset} className="btn-secondary">

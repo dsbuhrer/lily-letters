@@ -102,12 +102,14 @@ const faqData = [
 function FAQItem({ question, answer }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-taupe/20 last:border-b-0">
+    <div className="border-b border-taupe/35 last:border-b-0">
       <button
+        type="button"
         onClick={() => setOpen(!open)}
-        className="w-full text-left py-4 flex items-start justify-between gap-4 group"
+        className="w-full text-left py-4 flex items-start justify-between gap-4 group focus-visible:outline-offset-[-2px]"
+        aria-expanded={open}
       >
-        <span className="font-body text-sm font-medium text-[#2d2020] group-hover:text-wine transition-colors pr-4">
+        <span className="font-body text-sm font-medium text-ink group-hover:text-wine transition-colors pr-4">
           {question}
         </span>
         <span className="flex-shrink-0 mt-0.5">
@@ -182,7 +184,7 @@ export default function FAQPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="font-body text-sm text-[#2d2020]/55"
+            className="page-lead mx-auto"
           >
             Everything you need to know about our templates, Canva, printing, and orders.
           </motion.p>
@@ -200,7 +202,7 @@ export default function FAQPage() {
               placeholder="Search questions..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full border border-taupe bg-white pl-10 pr-4 py-3 font-body text-sm text-[#2d2020] placeholder-[#a89c96] focus:outline-none focus:border-gold transition-colors"
+              className="input-field pl-10"
             />
           </motion.div>
         </div>
@@ -213,10 +215,10 @@ export default function FAQPage() {
             <div className="flex flex-wrap gap-2 mb-10">
               <button
                 onClick={() => setActiveCategory('all')}
-                className={`font-body text-xs px-4 py-2 border transition-colors ${
+                className={`font-body text-xs px-4 py-2 border transition-all duration-200 ${
                   activeCategory === 'all'
-                    ? 'bg-wine text-cream border-wine'
-                    : 'bg-white text-[#2d2020]/60 border-taupe hover:border-wine hover:text-wine'
+                    ? 'bg-wine text-cream border-wine shadow-soft'
+                    : 'bg-white text-ink-muted border-taupe/80 hover:border-wine hover:text-wine'
                 }`}
               >
                 All Topics
@@ -225,10 +227,10 @@ export default function FAQPage() {
                 <button
                   key={cat.category}
                   onClick={() => setActiveCategory(cat.category)}
-                  className={`font-body text-xs px-4 py-2 border transition-colors ${
+                  className={`font-body text-xs px-4 py-2 border transition-all duration-200 ${
                     activeCategory === cat.category
-                      ? 'bg-wine text-cream border-wine'
-                      : 'bg-white text-[#2d2020]/60 border-taupe hover:border-wine hover:text-wine'
+                      ? 'bg-wine text-cream border-wine shadow-soft'
+                      : 'bg-white text-ink-muted border-taupe/80 hover:border-wine hover:text-wine'
                   }`}
                 >
                   {cat.icon} {cat.category}
@@ -251,7 +253,7 @@ export default function FAQPage() {
                     <span className="text-xl">{cat.icon}</span>
                     <h2 className="font-display text-xl font-light text-wine">{cat.category}</h2>
                   </div>
-                  <div className="bg-white border border-taupe/20 px-6">
+                  <div className="panel px-6 shadow-soft">
                     {cat.items.map((item) => (
                       <FAQItem key={item.q} question={item.q} answer={item.a} />
                     ))}
@@ -261,7 +263,7 @@ export default function FAQPage() {
             ) : (
               <div className="text-center py-16">
                 <p className="font-display text-2xl text-wine/40 mb-2">No results found</p>
-                <p className="font-body text-sm text-[#2d2020]/40">
+                <p className="font-body text-sm text-ink-faint">
                   Try a different search term or{' '}
                   <Link to="/contact" className="text-wine underline">
                     contact us directly
@@ -277,12 +279,12 @@ export default function FAQPage() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mt-16 bg-wine/5 border border-wine/20 p-8 text-center"
+            className="mt-16 panel-elevated p-8 text-center bg-wine/[0.04] border-wine/25"
           >
             <p className="font-display text-xl font-light text-wine mb-3">
               Still have questions?
             </p>
-            <p className="font-body text-sm text-[#2d2020]/60 mb-5">
+            <p className="font-body text-sm text-ink-muted mb-5">
               We're here to help! Send us a message and we'll get back to you within 1–2 business days.
             </p>
             <Link to="/contact" className="btn-primary">

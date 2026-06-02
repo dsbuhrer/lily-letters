@@ -20,22 +20,30 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="h-screen bg-cream flex overflow-hidden">
-      <aside className="w-56 bg-wine text-cream flex flex-col shrink-0 h-full sticky top-0">
+    <div className="h-screen bg-[#ebe6dc] flex overflow-hidden">
+      <aside className="w-56 bg-wine text-cream flex flex-col shrink-0 h-full shadow-panel">
         <div className="p-6 border-b border-cream/10 shrink-0">
-          <Link to="/" className="font-display text-xl font-light">
+          <Link
+            to="/"
+            className="font-display text-xl font-light tracking-tight hover:text-cream/90 transition-colors focus-visible:outline-offset-2 focus-visible:outline-cream/40"
+          >
             Lily CMS
           </Link>
+          <p className="font-body text-[10px] uppercase tracking-widest text-cream/45 mt-2">
+            Content admin
+          </p>
         </div>
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0">
+        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto min-h-0" aria-label="CMS">
           {links.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}
               end={end}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 text-sm rounded-sm transition-colors ${
-                  isActive ? 'bg-cream/15 text-cream' : 'text-cream/70 hover:text-cream hover:bg-cream/10'
+                `flex items-center gap-3 px-3 py-2.5 text-sm rounded-sm transition-colors focus-visible:outline-offset-2 focus-visible:outline-cream/40 ${
+                  isActive
+                    ? 'bg-cream/15 text-cream font-medium shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+                    : 'text-cream/70 hover:text-cream hover:bg-cream/10'
                 }`
               }
             >
@@ -47,13 +55,13 @@ export default function AdminLayout() {
         <button
           type="button"
           onClick={logout}
-          className="flex items-center gap-3 px-7 py-4 text-sm text-cream/60 hover:text-cream border-t border-cream/10 shrink-0"
+          className="flex items-center gap-3 px-6 py-4 text-sm text-cream/55 hover:text-cream hover:bg-cream/5 border-t border-cream/10 shrink-0 transition-colors w-full text-left focus-visible:outline-offset-[-2px] focus-visible:outline-cream/40"
         >
-          <LogOut size={18} />
+          <LogOut size={18} strokeWidth={1.5} />
           Log out
         </button>
       </aside>
-      <main className="flex-1 min-w-0 h-full overflow-y-auto">
+      <main className="flex-1 min-w-0 h-full overflow-y-auto bg-cream/40">
         <Outlet />
       </main>
     </div>

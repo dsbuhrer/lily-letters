@@ -9,7 +9,7 @@ export default function DownloadButton({ order, variant = 'primary' }) {
 
   if (!available) {
     return (
-      <p className="font-body text-sm text-[#2d2020]/50">
+      <p className="font-body text-sm text-ink-subtle">
         {order.status === 'pending'
           ? 'Downloads will be available once payment is confirmed.'
           : 'Download access has expired or is unavailable.'}

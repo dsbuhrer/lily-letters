@@ -129,9 +129,9 @@ export default function ImageUploadWithCrop({
   return (
     <div className="space-y-3">
       <div>
-        <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">{label}</span>
+        <span className="text-xs uppercase tracking-widest text-ink-subtle">{label}</span>
         {recommendedSize && (
-          <p className="text-xs text-[#2d2020]/50 mt-1">
+          <p className="text-xs text-ink-subtle mt-1">
             Resolução recomendada: {recommendedSize}
             {recommendedSizeNote ? ` (${recommendedSizeNote})` : ''}
           </p>
@@ -213,7 +213,7 @@ export default function ImageUploadWithCrop({
           } ${uploading ? 'pointer-events-none opacity-60' : ''}`}
         >
           {uploading ? (
-            <p className="flex items-center justify-center gap-2 text-sm text-[#2d2020]/60">
+            <p className="flex items-center justify-center gap-2 text-sm text-ink-muted">
               <Loader2 size={18} className="animate-spin" />
               Enviando…
             </p>
@@ -223,7 +223,7 @@ export default function ImageUploadWithCrop({
               <p className="text-sm text-wine font-medium">
                 {isMultiple ? 'Arraste ou clique para adicionar' : 'Arraste ou clique para escolher a imagem'}
               </p>
-              <p className="text-xs text-[#2d2020]/45 mt-2">Recorte antes do envio · convertido para WebP no servidor</p>
+              <p className="text-xs text-ink-subtle mt-2">Recorte antes do envio · convertido para WebP no servidor</p>
             </>
           )}
           <input

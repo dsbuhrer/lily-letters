@@ -12,8 +12,7 @@ import {
   suggestEmailFix,
 } from '../utils/emailHelpers';
 
-const inputClass =
-  'w-full border border-taupe bg-white px-4 py-3 text-sm font-body text-[#2d2020] placeholder-[#a89c96] focus:outline-none focus:border-gold transition-colors duration-200';
+const inputBase = 'input-field';
 
 export default function CheckoutPage() {
   const { items, clearCart } = useCartStore();
@@ -53,7 +52,7 @@ export default function CheckoutPage() {
   const [showTypoPromptOnSubmit, setShowTypoPromptOnSubmit] = useState(false);
 
   const getEmailInputClass = () => {
-    let cls = inputClass;
+    let cls = inputBase;
     if (emailTouched && emailError) cls += ' input-field-error';
     else if (emailTouched && isValidEmail(info.email)) cls += ' input-field-valid';
     return cls;
@@ -259,7 +258,7 @@ export default function CheckoutPage() {
               className="h-12"
             />
           </Link>
-          <div className="flex items-center gap-2 text-xs font-body text-[#2d2020]/50">
+          <div className="flex items-center gap-2 text-xs font-body text-ink-subtle">
             <Lock size={12} strokeWidth={1.5} />
             Secure Checkout
           </div>
@@ -278,11 +277,11 @@ export default function CheckoutPage() {
                 ? 'bg-sage text-cream'
                 : isCurrent
                   ? 'bg-wine text-cream'
-                  : 'bg-taupe/30 text-[#2d2020]/40'
+                  : 'bg-taupe/30 text-ink-faint'
             }`;
 
             const labelClass = `font-body text-sm font-medium transition-colors ${
-              isCurrent ? 'text-wine' : isComplete ? 'text-[#2d2020]/70' : 'text-[#2d2020]/40'
+              isCurrent ? 'text-wine' : isComplete ? 'text-ink-muted' : 'text-ink-faint'
             }`;
 
             const stepContent = (
@@ -341,7 +340,7 @@ export default function CheckoutPage() {
                     <div>
                       <label
                         htmlFor="checkout-email"
-                        className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5"
+                        className="form-label"
                       >
                         Email for your download & receipt *
                       </label>
@@ -374,7 +373,7 @@ export default function CheckoutPage() {
                             exit={{ opacity: 0, y: -4 }}
                             className="mt-2 flex flex-wrap items-center gap-2"
                           >
-                            <span className="font-body text-xs text-[#2d2020]/60">
+                            <span className="font-body text-xs text-ink-subtle">
                               Did you mean{' '}
                               <span className="font-medium text-wine">{emailSuggestion}</span>?
                             </span>
@@ -397,7 +396,7 @@ export default function CheckoutPage() {
                             exit={{ opacity: 0, y: -4 }}
                             className="mt-2 p-3 bg-gold/10 border border-gold/30"
                           >
-                            <p className="font-body text-xs text-[#2d2020]/70 mb-2">
+                            <p className="font-body text-xs text-ink-muted mb-2">
                               Before you continue: did you mean{' '}
                               <strong className="text-wine">{emailSuggestion}</strong>?
                             </p>
@@ -412,7 +411,7 @@ export default function CheckoutPage() {
                               <button
                                 type="button"
                                 onClick={proceedToBilling}
-                                className="font-body text-xs px-3 py-1.5 border border-taupe text-[#2d2020]/70 hover:border-wine hover:text-wine transition-colors"
+                                className="font-body text-xs px-3 py-1.5 border border-taupe text-ink-muted hover:border-wine hover:text-wine transition-colors"
                               >
                                 Keep as entered
                               </button>
@@ -427,7 +426,7 @@ export default function CheckoutPage() {
                             initial={{ opacity: 0, y: -4 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0 }}
-                            className="font-body text-xs text-[#2d2020]/60 mt-2 leading-relaxed"
+                            className="font-body text-xs text-ink-subtle mt-2 leading-relaxed"
                           >
                             We&apos;ll send your download to{' '}
                             <strong className="text-wine font-medium">
@@ -440,7 +439,7 @@ export default function CheckoutPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5">
+                        <label className="form-label">
                           First Name *
                         </label>
                         <input
@@ -449,11 +448,11 @@ export default function CheckoutPage() {
                           placeholder="First name"
                           value={info.firstName}
                           onChange={(e) => setInfo({ ...info, firstName: e.target.value })}
-                          className={inputClass}
+                          className={inputBase}
                         />
                       </div>
                       <div>
-                        <label className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5">
+                        <label className="form-label">
                           Last Name *
                         </label>
                         <input
@@ -462,13 +461,13 @@ export default function CheckoutPage() {
                           placeholder="Last name"
                           value={info.lastName}
                           onChange={(e) => setInfo({ ...info, lastName: e.target.value })}
-                          className={inputClass}
+                          className={inputBase}
                         />
                       </div>
                     </div>
 
                     <div className="pt-2 border-t border-taupe/20">
-                      <p className="font-body text-xs text-[#2d2020]/40 mb-4">
+                      <p className="font-body text-xs text-ink-faint mb-4">
                         ℹ️ You can create an account after completing your purchase to manage your downloads.
                       </p>
                       <button type="submit" className="btn-primary w-full">
@@ -494,21 +493,21 @@ export default function CheckoutPage() {
                     <button
                       type="button"
                       onClick={() => goToStep(1)}
-                      className="font-body text-xs text-[#2d2020]/50 hover:text-wine transition-colors"
+                      className="font-body text-xs text-ink-subtle hover:text-wine transition-colors"
                     >
                       ← Edit Contact
                     </button>
                   </div>
 
                   <form onSubmit={handleBillingSubmit} className="space-y-4" noValidate>
-                    <p className="font-body text-sm text-[#2d2020]/55 -mt-2 mb-2">
+                    <p className="font-body text-sm text-ink-muted -mt-2 mb-2">
                       Required for card verification. We only ship digital downloads — nothing is mailed to this address.
                     </p>
 
                     <div>
                       <label
                         htmlFor="billing-street"
-                        className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5"
+                        className="form-label"
                       >
                         Street *
                       </label>
@@ -520,7 +519,7 @@ export default function CheckoutPage() {
                         value={billing.street}
                         onChange={(e) => updateBilling('street', e.target.value)}
                         className={
-                          billingErrors.street ? `${inputClass} input-field-error` : inputClass
+                          billingErrors.street ? `${inputBase} input-field-error` : inputBase
                         }
                         aria-invalid={Boolean(billingErrors.street)}
                       />
@@ -535,7 +534,7 @@ export default function CheckoutPage() {
                       <div>
                         <label
                           htmlFor="billing-postal"
-                          className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5"
+                          className="form-label"
                         >
                           ZIP / Postal Code *
                         </label>
@@ -547,7 +546,7 @@ export default function CheckoutPage() {
                           value={billing.postalCode}
                           onChange={(e) => updateBilling('postalCode', e.target.value)}
                           className={
-                            billingErrors.postalCode ? `${inputClass} input-field-error` : inputClass
+                            billingErrors.postalCode ? `${inputBase} input-field-error` : inputBase
                           }
                           aria-invalid={Boolean(billingErrors.postalCode)}
                         />
@@ -560,7 +559,7 @@ export default function CheckoutPage() {
                       <div>
                         <label
                           htmlFor="billing-city"
-                          className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5"
+                          className="form-label"
                         >
                           City *
                         </label>
@@ -572,7 +571,7 @@ export default function CheckoutPage() {
                           value={billing.city}
                           onChange={(e) => updateBilling('city', e.target.value)}
                           className={
-                            billingErrors.city ? `${inputClass} input-field-error` : inputClass
+                            billingErrors.city ? `${inputBase} input-field-error` : inputBase
                           }
                           aria-invalid={Boolean(billingErrors.city)}
                         />
@@ -588,7 +587,7 @@ export default function CheckoutPage() {
                       <div>
                         <label
                           htmlFor="billing-state"
-                          className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5"
+                          className="form-label"
                         >
                           State / Province *
                         </label>
@@ -600,7 +599,7 @@ export default function CheckoutPage() {
                           value={billing.stateProvince}
                           onChange={(e) => updateBilling('stateProvince', e.target.value)}
                           className={
-                            billingErrors.stateProvince ? `${inputClass} input-field-error` : inputClass
+                            billingErrors.stateProvince ? `${inputBase} input-field-error` : inputBase
                           }
                           aria-invalid={Boolean(billingErrors.stateProvince)}
                         />
@@ -613,7 +612,7 @@ export default function CheckoutPage() {
                       <div>
                         <label
                           htmlFor="billing-country"
-                          className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5"
+                          className="form-label"
                         >
                           Country *
                         </label>
@@ -623,7 +622,7 @@ export default function CheckoutPage() {
                           value={billing.country}
                           onChange={(e) => updateBilling('country', e.target.value)}
                           className={
-                            billingErrors.country ? `${inputClass} input-field-error` : inputClass
+                            billingErrors.country ? `${inputBase} input-field-error` : inputBase
                           }
                           aria-invalid={Boolean(billingErrors.country)}
                         >
@@ -670,7 +669,7 @@ export default function CheckoutPage() {
                     <button
                       type="button"
                       onClick={() => goToStep(2)}
-                      className="font-body text-xs text-[#2d2020]/50 hover:text-wine transition-colors"
+                      className="font-body text-xs text-ink-subtle hover:text-wine transition-colors"
                     >
                       ← Edit Billing
                     </button>
@@ -682,13 +681,13 @@ export default function CheckoutPage() {
                       <div className="flex gap-3 min-w-0">
                         <Mail size={18} strokeWidth={1.5} className="text-gold flex-shrink-0 mt-0.5" />
                         <div className="min-w-0">
-                          <p className="font-body text-xs text-[#2d2020]/50 uppercase tracking-wider mb-0.5">
+                          <p className="font-body text-xs text-ink-subtle uppercase tracking-wider mb-0.5">
                             Delivery email
                           </p>
                           <p className="font-body text-sm font-medium text-wine break-all">
                             {info.email}
                           </p>
-                          <p className="font-body text-xs text-[#2d2020]/55 mt-1.5 leading-relaxed">
+                          <p className="font-body text-xs text-ink-muted mt-1.5 leading-relaxed">
                             Your templates will be sent here — tap Change if this looks wrong.
                           </p>
                         </div>
@@ -705,7 +704,7 @@ export default function CheckoutPage() {
 
                   <form onSubmit={handlePaymentSubmit} className="space-y-4">
                     <div>
-                      <label className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5">
+                      <label className="form-label">
                         Card Number *
                       </label>
                       <div className="relative">
@@ -718,7 +717,7 @@ export default function CheckoutPage() {
                             setPayment({ ...payment, cardNumber: formatCard(e.target.value) })
                           }
                           maxLength={19}
-                          className={`${inputClass} pr-12`}
+                          className={`${inputBase} pr-12`}
                         />
                         <CreditCard
                           size={18}
@@ -730,7 +729,7 @@ export default function CheckoutPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5">
+                        <label className="form-label">
                           Expiry Date *
                         </label>
                         <input
@@ -742,11 +741,11 @@ export default function CheckoutPage() {
                             setPayment({ ...payment, expiry: formatExpiry(e.target.value) })
                           }
                           maxLength={5}
-                          className={inputClass}
+                          className={inputBase}
                         />
                       </div>
                       <div>
-                        <label className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5">
+                        <label className="form-label">
                           CVV *
                         </label>
                         <input
@@ -761,13 +760,13 @@ export default function CheckoutPage() {
                             })
                           }
                           maxLength={4}
-                          className={inputClass}
+                          className={inputBase}
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5">
+                      <label className="form-label">
                         Name on Card *
                       </label>
                       <input
@@ -776,14 +775,14 @@ export default function CheckoutPage() {
                         placeholder="As it appears on your card"
                         value={payment.nameOnCard}
                         onChange={(e) => setPayment({ ...payment, nameOnCard: e.target.value })}
-                        className={inputClass}
+                        className={inputBase}
                       />
                     </div>
 
                     {/* Trust badges */}
                     <div className="flex items-center gap-3 py-3 border-y border-taupe/20">
                       <ShieldCheck size={18} strokeWidth={1.5} className="text-gold flex-shrink-0" />
-                      <p className="font-body text-xs text-[#2d2020]/50">
+                      <p className="font-body text-xs text-ink-subtle">
                         Your payment is protected by 256-bit SSL encryption. We never store your card details.
                       </p>
                     </div>
@@ -818,7 +817,7 @@ export default function CheckoutPage() {
 
           {/* Order Summary */}
           <div className="lg:col-span-2">
-            <div className="bg-white border border-taupe/20 p-6 sticky top-28">
+            <div className="panel p-6 shadow-panel sticky top-28">
               <h3 className="font-body text-xs uppercase tracking-widest text-gold font-medium mb-5">
                 Order Summary
               </h3>
@@ -832,8 +831,8 @@ export default function CheckoutPage() {
                       className="w-14 h-14 object-cover flex-shrink-0"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="font-body text-sm text-[#2d2020] truncate">{item.name}</p>
-                      <p className="font-body text-xs text-[#2d2020]/40">Digital Download</p>
+                      <p className="font-body text-sm text-ink truncate">{item.name}</p>
+                      <p className="font-body text-xs text-ink-faint">Digital Download</p>
                     </div>
                     <span className="font-body text-sm font-medium text-wine">
                       ${item.price.toFixed(2)}
@@ -844,11 +843,11 @@ export default function CheckoutPage() {
 
               <div className="space-y-2 pt-4 border-t border-taupe/20">
                 <div className="flex justify-between font-body text-sm">
-                  <span className="text-[#2d2020]/60">Subtotal</span>
-                  <span className="text-[#2d2020]">${subtotal.toFixed(2)}</span>
+                  <span className="text-ink-subtle">Subtotal</span>
+                  <span className="text-ink">${subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-body text-sm">
-                  <span className="text-[#2d2020]/60">Shipping</span>
+                  <span className="text-ink-subtle">Shipping</span>
                   <span className="text-sage font-medium">Free (Digital)</span>
                 </div>
                 <div className="flex justify-between pt-3 border-t border-taupe/20">
@@ -860,7 +859,7 @@ export default function CheckoutPage() {
               </div>
 
               <div className="mt-4 space-y-1.5">
-                <p className="font-body text-xs text-[#2d2020]/50 flex items-start gap-1.5">
+                <p className="font-body text-xs text-ink-subtle flex items-start gap-1.5">
                   <Check size={11} className="text-sage flex-shrink-0 mt-0.5" />
                   {step === 3 && info.email ? (
                     <>
@@ -871,11 +870,11 @@ export default function CheckoutPage() {
                     'Instant download + email sent to the address you enter'
                   )}
                 </p>
-                <p className="font-body text-xs text-[#2d2020]/50 flex items-center gap-1.5">
+                <p className="font-body text-xs text-ink-subtle flex items-center gap-1.5">
                   <Check size={11} className="text-sage" />
                   Instant PDF download after payment
                 </p>
-                <p className="font-body text-xs text-[#2d2020]/50 flex items-center gap-1.5">
+                <p className="font-body text-xs text-ink-subtle flex items-center gap-1.5">
                   <Check size={11} className="text-sage" />
                   PDF with all Canva links included
                 </p>

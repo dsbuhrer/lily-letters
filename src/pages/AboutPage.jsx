@@ -74,7 +74,7 @@ export default function AboutPage() {
           <motion.p
             {...fadeUp}
             transition={{ delay: 0.2 }}
-            className="font-body text-base text-[#2d2020]/60 leading-relaxed max-w-xl mx-auto"
+            className="font-body text-base text-ink-muted leading-relaxed max-w-xl mx-auto"
           >
             The Lily Letters Co is a creative studio dedicated to making your most
             meaningful celebrations look as beautiful as they feel — through
@@ -101,7 +101,7 @@ export default function AboutPage() {
               <p className="font-body text-sm text-gold uppercase tracking-wider mb-5">
                 Founder, Designer & Illustrator
               </p>
-              <div className="space-y-4 font-body text-sm text-[#2d2020]/60 leading-relaxed mb-8">
+              <div className="space-y-4 font-body text-sm text-ink-muted leading-relaxed mb-8">
                 <p>
                   I've always believed that the details are what make a celebration truly
                   memorable — and beautiful stationery is one of the first things your guests
@@ -130,7 +130,7 @@ export default function AboutPage() {
               <p className="font-body text-sm text-gold uppercase tracking-wider mb-5">
                 Inspired by Beautiful Details
               </p>
-              <div className="space-y-4 font-body text-sm text-[#2d2020]/60 leading-relaxed">
+              <div className="space-y-4 font-body text-sm text-ink-muted leading-relaxed">
                 <p>
                   The studio started from my love for detailed line-art illustrations, soft
                   colors, vintage inspiration, and designs that make special moments feel even
@@ -190,7 +190,7 @@ export default function AboutPage() {
                   <v.icon size={22} strokeWidth={1.2} className="text-wine" />
                 </div>
                 <h3 className="font-display text-lg font-light text-wine mb-2">{v.title}</h3>
-                <p className="font-body text-sm text-[#2d2020]/55 leading-relaxed">{v.body}</p>
+                <p className="font-body text-sm text-ink-muted leading-relaxed">{v.body}</p>
               </motion.div>
             ))}
           </div>
@@ -225,7 +225,7 @@ export default function AboutPage() {
         <motion.div {...fadeUp} className="max-w-lg mx-auto px-6">
           <p className="section-subtitle mb-3">Explore the Shop</p>
           <h2 className="section-heading mb-4">Discover Designs You'll Love</h2>
-          <p className="font-body text-sm text-[#2d2020]/55 mb-8 leading-relaxed">
+          <p className="font-body text-sm text-ink-muted mb-8 leading-relaxed">
             New collections are added regularly — favorite the shop so you never miss what's next.
           </p>
           <Link to="/products" className="btn-primary">

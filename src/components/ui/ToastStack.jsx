@@ -2,17 +2,17 @@ import { CheckCircle2, Info, X, XCircle } from 'lucide-react';
 
 const styles = {
   success: {
-    wrap: 'border-sage/40 bg-cream',
+    wrap: 'border-sage/50 bg-white shadow-panel',
     icon: CheckCircle2,
     iconClass: 'text-sage',
   },
   error: {
-    wrap: 'border-red-300/60 bg-red-50/90',
+    wrap: 'border-red-300/70 bg-red-50/95 shadow-panel',
     icon: XCircle,
-    iconClass: 'text-red-700',
+    iconClass: 'text-red-800',
   },
   info: {
-    wrap: 'border-gold/40 bg-cream',
+    wrap: 'border-gold/45 bg-white shadow-panel',
     icon: Info,
     iconClass: 'text-gold',
   },
@@ -23,7 +23,7 @@ export default function ToastStack({ toasts, onDismiss }) {
 
   return (
     <div
-      className="fixed bottom-6 right-6 z-[110] flex flex-col gap-3 max-w-sm w-[min(100vw-2rem,24rem)] pointer-events-none"
+      className="fixed bottom-6 right-4 sm:right-6 z-[110] flex flex-col gap-3 max-w-sm w-[min(100vw-2rem,24rem)] pointer-events-none"
       aria-live="polite"
       aria-atomic="false"
     >
@@ -33,14 +33,14 @@ export default function ToastStack({ toasts, onDismiss }) {
         return (
           <div
             key={t.id}
-            className={`pointer-events-auto flex items-start gap-3 border px-4 py-3 shadow-lg animate-[toast-in_0.25s_ease-out] ${s.wrap}`}
+            className={`pointer-events-auto flex items-start gap-3 border px-4 py-3.5 animate-[toast-in_0.25s_ease-out] ${s.wrap}`}
             role="status"
           >
             <Icon size={18} className={`shrink-0 mt-0.5 ${s.iconClass}`} strokeWidth={1.5} />
-            <p className="flex-1 font-body text-sm text-[#2d2020] leading-snug">{t.message}</p>
+            <p className="flex-1 font-body text-sm text-ink leading-snug">{t.message}</p>
             <button
               type="button"
-              className="shrink-0 p-0.5 text-[#2d2020]/40 hover:text-wine"
+              className="icon-btn shrink-0 -mr-1 text-ink-faint hover:text-wine"
               aria-label="Dismiss"
               onClick={() => onDismiss(t.id)}
             >

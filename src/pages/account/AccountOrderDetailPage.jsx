@@ -31,7 +31,7 @@ export default function AccountOrderDetailPage() {
   }, [supabase, user, orderNumber]);
 
   if (loading) {
-    return <p className="font-body text-sm text-[#2d2020]/50">Loading order…</p>;
+    return <p className="font-body text-sm text-ink-subtle">Loading order…</p>;
   }
 
   if (notFound || !order) {
@@ -52,17 +52,17 @@ export default function AccountOrderDetailPage() {
     <div>
       <Link
         to="/account/orders"
-        className="inline-flex items-center gap-2 font-body text-sm text-[#2d2020]/50 hover:text-wine mb-6"
+        className="inline-flex items-center gap-2 font-body text-sm text-ink-subtle hover:text-wine mb-6"
       >
         <ArrowLeft size={16} />
         All orders
       </Link>
 
-      <div className="bg-white border border-taupe/30 p-6 mb-6">
+      <div className="panel panel-padding mb-6">
         <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
           <div>
             <h2 className="font-display text-2xl text-wine">{order.order_number}</h2>
-            <p className="font-body text-sm text-[#2d2020]/50 mt-1">
+            <p className="font-body text-sm text-ink-subtle mt-1">
               Placed {formatOrderDate(order.created_at)}
             </p>
           </div>
@@ -71,17 +71,17 @@ export default function AccountOrderDetailPage() {
 
         <div className="grid sm:grid-cols-2 gap-4 mb-6 text-sm font-body">
           <div>
-            <p className="text-[#2d2020]/40 uppercase tracking-widest text-xs mb-1">Total</p>
+            <p className="text-ink-faint uppercase tracking-widest text-xs mb-1">Total</p>
             <p className="font-display text-xl text-wine">
               {formatCents(order.subtotal_cents, order.currency)}
             </p>
           </div>
           {order.download_expires_at && (
             <div>
-              <p className="text-[#2d2020]/40 uppercase tracking-widest text-xs mb-1">
+              <p className="text-ink-faint uppercase tracking-widest text-xs mb-1">
                 Download access until
               </p>
-              <p className="text-[#2d2020]/70">{formatOrderDate(order.download_expires_at)}</p>
+              <p className="text-ink-muted">{formatOrderDate(order.download_expires_at)}</p>
             </div>
           )}
         </div>
@@ -101,12 +101,12 @@ export default function AccountOrderDetailPage() {
         {items.map((item) => (
           <div
             key={item.id}
-            className="bg-white border border-taupe/30 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+            className="panel p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-soft"
           >
             <div className="flex items-start gap-3 min-w-0">
               <Check size={14} className="text-sage mt-1 shrink-0" />
               <div className="min-w-0">
-                <p className="font-body text-sm font-medium text-[#2d2020]">{item.product_name}</p>
+                <p className="font-body text-sm font-medium text-ink">{item.product_name}</p>
                 <p className="font-body text-xs text-gold">Canva template</p>
               </div>
             </div>
@@ -120,7 +120,7 @@ export default function AccountOrderDetailPage() {
                 Open in Canva
               </button>
             ) : (
-              <span className="font-body text-xs text-[#2d2020]/40">Unavailable</span>
+              <span className="font-body text-xs text-ink-faint">Unavailable</span>
             )}
           </div>
         ))}

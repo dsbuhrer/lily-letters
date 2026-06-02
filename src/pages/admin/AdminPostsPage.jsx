@@ -27,13 +27,7 @@ const postComparators = {
 function PostStatusLabel({ status }) {
   const isPublished = status === 'published';
   return (
-    <span
-      className={`inline-block text-[10px] uppercase tracking-widest px-2.5 py-1 border ${
-        isPublished
-          ? 'bg-wine/10 text-wine border-wine/25'
-          : 'bg-[#2d2020]/5 text-[#2d2020]/60 border-taupe'
-      }`}
-    >
+    <span className={`badge ${isPublished ? 'badge-published' : 'badge-draft'}`}>
       {isPublished ? 'Published' : 'Draft'}
     </span>
   );
@@ -92,13 +86,13 @@ export default function AdminPostsPage() {
   };
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="font-display text-3xl text-wine">Posts</h1>
+    <div className="admin-page">
+      <header className="admin-page-header">
+        <h1 className="page-title">Posts</h1>
         <Link to="/admin/posts/new" className="btn-primary">
           New post
         </Link>
-      </div>
+      </header>
 
       <AdminListToolbar
         search={search}
@@ -111,46 +105,42 @@ export default function AdminPostsPage() {
         totalCount={posts.length}
       />
 
-      <div className="bg-white/80 border border-taupe overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-cream border-b border-taupe">
+      <div className="table-shell">
+        <table className="data-table">
+          <thead>
             <tr>
-              <th className="text-left p-4 font-body font-medium">Title</th>
-              <th className="text-left p-4">Status</th>
-              <th className="text-left p-4">Updated</th>
-              <th className="p-4" />
+              <th>Title</th>
+              <th>Status</th>
+              <th>Updated</th>
+              <th className="text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredPosts.length === 0 ? (
               <tr>
-                <td colSpan={4} className="p-8 text-center text-[#2d2020]/50">
+                <td colSpan={4} className="data-table-empty">
                   {posts.length === 0 ? 'No posts yet.' : 'No posts match your search.'}
                 </td>
               </tr>
             ) : (
               filteredPosts.map((post) => (
-                <tr key={post.id} className="border-b border-taupe/40">
-                  <td className="p-4">
-                    <Link to={`/admin/posts/${post.id}`} className="text-wine hover:underline font-medium">
+                <tr key={post.id}>
+                  <td>
+                    <Link to={`/admin/posts/${post.id}`} className="table-action font-medium">
                       {post.title}
                     </Link>
-                    <p className="text-xs text-[#2d2020]/50 mt-1">/blog/{post.slug}</p>
+                    <p className="text-xs text-ink-subtle mt-1">/blog/{post.slug}</p>
                   </td>
-                  <td className="p-4">
+                  <td>
                     <PostStatusLabel status={post.status} />
                   </td>
-                  <td className="p-4 text-[#2d2020]/60">
+                  <td className="tabular-nums">
                     {new Date(post.updated_at).toLocaleDateString()}
                   </td>
-                  <td className="p-4 text-right">
-                    <div className="flex flex-wrap items-center justify-end gap-3">
+                  <td className="text-right">
+                    <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1">
                       {post.status !== 'published' && (
-                        <button
-                          type="button"
-                          onClick={() => publish(post)}
-                          className="text-wine text-xs font-medium hover:underline"
-                        >
+                        <button type="button" onClick={() => publish(post)} className="table-action">
                           Publish
                         </button>
                       )}
@@ -159,15 +149,15 @@ export default function AdminPostsPage() {
                           href={`/blog/${post.slug}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[#2d2020]/70 text-xs font-medium hover:underline"
+                          className="table-action-muted"
                         >
                           View
                         </a>
                       )}
-                      <Link to={`/admin/posts/${post.id}`} className="text-wine text-xs font-medium hover:underline">
+                      <Link to={`/admin/posts/${post.id}`} className="table-action">
                         Edit
                       </Link>
-                      <button type="button" onClick={() => remove(post.id)} className="text-red-600 text-xs hover:underline">
+                      <button type="button" onClick={() => remove(post.id)} className="table-action-danger">
                         Delete
                       </button>
                     </div>

@@ -1,8 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Link from '@tiptap/extension-link';
+import { useEditor } from '@tiptap/react';
+import BlogRichTextEditor, { getBlogEditorExtensions } from '../../components/admin/BlogRichTextEditor';
 import { ChevronLeft, ChevronRight, Loader2, Sparkles, Plus, Trash2, Info } from 'lucide-react';
 import api from '../../lib/api';
 import { useUiFeedback } from '../../context/UiFeedbackContext';
@@ -32,7 +31,7 @@ function FieldInfo({ label, children }) {
     <span className="relative inline-flex align-middle ml-1.5">
       <button
         type="button"
-        className="text-[#2d2020]/45 hover:text-wine focus:text-wine rounded-full p-0.5"
+        className="text-ink-subtle hover:text-wine focus:text-wine rounded-full p-0.5"
         aria-expanded={open}
         aria-label={label}
         onClick={() => setOpen((v) => !v)}
@@ -45,7 +44,7 @@ function FieldInfo({ label, children }) {
       {open && (
         <span
           role="tooltip"
-          className="absolute left-0 top-full mt-1.5 z-20 w-72 p-3 text-xs font-normal normal-case tracking-normal leading-relaxed text-[#2d2020] bg-white border border-taupe shadow-md rounded-sm"
+          className="absolute left-0 top-full mt-1.5 z-20 w-72 p-3 text-xs font-normal normal-case tracking-normal leading-relaxed text-ink bg-white border border-taupe shadow-md rounded-sm"
         >
           {children}
         </span>
@@ -128,10 +127,17 @@ export default function AdminPostEditorPage() {
   const [seoSource, setSeoSource] = useState('');
   const [seoError, setSeoError] = useState('');
   const [existingSlug, setExistingSlug] = useState('');
+  const pendingContentRef = useRef(null);
 
   const editor = useEditor({
-    extensions: [StarterKit, Link.configure({ openOnClick: false })],
+    extensions: getBlogEditorExtensions(),
     content: '<p></p>',
+    immediatelyRender: false,
+    editorProps: {
+      attributes: {
+        class: 'tiptap-editor focus:outline-none min-h-[220px]',
+      },
+    },
   });
 
   const set = (key, value) => setForm((f) => ({ ...f, [key]: value }));
@@ -164,10 +170,20 @@ export default function AdminPostEditorPage() {
           faq: post.faq?.length ? post.faq : [emptyFaq()],
           seo_keywords: post.seo_keywords || [],
         });
-        editor?.commands.setContent(post.content || '<p></p>');
+        pendingContentRef.current = post.content || '<p></p>';
+        if (editor && !editor.isDestroyed) {
+          editor.commands.setContent(pendingContentRef.current);
+          pendingContentRef.current = null;
+        }
       });
     }
   }, [id, isNew, editor]);
+
+  useEffect(() => {
+    if (!editor || editor.isDestroyed || pendingContentRef.current === null) return;
+    editor.commands.setContent(pendingContentRef.current);
+    pendingContentRef.current = null;
+  }, [editor]);
 
   const seoAutoRan = useRef(false);
 
@@ -346,16 +362,16 @@ export default function AdminPostEditorPage() {
         <p className="text-sm mb-2">
           <span
             className={`inline-block text-[10px] uppercase tracking-widest px-2.5 py-1 border ${
-              isDraft ? 'bg-[#2d2020]/5 text-[#2d2020]/60 border-taupe' : 'bg-wine/10 text-wine border-wine/25'
+              isDraft ? 'bg-[#2d2020]/5 text-ink-muted border-taupe' : 'bg-wine/10 text-wine border-wine/25'
             }`}
           >
             {isDraft ? 'Draft' : 'Published'}
           </span>
         </p>
       )}
-      <p className="text-sm text-[#2d2020]/50 mb-6">
+      <p className="text-sm text-ink-subtle mb-6">
         URL: <span className="text-wine font-mono">/blog/{previewSlug}</span>
-        <span className="text-[#2d2020]/40"> (slug generated from title)</span>
+        <span className="text-ink-faint"> (slug generated from title)</span>
       </p>
 
       <nav className="flex gap-1 mb-8 overflow-x-auto pb-1" aria-label="Steps">
@@ -370,7 +386,7 @@ export default function AdminPostEditorPage() {
                 ? 'bg-wine text-cream border-wine'
                 : i < step
                   ? 'border-taupe text-wine hover:bg-wine/5'
-                  : 'border-taupe/50 text-[#2d2020]/35'
+                  : 'border-taupe/50 text-ink-faint'
             }`}
           >
             {i + 1}. {s.label}
@@ -388,7 +404,7 @@ export default function AdminPostEditorPage() {
         {step === 0 && (
           <div className="space-y-5">
             <label className="block">
-              <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Title *</span>
+              <span className="text-xs uppercase tracking-widest text-ink-subtle">Title *</span>
               <input
                 className="input-field mt-1"
                 value={form.title}
@@ -397,7 +413,7 @@ export default function AdminPostEditorPage() {
               />
             </label>
             <label className="block">
-              <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Category *</span>
+              <span className="text-xs uppercase tracking-widest text-ink-subtle">Category *</span>
               <select
                 className="input-field mt-1"
                 value={form.category_id}
@@ -412,7 +428,7 @@ export default function AdminPostEditorPage() {
               </select>
             </label>
             <label className="block">
-              <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Tags</span>
+              <span className="text-xs uppercase tracking-widest text-ink-subtle">Tags</span>
               <input
                 className="input-field mt-1"
                 value={form.tag_slugs}
@@ -426,7 +442,7 @@ export default function AdminPostEditorPage() {
         {step === 1 && (
           <div className="space-y-5">
             <label className="block">
-              <span className="text-xs uppercase tracking-widest text-[#2d2020]/50 inline-flex items-center">
+              <span className="text-xs uppercase tracking-widest text-ink-subtle inline-flex items-center">
                 Direct answer (AEO snippet) *
                 <FieldInfo label="What is Direct answer (AEO snippet)?">
                   <strong className="text-wine block mb-1">What it is</strong>
@@ -442,12 +458,12 @@ export default function AdminPostEditorPage() {
                 onChange={(e) => set('direct_answer', e.target.value)}
                 placeholder="40–60 words: the clearest answer to the main question."
               />
-              <span className="text-xs text-[#2d2020]/40 mt-1 block">{form.direct_answer.length} characters</span>
+              <span className="text-xs text-ink-faint mt-1 block">{form.direct_answer.length} characters</span>
             </label>
             <div>
-              <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Article body *</span>
-              <div className="mt-1 border border-taupe bg-white min-h-[220px] p-4 prose-blog">
-                <EditorContent editor={editor} />
+              <span className="text-xs uppercase tracking-widest text-ink-subtle">Article body *</span>
+              <div className="mt-1">
+                <BlogRichTextEditor editor={editor} onError={setStepError} />
               </div>
             </div>
           </div>
@@ -470,7 +486,7 @@ export default function AdminPostEditorPage() {
               onError={setStepError}
             />
             <label className="block">
-              <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Image alt text</span>
+              <span className="text-xs uppercase tracking-widest text-ink-subtle">Image alt text</span>
               <input
                 className="input-field mt-1"
                 value={form.hero_alt}
@@ -483,7 +499,7 @@ export default function AdminPostEditorPage() {
 
         {step === 3 && (
           <div className="space-y-6">
-            <p className="text-sm text-[#2d2020]/60">Add FAQs for Google and AI search. At least one complete pair is required.</p>
+            <p className="text-sm text-ink-muted">Add FAQs for Google and AI search. At least one complete pair is required.</p>
             {form.faq.map((item, i) => (
               <div key={i} className="p-4 border border-taupe/60 bg-white/50 space-y-3">
                 <div className="flex items-center justify-between">
@@ -491,7 +507,7 @@ export default function AdminPostEditorPage() {
                   {form.faq.length > 1 && (
                     <button
                       type="button"
-                      className="text-[#2d2020]/40 hover:text-wine"
+                      className="text-ink-faint hover:text-wine"
                       onClick={() => set('faq', form.faq.filter((_, j) => j !== i))}
                       aria-label="Remove FAQ"
                     >
@@ -535,9 +551,9 @@ export default function AdminPostEditorPage() {
 
         {step === 4 && (
           <div className="space-y-4">
-            <p className="text-sm text-[#2d2020]/60">Select templates to show in “Shop the look” on this article.</p>
+            <p className="text-sm text-ink-muted">Select templates to show in “Shop the look” on this article.</p>
             {products.length === 0 ? (
-              <p className="text-sm text-[#2d2020]/50">No products in catalog. Add products first.</p>
+              <p className="text-sm text-ink-subtle">No products in catalog. Add products first.</p>
             ) : (
               <ul className="space-y-2 max-h-80 overflow-y-auto border border-taupe p-3 bg-white/50">
                 {products.map((p) => (
@@ -551,7 +567,7 @@ export default function AdminPostEditorPage() {
                       />
                       <span className="text-sm">
                         <span className="font-medium text-wine">{p.name}</span>
-                        <span className="text-[#2d2020]/50 block text-xs">
+                        <span className="text-ink-subtle block text-xs">
                           ${p.price} · {p.category}
                         </span>
                       </span>
@@ -560,7 +576,7 @@ export default function AdminPostEditorPage() {
                 ))}
               </ul>
             )}
-            <p className="text-xs text-[#2d2020]/50">
+            <p className="text-xs text-ink-subtle">
               {form.related_product_ids.length} product(s) selected
             </p>
           </div>
@@ -569,7 +585,7 @@ export default function AdminPostEditorPage() {
         {step === 5 && (
           <div className="space-y-5">
             <div className="flex items-center justify-between gap-4">
-              <p className="text-sm text-[#2d2020]/60">SEO fields are filled automatically from your content.</p>
+              <p className="text-sm text-ink-muted">SEO fields are filled automatically from your content.</p>
               <button
                 type="button"
                 className="btn-ghost text-sm inline-flex items-center gap-2 shrink-0"
@@ -585,27 +601,27 @@ export default function AdminPostEditorPage() {
             )}
             {seoSource && !seoError && <p className="text-xs text-gold">{seoSource}</p>}
             {seoLoading ? (
-              <p className="text-sm text-[#2d2020]/50 flex items-center gap-2">
+              <p className="text-sm text-ink-subtle flex items-center gap-2">
                 <Loader2 size={16} className="animate-spin" /> Generating SEO…
               </p>
             ) : (
               <div className="space-y-4 p-4 border border-taupe bg-[#f8f5ef] text-sm">
                 <div>
-                  <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Meta title</span>
+                  <span className="text-xs uppercase tracking-widest text-ink-subtle">Meta title</span>
                   <p className="mt-1 text-wine">{form.meta_title || '—'}</p>
                 </div>
                 <div>
-                  <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Meta description</span>
+                  <span className="text-xs uppercase tracking-widest text-ink-subtle">Meta description</span>
                   <p className="mt-1">{form.meta_description || '—'}</p>
                 </div>
                 <div>
-                  <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Card excerpt</span>
+                  <span className="text-xs uppercase tracking-widest text-ink-subtle">Card excerpt</span>
                   <p className="mt-1">{form.excerpt || '—'}</p>
                 </div>
                 {form.seo_keywords?.length > 0 && (
                   <div>
-                    <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Keywords</span>
-                    <p className="mt-1 text-[#2d2020]/70">{form.seo_keywords.join(', ')}</p>
+                    <span className="text-xs uppercase tracking-widest text-ink-subtle">Keywords</span>
+                    <p className="mt-1 text-ink-muted">{form.seo_keywords.join(', ')}</p>
                   </div>
                 )}
               </div>

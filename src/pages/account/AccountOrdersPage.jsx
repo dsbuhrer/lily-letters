@@ -18,14 +18,14 @@ export default function AccountOrdersPage() {
   }, [supabase, user]);
 
   if (loading) {
-    return <p className="font-body text-sm text-[#2d2020]/50">Loading orders…</p>;
+    return <p className="font-body text-sm text-ink-subtle">Loading orders…</p>;
   }
 
   if (orders.length === 0) {
     return (
-      <div className="bg-white border border-taupe/30 p-10 text-center">
+      <div className="panel panel-padding text-center">
         <p className="font-display text-2xl text-wine mb-3">No orders yet</p>
-        <p className="font-body text-sm text-[#2d2020]/60 mb-6">
+        <p className="font-body text-sm text-ink-muted mb-6">
           Your purchase history will show up here after checkout.
         </p>
         <Link to="/products" className="btn-primary inline-flex">

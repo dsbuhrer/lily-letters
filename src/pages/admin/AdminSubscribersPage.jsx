@@ -40,9 +40,9 @@ export default function AdminSubscribersPage() {
   );
 
   return (
-    <div className="p-8">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-        <h1 className="font-display text-3xl text-wine">Newsletter subscribers</h1>
+    <div className="admin-page">
+      <header className="admin-page-header">
+        <h1 className="page-title">Newsletter subscribers</h1>
         <button
           type="button"
           className="btn-secondary inline-flex items-center gap-2"
@@ -66,11 +66,11 @@ export default function AdminSubscribersPage() {
           <Download size={16} />
           Export CSV
         </button>
-      </div>
+      </header>
 
       <div className="flex flex-wrap items-center gap-4 mb-6">
         <div className="relative flex-1 min-w-[200px] max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#2d2020]/40 pointer-events-none" size={18} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint pointer-events-none" size={18} />
           <input
             type="search"
             className="input-field pl-10 w-full"
@@ -97,34 +97,34 @@ export default function AdminSubscribersPage() {
           Search
         </button>
         {subscribers.length > 0 && (
-          <p className="text-sm text-[#2d2020]/60 ml-auto w-full sm:w-auto">
+          <p className="text-sm text-ink-muted ml-auto w-full sm:w-auto">
             {subscribers.length} {subscribers.length === 1 ? 'subscriber' : 'subscribers'}
           </p>
         )}
       </div>
 
-      <div className="bg-white/80 border border-taupe overflow-hidden max-h-[60vh] overflow-y-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-cream border-b border-taupe sticky top-0">
+      <div className="table-shell max-h-[60vh] overflow-y-auto">
+        <table className="data-table">
+          <thead className="sticky top-0 z-[1]">
             <tr>
-              <th className="text-left p-4">Email</th>
-              <th className="text-left p-4">Source</th>
-              <th className="text-left p-4">Subscribed</th>
+              <th>Email</th>
+              <th>Source</th>
+              <th>Subscribed</th>
             </tr>
           </thead>
           <tbody>
             {sortedSubscribers.length === 0 ? (
               <tr>
-                <td colSpan={3} className="p-8 text-center text-[#2d2020]/50">
+                <td colSpan={3} className="data-table-empty">
                   No subscribers found.
                 </td>
               </tr>
             ) : (
               sortedSubscribers.map((s) => (
-                <tr key={s.id} className="border-b border-taupe/40">
-                  <td className="p-4 font-medium">{s.email}</td>
-                  <td className="p-4 capitalize">{s.source}</td>
-                  <td className="p-4 text-[#2d2020]/60">{new Date(s.created_at).toLocaleString()}</td>
+                <tr key={s.id}>
+                  <td className="font-medium text-ink">{s.email}</td>
+                  <td className="capitalize">{s.source}</td>
+                  <td className="tabular-nums">{new Date(s.created_at).toLocaleString()}</td>
                 </tr>
               ))
             )}

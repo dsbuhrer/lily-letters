@@ -21,7 +21,7 @@ export default function ShareButtons({ title, url, image }) {
 
   return (
     <div className="flex items-center gap-3">
-      <span className="text-xs uppercase tracking-widest text-[#2d2020]/45 font-body">Share</span>
+      <span className="text-xs uppercase tracking-widest text-ink-subtle font-body">Share</span>
       <a
         href={pinterestUrl}
         target="_blank"

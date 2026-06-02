@@ -12,8 +12,8 @@ export default function CheckoutEmailNotice() {
           <summary className="font-body text-xs text-gold cursor-pointer list-none hover:text-wine transition-colors [&::-webkit-details-marker]:hidden">
             <span className="underline underline-offset-2">Why this matters</span>
           </summary>
-          <p className="font-body text-xs text-[#2d2020]/70 leading-relaxed mt-2 text-balance">
-            <span className="font-medium text-[#2d2020]/85">Important:</span> Use your best
+          <p className="font-body text-xs text-ink-muted leading-relaxed mt-2 text-balance">
+            <span className="font-medium text-ink/85">Important:</span> Use your best
             email — the one you open every day. Your PDF with Canva template links and order
             receipt are delivered only to this address. A typo or old inbox means you may not
             find your purchase.

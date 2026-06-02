@@ -101,7 +101,7 @@ export default function ContactPage() {
             <br />
             <em className="text-gold">From You</em>
           </motion.h1>
-          <motion.p {...fadeUp} transition={{ delay: 0.2 }} className="font-body text-sm text-[#2d2020]/55 leading-relaxed">
+          <motion.p {...fadeUp} transition={{ delay: 0.2 }} className="page-lead mx-auto">
             Have a question about your order, need help with a template, or just want to say hello? 
             We typically respond within 1–2 business days.
           </motion.p>
@@ -112,33 +112,33 @@ export default function ContactPage() {
         <div className="max-w-5xl mx-auto px-6 grid md:grid-cols-5 gap-12">
           {/* Contact Info */}
           <motion.div {...fadeUp} className="md:col-span-2 space-y-6">
-            <div className="bg-white border border-taupe/20 p-6">
+            <div className="panel shadow-soft p-6">
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 bg-wine/10 flex items-center justify-center flex-shrink-0">
                   <Mail size={18} strokeWidth={1.3} className="text-wine" />
                 </div>
                 <div>
-                  <h3 className="font-body text-sm font-medium text-[#2d2020] mb-1">Email Us</h3>
+                  <h3 className="font-body text-sm font-medium text-ink mb-1">Email Us</h3>
                   <a
                     href="mailto:thelilyletters.co@gmail.com"
                     className="font-body text-sm text-gold hover:text-wine transition-colors"
                   >
                     thelilyletters.co@gmail.com
                   </a>
-                  <p className="font-body text-xs text-[#2d2020]/40 mt-1">
+                  <p className="font-body text-xs text-ink-faint mt-1">
                     For all order & template questions
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white border border-taupe/20 p-6">
+            <div className="panel shadow-soft p-6">
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 bg-wine/10 flex items-center justify-center flex-shrink-0">
                   <Instagram size={18} strokeWidth={1.3} className="text-wine" />
                 </div>
                 <div>
-                  <h3 className="font-body text-sm font-medium text-[#2d2020] mb-1">Instagram</h3>
+                  <h3 className="font-body text-sm font-medium text-ink mb-1">Instagram</h3>
                   <a
                     href="https://www.instagram.com/thelilyletters.co"
                     target="_blank"
@@ -147,22 +147,22 @@ export default function ContactPage() {
                   >
                     @thelilyletters.co
                   </a>
-                  <p className="font-body text-xs text-[#2d2020]/40 mt-1">
+                  <p className="font-body text-xs text-ink-faint mt-1">
                     DMs welcome, response may be slower
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white border border-taupe/20 p-6">
+            <div className="panel shadow-soft p-6">
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 bg-wine/10 flex items-center justify-center flex-shrink-0">
                   <Clock size={18} strokeWidth={1.3} className="text-wine" />
                 </div>
                 <div>
-                  <h3 className="font-body text-sm font-medium text-[#2d2020] mb-1">Response Time</h3>
-                  <p className="font-body text-sm text-[#2d2020]/70">1–2 Business Days</p>
-                  <p className="font-body text-xs text-[#2d2020]/40 mt-1">
+                  <h3 className="font-body text-sm font-medium text-ink mb-1">Response Time</h3>
+                  <p className="font-body text-sm text-ink-muted">1–2 Business Days</p>
+                  <p className="font-body text-xs text-ink-faint mt-1">
                     Mon–Fri, 9am–5pm EST
                   </p>
                 </div>
@@ -173,7 +173,7 @@ export default function ContactPage() {
               <p className="font-body text-xs text-gold uppercase tracking-wider font-medium mb-2">
                 Quick Tip
               </p>
-              <p className="font-body text-sm text-[#2d2020]/65 leading-relaxed">
+              <p className="font-body text-sm text-ink-muted leading-relaxed">
                 Check our <a href="/faq" className="text-wine underline">FAQ page</a> first—most 
                 common questions about downloads, Canva access, and printing are answered there instantly.
               </p>
@@ -186,7 +186,7 @@ export default function ContactPage() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.97 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-white border border-taupe/20 p-10 text-center"
+                className="panel shadow-soft p-10 text-center"
               >
                 <div className="w-16 h-16 bg-sage/15 flex items-center justify-center mx-auto mb-5">
                   <CheckCircle size={28} strokeWidth={1.5} className="text-sage" />
@@ -194,7 +194,7 @@ export default function ContactPage() {
                 <h2 className="font-display text-2xl font-light text-wine mb-3">
                   Message Sent!
                 </h2>
-                <p className="font-body text-sm text-[#2d2020]/60 mb-6 leading-relaxed">
+                <p className="font-body text-sm text-ink-muted mb-6 leading-relaxed">
                   Thank you for reaching out, {form.name}! We've received your message and will 
                   get back to you at <strong>{form.email}</strong> within 1–2 business days.
                 </p>
@@ -211,7 +211,7 @@ export default function ContactPage() {
                 </button>
               </motion.div>
             ) : (
-              <div className="bg-white border border-taupe/20 p-8">
+              <div className="panel shadow-soft p-8">
                 <h2 className="font-display text-2xl font-light text-wine mb-6">
                   Send Us a Message
                 </h2>
@@ -220,7 +220,7 @@ export default function ContactPage() {
                     <div>
                       <label
                         htmlFor="contact-name"
-                        className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5"
+                        className="form-label"
                       >
                         Your Name *
                       </label>
@@ -244,7 +244,7 @@ export default function ContactPage() {
                     <div>
                       <label
                         htmlFor="contact-email"
-                        className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5"
+                        className="form-label"
                       >
                         Email Address *
                       </label>
@@ -270,7 +270,7 @@ export default function ContactPage() {
                   <div>
                     <label
                       htmlFor="contact-topic"
-                      className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5"
+                      className="form-label"
                     >
                       Topic
                     </label>
@@ -297,7 +297,7 @@ export default function ContactPage() {
                   <div>
                     <label
                       htmlFor="contact-message"
-                      className="block font-body text-xs uppercase tracking-wider text-[#2d2020]/60 mb-1.5"
+                      className="form-label"
                     >
                       Your Message *
                     </label>
@@ -338,7 +338,7 @@ export default function ContactPage() {
                     )}
                   </button>
 
-                  <p className="font-body text-xs text-[#2d2020]/40 text-center">
+                  <p className="font-body text-xs text-ink-faint text-center">
                     We respect your privacy. Your information is never shared with third parties.
                   </p>
                 </form>

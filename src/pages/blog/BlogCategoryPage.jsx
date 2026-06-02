@@ -44,7 +44,7 @@ export default function BlogCategoryPage() {
           ))}
         </div>
         {posts.length === 0 && (
-          <p className="text-[#2d2020]/50">
+          <p className="text-ink-subtle">
             No articles in this category yet. <Link to="/blog" className="text-wine underline">Browse all</Link>
           </p>
         )}

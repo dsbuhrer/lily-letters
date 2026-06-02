@@ -12,6 +12,12 @@ export default {
         gold: '#978152',
         sage: '#6b7050',
         wine: '#4c2233',
+        ink: '#2d2020',
+      },
+      boxShadow: {
+        soft: '0 1px 2px rgba(44, 34, 51, 0.04), 0 4px 16px rgba(44, 34, 51, 0.06)',
+        panel: '0 1px 3px rgba(44, 34, 51, 0.05), 0 8px 24px rgba(44, 34, 51, 0.08)',
+        elevated: '0 4px 6px rgba(44, 34, 51, 0.05), 0 16px 40px rgba(44, 34, 51, 0.12)',
       },
       fontFamily: {
         display: ['"Cormorant Garamond"', 'Georgia', 'serif'],

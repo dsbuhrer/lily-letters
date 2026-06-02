@@ -27,11 +27,11 @@ function ContactStatusBadge({ readAt }) {
   const unread = !readAt;
   return (
     <span
-      className={`inline-block text-[10px] uppercase tracking-widest px-2.5 py-1 border ${
+      className={
         unread
-          ? 'bg-gold/15 text-wine border-gold/40'
-          : 'bg-[#2d2020]/5 text-[#2d2020]/60 border-taupe'
-      }`}
+          ? 'badge bg-gold/15 text-wine border-gold/40'
+          : 'badge bg-ink/[0.06] text-ink-muted border-taupe/60'
+      }
     >
       {unread ? 'New' : 'Read'}
     </span>
@@ -108,21 +108,22 @@ export default function AdminContactsPage() {
   };
 
   return (
-    <div className="p-8">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+    <div className="admin-page">
+      <header className="admin-page-header">
         <div>
-          <h1 className="font-display text-3xl text-wine">Contacts</h1>
-          <p className="text-sm text-[#2d2020]/50 mt-1">Contact form submissions from the site</p>
+          <h1 className="page-title">Contacts</h1>
+          <p className="page-lead mt-1">Contact form submissions from the site</p>
         </div>
-        <label className="flex items-center gap-2 text-sm text-[#2d2020]/70">
+        <label className="flex items-center gap-2 text-sm text-ink-muted cursor-pointer select-none">
           <input
             type="checkbox"
+            className="accent-wine"
             checked={unreadOnly}
             onChange={(e) => setUnreadOnly(e.target.checked)}
           />
           Unread only
         </label>
-      </div>
+      </header>
 
       <AdminListToolbar
         search={search}
@@ -136,35 +137,35 @@ export default function AdminContactsPage() {
       />
 
       <div className="grid lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-2 bg-white/80 border border-taupe overflow-hidden">
+        <div className="lg:col-span-2 table-shell">
           {loading ? (
-            <p className="p-8 text-[#2d2020]/50 text-sm">Loading…</p>
+            <p className="data-table-empty">Loading…</p>
           ) : filteredContacts.length === 0 ? (
-            <p className="p-8 text-center text-[#2d2020]/50 text-sm">
+            <p className="data-table-empty">
               {contacts.length === 0 ? 'No contacts yet.' : 'No contacts match your search.'}
             </p>
           ) : (
-            <ul className="divide-y divide-taupe/40 max-h-[70vh] overflow-y-auto">
+            <ul className="divide-y divide-taupe/35 max-h-[70vh] overflow-y-auto">
               {filteredContacts.map((contact) => (
                 <li key={contact.id}>
                   <button
                     type="button"
                     onClick={() => openContact(contact)}
-                    className={`w-full text-left p-4 hover:bg-cream/60 transition-colors ${
-                      selected?.id === contact.id ? 'bg-cream' : ''
+                    className={`w-full text-left p-4 transition-colors duration-150 hover:bg-cream/60 focus-visible:bg-cream/80 ${
+                      selected?.id === contact.id ? 'bg-cream/90 ring-1 ring-inset ring-gold/25' : ''
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="font-medium text-wine truncate">{contact.name}</p>
-                        <p className="text-xs text-[#2d2020]/50 truncate">{contact.email}</p>
+                        <p className="text-xs text-ink-subtle truncate">{contact.email}</p>
                       </div>
                       <ContactStatusBadge readAt={contact.read_at} />
                     </div>
                     {contact.topic && (
-                      <p className="text-xs text-[#2d2020]/60 mt-2 truncate">{contact.topic}</p>
+                      <p className="text-xs text-ink-muted mt-2 truncate">{contact.topic}</p>
                     )}
-                    <p className="text-xs text-[#2d2020]/40 mt-1">
+                    <p className="text-xs text-ink-faint mt-1">
                       {new Date(contact.created_at).toLocaleString()}
                     </p>
                   </button>
@@ -174,20 +175,20 @@ export default function AdminContactsPage() {
           )}
         </div>
 
-        <div className="lg:col-span-3 bg-white/80 border border-taupe min-h-[320px]">
+        <div className="lg:col-span-3 panel min-h-[320px] flex flex-col">
           {!selected ? (
-            <div className="p-10 text-center text-[#2d2020]/45">
-              <Mail className="mx-auto mb-3 text-gold" size={32} strokeWidth={1.25} />
+            <div className="flex-1 flex flex-col items-center justify-center p-10 text-center text-ink-subtle">
+              <Mail className="mb-3 text-gold" size={32} strokeWidth={1.25} />
               <p className="text-sm">Select a contact to view the full message</p>
             </div>
           ) : (
-            <div className="p-6">
+            <div className="panel-padding flex-1">
               <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
                 <div>
                   <h2 className="font-display text-2xl text-wine">{selected.name}</h2>
                   <a
                     href={`mailto:${selected.email}`}
-                    className="text-sm text-gold hover:text-wine hover:underline"
+                    className="text-sm text-gold hover:text-wine hover:underline underline-offset-2 transition-colors"
                   >
                     {selected.email}
                   </a>
@@ -203,7 +204,7 @@ export default function AdminContactsPage() {
                   </button>
                   <button
                     type="button"
-                    className="text-red-600 text-xs hover:underline inline-flex items-center gap-1"
+                    className="table-action-danger inline-flex items-center gap-1"
                     onClick={() => remove(selected.id)}
                   >
                     <Trash2 size={14} />
@@ -211,7 +212,7 @@ export default function AdminContactsPage() {
                   </button>
                   <button
                     type="button"
-                    className="p-1 text-[#2d2020]/40 hover:text-wine"
+                    className="icon-btn"
                     aria-label="Close"
                     onClick={() => setSelected(null)}
                   >
@@ -222,22 +223,22 @@ export default function AdminContactsPage() {
 
               <dl className="space-y-4 text-sm">
                 <div>
-                  <dt className="text-xs uppercase tracking-widest text-[#2d2020]/50">Received</dt>
-                  <dd className="mt-1 text-[#2d2020]/80">
+                  <dt className="form-label mb-0">Received</dt>
+                  <dd className="mt-1 text-ink-muted">
                     {new Date(selected.created_at).toLocaleString()}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs uppercase tracking-widest text-[#2d2020]/50">Topic</dt>
-                  <dd className="mt-1 text-[#2d2020]/80">{selected.topic || '—'}</dd>
+                  <dt className="form-label mb-0">Topic</dt>
+                  <dd className="mt-1 text-ink-muted">{selected.topic || '—'}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs uppercase tracking-widest text-[#2d2020]/50">Source</dt>
-                  <dd className="mt-1 text-[#2d2020]/80 capitalize">{selected.source}</dd>
+                  <dt className="form-label mb-0">Source</dt>
+                  <dd className="mt-1 text-ink-muted capitalize">{selected.source}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs uppercase tracking-widest text-[#2d2020]/50">Message</dt>
-                  <dd className="mt-2 p-4 bg-cream/80 border border-taupe/50 font-body text-[#2d2020] leading-relaxed whitespace-pre-wrap">
+                  <dt className="form-label mb-0">Message</dt>
+                  <dd className="mt-2 p-4 bg-cream/80 border border-taupe/50 font-body text-ink leading-relaxed whitespace-pre-wrap">
                     {selected.message}
                   </dd>
                 </div>

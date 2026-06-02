@@ -55,7 +55,7 @@ function PageFallback() {
   return (
     <main className="min-h-screen bg-cream pt-28 flex flex-col items-center justify-center gap-4 blog-loader-enter">
       <Loader2 size={32} strokeWidth={1.5} className="text-wine blog-loader-spin" aria-hidden />
-      <p className="font-body text-xs tracking-[0.2em] uppercase text-[#2d2020]/50">Loading…</p>
+      <p className="font-body text-xs tracking-[0.2em] uppercase text-ink-subtle">Loading…</p>
     </main>
   );
 }
@@ -70,8 +70,8 @@ export default function App() {
       {!hideLayout && <Header />}
       {!hideLayout && <CartDrawer />}
 
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
+      <AnimatePresence mode="wait" initial={false}>
+        <Routes location={location}>
           <Route path="/" element={<HomePage />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
@@ -152,12 +152,12 @@ export default function App() {
           <Route
             path="*"
             element={
-              <main className="min-h-screen bg-cream flex items-center justify-center text-center px-6">
-                <div>
-                  <p className="font-display text-8xl font-light text-wine/20 mb-4">404</p>
-                  <h1 className="font-display text-3xl font-light text-wine mb-4">Page Not Found</h1>
-                  <p className="font-body text-sm text-[#2d2020]/50 mb-6">
-                    The page you're looking for doesn't exist.
+              <main className="min-h-screen bg-cream flex items-center justify-center text-center px-6 py-24">
+                <div className="auth-panel auth-panel-centered max-w-md">
+                  <p className="font-display text-7xl md:text-8xl font-light text-wine/15 mb-4 tabular-nums">404</p>
+                  <h1 className="font-display text-3xl font-light text-wine mb-3">Page Not Found</h1>
+                  <p className="page-lead mx-auto mb-8">
+                    The page you&apos;re looking for doesn&apos;t exist.
                   </p>
                   <a href="/" className="btn-primary">
                     Go Home

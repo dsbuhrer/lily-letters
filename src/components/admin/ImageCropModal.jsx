@@ -32,7 +32,7 @@ export default function ImageCropModal({ imageSrc, onClose, onComplete, aspect =
       <div className="bg-cream w-full max-w-lg border border-taupe shadow-xl">
         <div className="p-4 border-b border-taupe">
           <h2 className="font-display text-xl text-wine">Recortar imagem</h2>
-          <p className="text-xs text-[#2d2020]/50 mt-1">Arraste para reposicionar · use o controle de zoom</p>
+          <p className="text-xs text-ink-subtle mt-1">Arraste para reposicionar · use o controle de zoom</p>
         </div>
         <div className="relative w-full h-72 bg-[#2d2020]">
           <Cropper
@@ -46,7 +46,7 @@ export default function ImageCropModal({ imageSrc, onClose, onComplete, aspect =
           />
         </div>
         <div className="px-4 py-3">
-          <label className="text-xs uppercase tracking-widest text-[#2d2020]/50">Zoom</label>
+          <label className="text-xs uppercase tracking-widest text-ink-subtle">Zoom</label>
           <input
             type="range"
             min={1}

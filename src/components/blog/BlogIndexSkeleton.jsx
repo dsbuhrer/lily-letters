@@ -15,7 +15,7 @@ export function BlogLoadingIndicator({ label = 'Loading' }) {
           className="text-wine blog-loader-spin"
           aria-hidden
         />
-        <span className="font-body text-xs tracking-[0.2em] uppercase text-[#2d2020]/55">
+        <span className="font-body text-xs tracking-[0.2em] uppercase text-ink-muted">
           {label}
         </span>
       </div>

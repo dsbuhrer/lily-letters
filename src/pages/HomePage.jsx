@@ -241,7 +241,7 @@ export default function HomePage() {
                 <h3 className="font-display text-xl font-light text-wine mb-2">
                   {step.title}
                 </h3>
-                <p className="font-body text-sm text-[#2d2020]/60 leading-relaxed">
+                <p className="font-body text-sm text-ink-muted leading-relaxed">
                   {step.desc}
                 </p>
               </motion.div>
@@ -336,14 +336,14 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.15 }}
-                className="bg-white border border-taupe/20 p-8 hover:shadow-md transition-shadow"
+                className="card-surface-interactive p-8"
               >
                 <div className="flex mb-3">
                   {Array.from({ length: t.rating }).map((_, j) => (
                     <Star key={j} size={14} fill="#978152" strokeWidth={0} />
                   ))}
                 </div>
-                <p className="font-body text-sm text-[#2d2020]/70 leading-relaxed mb-6 italic">
+                <p className="font-body text-sm text-ink-muted leading-relaxed mb-6 italic">
                   "{t.text}"
                 </p>
                 <div className="flex items-center gap-3">
@@ -353,10 +353,10 @@ export default function HomePage() {
                     className="w-10 h-10 rounded-full object-cover"
                   />
                   <div>
-                    <p className="font-body text-sm font-medium text-[#2d2020]">
+                    <p className="font-body text-sm font-medium text-ink">
                       {t.name}
                     </p>
-                    <p className="font-body text-xs text-[#2d2020]/40">
+                    <p className="font-body text-xs text-ink-faint">
                       {t.location}
                     </p>
                   </div>
@@ -383,7 +383,7 @@ export default function HomePage() {
             <h2 className="section-heading mb-4">
               Ready to Begin?
             </h2>
-            <p className="font-body text-sm text-[#2d2020]/60 mb-8 leading-relaxed">
+            <p className="font-body text-sm text-ink-muted mb-8 leading-relaxed">
               Browse our full collection of wedding templates — from invitation suites 
               to day-of stationery. Every design is beautiful, editable, and instantly yours.
             </p>

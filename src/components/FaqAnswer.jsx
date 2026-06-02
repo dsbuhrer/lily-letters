@@ -12,7 +12,7 @@ const linkClass =
 function PrintsOfLovePromo() {
   return (
     <div className="space-y-3">
-      <p className="font-body text-sm text-[#2d2020]/75 leading-relaxed">
+      <p className="font-body text-sm text-ink/75 leading-relaxed">
         Looking to print? I recommend{' '}
         <a
           href={PRINTS_OF_LOVE_REFERRAL_URL}
@@ -32,7 +32,7 @@ function PrintsOfLovePromo() {
       >
         {PRINTS_OF_LOVE_REFERRAL_PATH}
       </a>
-      <p className="font-body text-sm text-[#2d2020]/75 leading-relaxed">
+      <p className="font-body text-sm text-ink/75 leading-relaxed">
         Use code{' '}
         <strong className="text-wine font-medium tracking-wide">{PRINTS_OF_LOVE_COUPON}</strong> at
         Prints of Love for 10% off your order of $49 or more!
@@ -66,7 +66,7 @@ function renderParagraph(part, index) {
   if (trimmed.includes(PRINTS_OF_LOVE_COUPON)) {
     const [before, after] = trimmed.split(PRINTS_OF_LOVE_COUPON);
     return (
-      <p key={index} className="font-body text-sm text-[#2d2020]/75 leading-relaxed">
+      <p key={index} className="font-body text-sm text-ink/75 leading-relaxed">
         {before}
         <strong className="text-wine font-medium tracking-wide">{PRINTS_OF_LOVE_COUPON}</strong>
         {after}
@@ -77,7 +77,7 @@ function renderParagraph(part, index) {
   if (mentionsPrintsOfLove(trimmed) && !hasPrintsOfLovePromo(trimmed)) {
     const parts = trimmed.split(/(Prints of Love)/i);
     return (
-      <p key={index} className="font-body text-sm text-[#2d2020]/75 leading-relaxed">
+      <p key={index} className="font-body text-sm text-ink/75 leading-relaxed">
         {parts.map((bit, i) =>
           /^prints of love$/i.test(bit) ? (
             <a
@@ -98,7 +98,7 @@ function renderParagraph(part, index) {
   }
 
   return (
-    <p key={index} className="font-body text-sm text-[#2d2020]/75 leading-relaxed">
+    <p key={index} className="font-body text-sm text-ink/75 leading-relaxed">
       {trimmed}
     </p>
   );

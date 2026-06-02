@@ -60,7 +60,7 @@ export default function TableOfContents({ contentHtml, sticky = false }) {
               className={`block py-1.5 px-2 font-body text-sm leading-snug transition-colors ${
                 activeId === h.id
                   ? 'bg-wine/5 text-wine font-medium'
-                  : 'text-[#2d2020]/60 hover:text-wine hover:bg-wine/[0.03]'
+                  : 'text-ink-muted hover:text-wine hover:bg-wine/[0.03]'
               }`}
             >
               {h.text}

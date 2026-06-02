@@ -40,7 +40,7 @@ function SidebarList({ title, icon: Icon, posts }) {
               <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center bg-wine/5 text-[10px] font-body font-medium text-wine/50">
                 {i + 1}
               </span>
-              <span className="font-body text-sm text-[#2d2020]/75 leading-snug group-hover:text-wine transition-colors line-clamp-2">
+              <span className="font-body text-sm text-ink/75 leading-snug group-hover:text-wine transition-colors line-clamp-2">
                 {p.title}
               </span>
             </Link>
@@ -153,7 +153,7 @@ export default function BlogIndexPage() {
               placeholder="Search articles…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              className="flex-1 px-5 py-3.5 text-sm font-body bg-cream/95 text-[#2d2020] placeholder-[#a89c96] focus:outline-none"
+              className="flex-1 px-5 py-3.5 text-sm font-body bg-cream/95 text-ink placeholder-[#a89c96] focus:outline-none"
             />
             <button
               type="submit"
@@ -220,7 +220,7 @@ export default function BlogIndexPage() {
                     ))}
                   </div>
                 ) : !featured ? (
-                  <p className="text-center text-[#2d2020]/50 font-body py-12">
+                  <p className="text-center text-ink-subtle font-body py-12">
                     Articles coming soon.
                   </p>
                 ) : null}
@@ -232,7 +232,7 @@ export default function BlogIndexPage() {
 
                 <div className="bg-gradient-to-br from-sage/15 via-white to-gold/10 p-6 ring-1 ring-sage/10">
                   <p className="font-display text-xl text-wine mb-2">Need a template?</p>
-                  <p className="font-body text-sm text-[#2d2020]/60 leading-relaxed mb-4">
+                  <p className="font-body text-sm text-ink-muted leading-relaxed mb-4">
                     Browse editable Canva wedding stationery — download instantly and personalize every detail.
                   </p>
                   <Link

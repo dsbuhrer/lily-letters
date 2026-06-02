@@ -27,7 +27,7 @@ export default function AdminLoginPage() {
   if (!configured) {
     return (
       <div className="min-h-screen bg-cream flex items-center justify-center px-6">
-        <p className="text-sm text-[#2d2020]/70 text-center max-w-md">
+        <p className="text-sm text-ink-muted text-center max-w-md">
           Configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env before using the CMS.
         </p>
       </div>
@@ -36,25 +36,25 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen bg-cream flex items-center justify-center px-6">
-      <form onSubmit={submit} className="w-full max-w-md bg-white/80 border border-taupe p-8 shadow-sm">
+      <form onSubmit={submit} className="auth-panel">
         <p className="section-subtitle mb-2 text-center">CMS</p>
         <h1 className="font-display text-3xl text-wine text-center mb-8">Sign in</h1>
-        {error && <p className="text-red-600 text-sm mb-4 text-center">{error}</p>}
+        {error && <p className="form-error mb-4">{error}</p>}
         <label className="block mb-4">
-          <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Email</span>
+          <span className="form-label">Email</span>
           <input
             type="email"
-            className="input-field mt-1"
+            className="input-field"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
         </label>
         <label className="block mb-6">
-          <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Password</span>
+          <span className="form-label">Password</span>
           <input
             type="password"
-            className="input-field mt-1"
+            className="input-field"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required

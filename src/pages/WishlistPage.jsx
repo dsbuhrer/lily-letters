@@ -32,7 +32,7 @@ export default function WishlistPage() {
           <motion.p
             {...fadeUp}
             transition={{ delay: 0.2 }}
-            className="font-body text-sm text-[#2d2020]/60 mt-4 max-w-lg mx-auto"
+            className="font-body text-sm text-ink-muted mt-4 max-w-lg mx-auto"
           >
             {items.length > 0
               ? `${items.length} template${items.length !== 1 ? 's' : ''} you have saved. Add them to your cart whenever you are ready.`
@@ -52,7 +52,7 @@ export default function WishlistPage() {
             <h2 className="font-display text-2xl font-light text-wine mb-3">
               Your wishlist is empty
             </h2>
-            <p className="font-body text-sm text-[#2d2020]/50 max-w-md mb-8">
+            <p className="font-body text-sm text-ink-subtle max-w-md mb-8">
               Browse our wedding templates and tap the heart on any design to save it here.
             </p>
             <Link to="/products" className="btn-primary inline-flex items-center gap-2">

@@ -120,7 +120,7 @@ export default function AdminProductEditorPage() {
   if (loading) {
     return (
       <div className="p-8">
-        <p className="text-[#2d2020]/50">Loading…</p>
+        <p className="text-ink-subtle">Loading…</p>
       </div>
     );
   }
@@ -157,17 +157,17 @@ export default function AdminProductEditorPage() {
 
       <div className="space-y-4">
         <label className="block">
-          <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Name *</span>
+          <span className="text-xs uppercase tracking-widest text-ink-subtle">Name *</span>
           <input className="input-field mt-1" value={form.name} onChange={(e) => set('name', e.target.value)} />
         </label>
 
         <label className="block">
-          <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Subtitle</span>
+          <span className="text-xs uppercase tracking-widest text-ink-subtle">Subtitle</span>
           <input className="input-field mt-1" value={form.subtitle} onChange={(e) => set('subtitle', e.target.value)} />
         </label>
 
         <label className="block">
-          <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Category *</span>
+          <span className="text-xs uppercase tracking-widest text-ink-subtle">Category *</span>
           <select className="input-field mt-1" value={form.category} onChange={(e) => set('category', e.target.value)}>
             {Object.entries(groupedCategories).map(([group, items]) => (
               <optgroup key={group} label={group}>
@@ -183,7 +183,7 @@ export default function AdminProductEditorPage() {
 
         <div className="grid grid-cols-2 gap-4">
           <label className="block">
-            <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Price (USD) *</span>
+            <span className="text-xs uppercase tracking-widest text-ink-subtle">Price (USD) *</span>
             <input
               className="input-field mt-1"
               type="number"
@@ -194,7 +194,7 @@ export default function AdminProductEditorPage() {
             />
           </label>
           <label className="block">
-            <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Original price</span>
+            <span className="text-xs uppercase tracking-widest text-ink-subtle">Original price</span>
             <input
               className="input-field mt-1"
               type="number"
@@ -208,7 +208,7 @@ export default function AdminProductEditorPage() {
         </div>
 
         <label className="block">
-          <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Description</span>
+          <span className="text-xs uppercase tracking-widest text-ink-subtle">Description</span>
           <textarea
             className="input-field mt-1"
             rows={4}
@@ -220,7 +220,7 @@ export default function AdminProductEditorPage() {
         <ProductImageUploader images={form.images} onChange={(urls) => set('images', urls)} onError={setError} />
 
         <label className="block">
-          <span className="text-xs uppercase tracking-widest text-[#2d2020]/50">Etsy URL</span>
+          <span className="text-xs uppercase tracking-widest text-ink-subtle">Etsy URL</span>
           <input className="input-field mt-1" value={form.etsy_url} onChange={(e) => set('etsy_url', e.target.value)} />
         </label>
 

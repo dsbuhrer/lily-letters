@@ -36,7 +36,7 @@ export default function BlogTagPage() {
           ))}
         </div>
         {posts.length === 0 && (
-          <p className="text-[#2d2020]/50">
+          <p className="text-ink-subtle">
             No articles with this tag yet.{' '}
             <Link to="/blog" className="text-wine underline">
               Browse all
