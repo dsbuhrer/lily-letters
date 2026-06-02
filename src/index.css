@@ -100,12 +100,24 @@
     @apply w-full my-8 ring-1 ring-wine/5;
   }
 
+  .prose-blog figure {
+    @apply my-8;
+  }
+
+  .prose-blog figcaption {
+    @apply mt-2 text-center text-sm font-body text-[#2d2020]/55;
+  }
+
   .prose-blog strong {
     @apply text-wine font-medium;
   }
 
   .prose-blog blockquote {
     @apply my-8 pl-5 border-l-4 border-gold/50 italic text-[#2d2020]/75 font-display text-lg;
+  }
+
+  .blog-quick-answer {
+    box-shadow: 0 0 0 1px rgba(151, 129, 82, 0.15);
   }
 }
 

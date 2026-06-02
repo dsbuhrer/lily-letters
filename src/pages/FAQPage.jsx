@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import FaqAnswer from '../components/FaqAnswer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Plus, Minus, Search } from 'lucide-react';
@@ -66,7 +67,7 @@ const faqData = [
       },
       {
         q: 'Can I print at a professional print shop?',
-        a: 'Yes! Simply export your finished Canva design as a PDF (Print) and bring it to any local or online print shop. We recommend Prints of Love, or your local print shop for best results. Important: before placing a large order, always request a test print first to check colors, sizing, and paper quality.',
+        a: 'Yes! Export your finished Canva design as a PDF (Print). Before a large order, request a test print to check colors, sizing, and paper quality.\n\nLooking to print? I recommend Prints of Love for all your professional printing needs. Click my special link below to get started:\n\nhttps://printsoflove.com/ref/LILYLETTERS\n\nUse code LILYLETTERS10 at Prints of Love for 10% off your order of $49 or more!',
       },
       {
         q: 'Can I print at home?',
@@ -126,9 +127,9 @@ function FAQItem({ question, answer }) {
             transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
-            <p className="font-body text-sm text-[#2d2020]/60 leading-relaxed pb-5 pr-8 whitespace-pre-line">
-              {answer}
-            </p>
+            <div className="pb-5 pr-8">
+              <FaqAnswer answer={answer} />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

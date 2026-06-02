@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Plus, Minus } from 'lucide-react';
+import FaqAnswer from '../FaqAnswer';
 
 export default function BlogFaq({ faq = [] }) {
   const [open, setOpen] = useState(0);
@@ -29,9 +30,9 @@ export default function BlogFaq({ faq = [] }) {
               </span>
             </button>
             {open === i && (
-              <p className="px-6 pb-5 font-body text-sm text-[#2d2020]/75 leading-relaxed">
-                {item.answer}
-              </p>
+              <div className="px-6 pb-5">
+                <FaqAnswer answer={item.answer} />
+              </div>
             )}
           </div>
         ))}

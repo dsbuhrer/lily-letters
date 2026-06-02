@@ -52,12 +52,28 @@ const SAMPLE_FAQ = [
     answer:
       'Yes. Table signs, seating charts, and place cards scale to your guest list. Duplicate Canva pages as needed for additional tables or names.',
   },
+  {
+    question: 'Where should I print my wedding stationery?',
+    answer:
+      'Looking to print? I recommend Prints of Love for all your professional printing needs. Click my special link below to get started:\n\nhttps://printsoflove.com/ref/LILYLETTERS\n\nUse code LILYLETTERS10 at Prints of Love for 10% off your order of $49 or more!',
+  },
 ];
 
+function sectionToHtml(s) {
+  if (s.type === 'h2') return `<h2>${s.text}</h2>`;
+  if (s.type === 'h3') return `<h3>${s.text}</h3>`;
+  if (s.type === 'img') {
+    const alt = (s.alt || '').replace(/"/g, '&quot;');
+    const caption = s.caption
+      ? `<figcaption>${s.caption}</figcaption>`
+      : '';
+    return `<figure><img src="${s.src}" alt="${alt}" loading="lazy" />${caption}</figure>`;
+  }
+  return `<p>${s.text}</p>`;
+}
+
 function postTemplate({ title, slug, categorySlug, excerpt, directAnswer, sections, productIds, tags }) {
-  const content = sections
-    .map((s) => (s.type === 'h2' ? `<h2>${s.text}</h2>` : s.type === 'h3' ? `<h3>${s.text}</h3>` : `<p>${s.text}</p>`))
-    .join('\n');
+  const content = sections.map(sectionToHtml).join('\n');
   const fullContent = content + '<p>Explore our editable Canva wedding templates to bring this look to life for your celebration.</p>';
   return {
     slug,
@@ -99,10 +115,28 @@ const SEED_POSTS = [
       { type: 'h2', text: 'Top welcome sign styles for 2026' },
       { type: 'h3', text: 'Acrylic and modern minimal' },
       { type: 'p', text: 'Clear or frosted acrylic with serif typography remains popular for modern and black-tie weddings.' },
+      {
+        type: 'img',
+        src: '/images/products/2/01.jpg',
+        alt: 'Modern acrylic welcome sign with elegant serif typography',
+        caption: 'Acrylic welcome signs keep lines crisp and feel elevated at indoor venues.',
+      },
       { type: 'h3', text: 'Floral and garden frames' },
       { type: 'p', text: 'Hand-drawn greenery and soft sage palettes pair beautifully with outdoor and vineyard venues.' },
+      {
+        type: 'img',
+        src: '/images/products/4/01.jpg',
+        alt: 'Sage green floral welcome sign with garden frame illustration',
+        caption: 'Floral frames soften the entrance and photograph beautifully in natural light.',
+      },
       { type: 'h2', text: 'What to include on your sign' },
       { type: 'p', text: 'Include your names, wedding date, and a warm line such as “Welcome to our wedding.” Add directional cues if needed for ceremony vs. reception.' },
+      {
+        type: 'img',
+        src: '/images/home/brand-story.jpg',
+        alt: 'Welcome sign displayed at a garden wedding entrance',
+        caption: 'Place your sign where guests naturally pause — near the entrance or ceremony aisle.',
+      },
     ],
   }),
   postTemplate({

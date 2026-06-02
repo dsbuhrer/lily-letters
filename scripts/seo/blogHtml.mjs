@@ -6,6 +6,7 @@ import {
 } from './seo.mjs';
 import { getSiteUrl } from './config.mjs';
 import { renderHtmlPage } from './htmlLayout.mjs';
+import { formatFaqAnswerHtml } from '../../src/lib/faqAnswerHtml.js';
 
 export function renderBlogIndex({ posts, categories }) {
   const siteUrl = getSiteUrl();
@@ -71,7 +72,7 @@ export function renderBlogPost({ post, category, related, relatedProducts = [], 
         ${escapeHtml(f.question)}
         <span class="text-gold text-xl">+</span>
       </summary>
-      <p class="mt-3 font-body text-sm text-[#2d2020]/80 leading-relaxed">${escapeHtml(f.answer)}</p>
+      <div class="mt-3 font-body text-sm text-[#2d2020]/80 leading-relaxed space-y-3">${formatFaqAnswerHtml(f.answer)}</div>
     </details>`,
     )
     .join('');
