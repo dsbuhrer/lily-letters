@@ -1,65 +1,81 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { getSupabaseClient, isSupabaseConfigured } from '../lib/supabaseClient';
 import { checkIsAdmin } from '../lib/supabase/adminAuth';
 
 const AdminAuthContext = createContext(null);
-
-const ADMIN_REFRESH_TIMEOUT_MS = 10_000;
-
-function withTimeout(promise, ms) {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Admin auth timeout')), ms);
-    }),
-  ]);
-}
 
 export function AdminAuthProvider({ children }) {
   const supabase = getSupabaseClient();
   const [session, setSession] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const initialSessionHandled = useRef(false);
+
+  const resolveAdminFromSession = useCallback(async (nextSession) => {
+    setSession(nextSession);
+    if (!nextSession) {
+      setIsAdmin(false);
+      return false;
+    }
+    try {
+      const ok = await checkIsAdmin();
+      setIsAdmin(ok);
+      return ok;
+    } catch (err) {
+      console.warn('resolveAdminFromSession:', err);
+      setIsAdmin(false);
+      return false;
+    }
+  }, []);
 
   const refreshAdmin = useCallback(async () => {
     if (!supabase) {
       setIsAdmin(false);
       return false;
     }
-    try {
-      const {
-        data: { session: current },
-      } = await withTimeout(supabase.auth.getSession(), ADMIN_REFRESH_TIMEOUT_MS);
-      setSession(current);
-      if (!current) {
-        setIsAdmin(false);
-        return false;
-      }
-      const ok = await withTimeout(checkIsAdmin(), ADMIN_REFRESH_TIMEOUT_MS);
-      setIsAdmin(ok);
-      return ok;
-    } catch (err) {
-      console.warn('refreshAdmin:', err);
-      setIsAdmin(false);
-      return false;
-    }
-  }, [supabase]);
+    return resolveAdminFromSession(session);
+  }, [supabase, session, resolveAdminFromSession]);
 
   useEffect(() => {
     if (!supabase) {
       setLoading(false);
       return undefined;
     }
-    refreshAdmin()
-      .catch((err) => console.warn('refreshAdmin:', err))
-      .finally(() => setLoading(false));
+
+    let mounted = true;
+    initialSessionHandled.current = false;
+
+    const finishInitialLoad = () => {
+      if (!mounted || initialSessionHandled.current) return;
+      initialSessionHandled.current = true;
+      setLoading(false);
+    };
+
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
-      refreshAdmin();
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      // Never call getSession() here — it deadlocks when AuthContext also uses auth.
+      setTimeout(() => {
+        if (!mounted) return;
+        resolveAdminFromSession(nextSession)
+          .catch((err) => console.warn('admin auth:', err))
+          .finally(() => {
+            if (event === 'INITIAL_SESSION') {
+              finishInitialLoad();
+            }
+          });
+      }, 0);
     });
-    return () => subscription.unsubscribe();
-  }, [supabase, refreshAdmin]);
+
+    // Fallback if INITIAL_SESSION never fires (should not happen on supported clients).
+    const fallbackTimer = setTimeout(finishInitialLoad, 3_000);
+
+    return () => {
+      mounted = false;
+      clearTimeout(fallbackTimer);
+      subscription.unsubscribe();
+    };
+  }, [supabase, resolveAdminFromSession]);
 
   const login = useCallback(
     async (email, password) => {

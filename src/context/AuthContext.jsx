@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { isEmailConfirmed } from '../lib/authEmail';
 import { getSupabaseClient, isSupabaseConfigured } from '../lib/supabaseClient';
 
@@ -17,6 +17,7 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const initialSessionHandled = useRef(false);
 
   const fetchProfile = useCallback(async (userId) => {
     if (!supabase || !userId) {
@@ -37,34 +38,49 @@ export function AuthProvider({ children }) {
       return undefined;
     }
 
-    supabase.auth
-      .getSession()
-      .then(({ data: { session: current } }) => {
-        setSession(current);
-        if (current?.user) {
-          fetchProfile(current.user.id);
-        }
-      })
-      .catch((err) => {
-        console.warn('getSession:', err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    let mounted = true;
+    initialSessionHandled.current = false;
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+    const finishInitialLoad = () => {
+      if (!mounted || initialSessionHandled.current) return;
+      initialSessionHandled.current = true;
+      setLoading(false);
+    };
+
+    const applySession = async (nextSession) => {
       setSession(nextSession);
       if (nextSession?.user) {
-        await claimGuestOrders(supabase, nextSession.user);
+        if (isEmailConfirmed(nextSession.user)) {
+          await claimGuestOrders(supabase, nextSession.user);
+        }
         await fetchProfile(nextSession.user.id);
       } else {
         setProfile(null);
       }
+    };
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      setTimeout(() => {
+        if (!mounted) return;
+        applySession(nextSession)
+          .catch((err) => console.warn('auth state:', err))
+          .finally(() => {
+            if (event === 'INITIAL_SESSION') {
+              finishInitialLoad();
+            }
+          });
+      }, 0);
     });
 
-    return () => subscription.unsubscribe();
+    const fallbackTimer = setTimeout(finishInitialLoad, 3_000);
+
+    return () => {
+      mounted = false;
+      clearTimeout(fallbackTimer);
+      subscription.unsubscribe();
+    };
   }, [supabase, fetchProfile]);
 
   const signUp = useCallback(
