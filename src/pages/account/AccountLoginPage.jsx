@@ -8,22 +8,27 @@ export default function AccountLoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
-  const { signIn, resetPassword, configured, user } = useAuth();
+  const { signIn, resetPassword, configured, user, emailConfirmed } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || '/account';
 
   useEffect(() => {
-    if (user) navigate(from, { replace: true });
-  }, [user, from, navigate]);
+    if (user && emailConfirmed) navigate(from, { replace: true });
+    if (user && !emailConfirmed) navigate('/account/confirm-email', { replace: true });
+  }, [user, emailConfirmed, from, navigate]);
 
   const submit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
-      await signIn(email, password);
-      navigate(from, { replace: true });
+      const { user: signedInUser } = await signIn(email, password);
+      if (signedInUser && !signedInUser.email_confirmed_at) {
+        navigate('/account/confirm-email', { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
     } catch (err) {
       setError(err.message || 'Sign in failed');
     } finally {

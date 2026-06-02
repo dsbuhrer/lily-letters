@@ -2,7 +2,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 export default function AccountGuard() {
-  const { user, loading, configured } = useAuth();
+  const { user, emailConfirmed, loading, configured } = useAuth();
   const location = useLocation();
 
   if (!configured) {
@@ -26,6 +26,10 @@ export default function AccountGuard() {
 
   if (!user) {
     return <Navigate to="/account/login" state={{ from: location.pathname }} replace />;
+  }
+
+  if (!emailConfirmed) {
+    return <Navigate to="/account/confirm-email" replace />;
   }
 
   return <Outlet />;

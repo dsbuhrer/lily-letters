@@ -1,9 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { isEmailConfirmed } from '../lib/authEmail';
 import { getSupabaseClient, isSupabaseConfigured } from '../lib/supabaseClient';
 
 const AuthContext = createContext(null);
 
-async function claimGuestOrders(supabase) {
+async function claimGuestOrders(supabase, user) {
+  if (!isEmailConfirmed(user)) return;
   const { error } = await supabase.rpc('claim_orders_by_email');
   if (error) {
     console.warn('claim_orders_by_email:', error.message);
@@ -48,7 +50,7 @@ export function AuthProvider({ children }) {
     } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
       setSession(nextSession);
       if (nextSession?.user) {
-        await claimGuestOrders(supabase);
+        await claimGuestOrders(supabase, nextSession.user);
         await fetchProfile(nextSession.user.id);
       } else {
         setProfile(null);
@@ -81,8 +83,8 @@ export function AuthProvider({ children }) {
           .eq('id', data.user.id);
       }
 
-      if (data.session) {
-        await claimGuestOrders(supabase);
+      if (data.session && isEmailConfirmed(data.user)) {
+        await claimGuestOrders(supabase, data.user);
         await fetchProfile(data.user.id);
       }
 
@@ -96,11 +98,25 @@ export function AuthProvider({ children }) {
       if (!supabase) throw new Error('Account system is not configured');
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      await claimGuestOrders(supabase);
-      if (data.user) await fetchProfile(data.user.id);
+      if (data.user && isEmailConfirmed(data.user)) {
+        await claimGuestOrders(supabase, data.user);
+        await fetchProfile(data.user.id);
+      }
       return data;
     },
     [supabase, fetchProfile],
+  );
+
+  const resendConfirmationEmail = useCallback(
+    async (email) => {
+      if (!supabase) throw new Error('Account system is not configured');
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email.trim(),
+      });
+      if (error) throw error;
+    },
+    [supabase],
   );
 
   const signOut = useCallback(async () => {
@@ -141,10 +157,14 @@ export function AuthProvider({ children }) {
     return Promise.resolve();
   }, [session, fetchProfile]);
 
+  const user = session?.user ?? null;
+  const emailConfirmed = isEmailConfirmed(user);
+
   const value = useMemo(
     () => ({
       session,
-      user: session?.user ?? null,
+      user,
+      emailConfirmed,
       profile,
       loading,
       configured: isSupabaseConfigured(),
@@ -152,18 +172,22 @@ export function AuthProvider({ children }) {
       signIn,
       signOut,
       resetPassword,
+      resendConfirmationEmail,
       updateProfile,
       refreshProfile,
       supabase,
     }),
     [
       session,
+      user,
+      emailConfirmed,
       profile,
       loading,
       signUp,
       signIn,
       signOut,
       resetPassword,
+      resendConfirmationEmail,
       updateProfile,
       refreshProfile,
       supabase,

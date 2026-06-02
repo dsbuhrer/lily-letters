@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Download, Mail, Check, ExternalLink, User, ArrowRight } from 'lucide-react';
 import { useUiFeedback } from '../context/UiFeedbackContext';
 import { useAuth } from '../context/AuthContext';
+import { isEmailConfirmed } from '../lib/authEmail';
 import { downloadOrderLinksPdf } from '../lib/orderDownloads';
 
 export default function OrderConfirmationPage() {
@@ -18,7 +19,7 @@ export default function OrderConfirmationPage() {
   const [createError, setCreateError] = useState('');
 
   useEffect(() => {
-    if (user) {
+    if (user && isEmailConfirmed(user)) {
       setAccountCreated(true);
       return undefined;
     }
@@ -43,15 +44,15 @@ export default function OrderConfirmationPage() {
     setCreating(true);
     setCreateError('');
     try {
-      const { session } = await signUp(order.email, password, {
+      const { session, user: newUser } = await signUp(order.email, password, {
         firstName: order.firstName,
       });
-      setAccountCreated(true);
-      if (session) {
+      if (session && newUser?.email_confirmed_at) {
+        setAccountCreated(true);
         toast.success('Account created! Your purchases are saved.');
         setTimeout(() => navigate('/account'), 1500);
       } else {
-        toast.info('Check your email to confirm your account.');
+        toast.info('Check your email to confirm your account. Purchases link after you confirm.');
       }
     } catch (err) {
       setCreateError(err.message || 'Could not create account');

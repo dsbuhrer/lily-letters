@@ -33,6 +33,7 @@ import AccountDashboardPage from './pages/account/AccountDashboardPage';
 import AccountOrdersPage from './pages/account/AccountOrdersPage';
 import AccountOrderDetailPage from './pages/account/AccountOrderDetailPage';
 import AccountSettingsPage from './pages/account/AccountSettingsPage';
+import AccountConfirmEmailPage from './pages/account/AccountConfirmEmailPage';
 
 const BlogIndexPage = lazy(() => import('./pages/blog/BlogIndexPage'));
 const BlogPostPage = lazy(() => import('./pages/blog/BlogPostPage'));
@@ -83,6 +84,7 @@ export default function App() {
 
           <Route path="/account/login" element={<AccountLoginPage />} />
           <Route path="/account/register" element={<AccountRegisterPage />} />
+          <Route path="/account/confirm-email" element={<AccountConfirmEmailPage />} />
           <Route element={<AccountGuard />}>
             <Route element={<AccountLayout />}>
               <Route path="/account" element={<AccountDashboardPage />} />

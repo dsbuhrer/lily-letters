@@ -1,3 +1,14 @@
+# Local Supabase Auth — require email confirmation before full customer access.
+# Hosted projects: Dashboard → Authentication → Providers → Email → Confirm email.
+[auth]
+site_url = "http://127.0.0.1:5173"
+additional_redirect_urls = ["http://127.0.0.1:5173/account"]
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+
 [functions.create-order]
 verify_jwt = false
 

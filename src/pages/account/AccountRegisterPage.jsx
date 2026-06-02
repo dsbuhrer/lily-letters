@@ -10,20 +10,23 @@ export default function AccountRegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState(false);
-  const { signUp, configured, user } = useAuth();
+  const [resendStatus, setResendStatus] = useState('');
+  const [resending, setResending] = useState(false);
+  const { signUp, resendConfirmationEmail, configured, user, emailConfirmed } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) navigate('/account', { replace: true });
-  }, [user, navigate]);
+    if (user && emailConfirmed) navigate('/account', { replace: true });
+    if (user && !emailConfirmed) navigate('/account/confirm-email', { replace: true });
+  }, [user, emailConfirmed, navigate]);
 
   const submit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
-      const { session } = await signUp(email, password, { firstName, lastName });
-      if (session) {
+      const { session, user: newUser } = await signUp(email, password, { firstName, lastName });
+      if (session && newUser?.email_confirmed_at) {
         navigate('/account', { replace: true });
       } else {
         setConfirmEmail(true);
@@ -46,6 +49,19 @@ export default function AccountRegisterPage() {
   }
 
   if (confirmEmail) {
+    const handleResend = async () => {
+      setResending(true);
+      setResendStatus('');
+      try {
+        await resendConfirmationEmail(email);
+        setResendStatus('We sent a new confirmation link.');
+      } catch (err) {
+        setResendStatus(err.message || 'Could not resend. Try again shortly.');
+      } finally {
+        setResending(false);
+      }
+    };
+
     return (
       <main className="min-h-screen bg-cream pt-24 flex items-center justify-center px-6 pb-12">
         <div className="w-full max-w-md bg-white/80 border border-taupe p-8 text-center">
@@ -54,7 +70,20 @@ export default function AccountRegisterPage() {
             We sent a confirmation link to <strong>{email}</strong>. Click it to activate your
             account and access your purchases.
           </p>
-          <Link to="/account/login" className="btn-primary inline-flex">
+          {resendStatus && (
+            <p className="font-body text-sm text-sage mb-4" role="status">
+              {resendStatus}
+            </p>
+          )}
+          <button
+            type="button"
+            className="btn-primary w-full"
+            onClick={handleResend}
+            disabled={resending}
+          >
+            {resending ? 'Sending…' : 'Resend confirmation email'}
+          </button>
+          <Link to="/account/login" className="btn-ghost inline-flex mt-3 text-sm">
             Back to sign in
           </Link>
         </div>

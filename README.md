@@ -114,11 +114,14 @@ VALUES ('<auth.users uuid>', 'admin');
 |-----|---------|
 | `/account/login` | Sign in |
 | `/account/register` | Create account |
+| `/account/confirm-email` | Pending email confirmation (resend link) |
 | `/account` | Dashboard — recent orders & quick download |
 | `/account/orders` | Purchase history |
 | `/account/settings` | Edit profile & password reset |
 
-Orders are stored in Supabase (`orders`, `order_items`, `profiles`). Payoneer webhook integration is documented in [`docs/PAYONEER_WEBHOOK.md`](docs/PAYONEER_WEBHOOK.md).
+Orders are stored in Supabase (`orders`, `order_items`, `profiles`). Guest orders link to an account only after **email confirmation** (app + `claim_orders_by_email` RPC). In production, enable **Confirm email** under Supabase Dashboard → Authentication → Email.
+
+Payoneer webhook integration is documented in [`docs/PAYONEER_WEBHOOK.md`](docs/PAYONEER_WEBHOOK.md).
 
 ## Stack
 
