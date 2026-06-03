@@ -37,8 +37,12 @@ const BlogTagPage = lazy(() => import('./pages/blog/BlogTagPage'));
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'));
 const AdminPostsPage = lazy(() => import('./pages/admin/AdminPostsPage'));
 const AdminPostEditorPage = lazy(() => import('./pages/admin/AdminPostEditorPage'));
+const AdminCategoriesPage = lazy(() => import('./pages/admin/AdminCategoriesPage'));
+const AdminCategoryEditorPage = lazy(() => import('./pages/admin/AdminCategoryEditorPage'));
 const AdminProductsPage = lazy(() => import('./pages/admin/AdminProductsPage'));
 const AdminProductEditorPage = lazy(() => import('./pages/admin/AdminProductEditorPage'));
+const AdminProductCategoriesPage = lazy(() => import('./pages/admin/AdminProductCategoriesPage'));
+const AdminProductCategoryEditorPage = lazy(() => import('./pages/admin/AdminProductCategoryEditorPage'));
 const AdminContactsPage = lazy(() => import('./pages/admin/AdminContactsPage'));
 const AdminSubscribersPage = lazy(() => import('./pages/admin/AdminSubscribersPage'));
 
@@ -164,6 +168,22 @@ export default function App() {
                 }
               />
               <Route
+                path="/admin/categories"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <AdminCategoriesPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/admin/categories/:id"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <AdminCategoryEditorPage />
+                  </Suspense>
+                }
+              />
+              <Route
                 path="/admin/products"
                 element={
                   <Suspense fallback={<PageFallback />}>
@@ -176,6 +196,22 @@ export default function App() {
                 element={
                   <Suspense fallback={<PageFallback />}>
                     <AdminProductEditorPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/admin/product-categories"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <AdminProductCategoriesPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/admin/product-categories/:id"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <AdminProductCategoryEditorPage />
                   </Suspense>
                 }
               />

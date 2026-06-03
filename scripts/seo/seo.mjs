@@ -127,7 +127,7 @@ export async function generateSitemap(supabase) {
 
   const [{ data: posts }, { data: categories }, { data: products }] = await Promise.all([
     supabase.from('posts').select('slug, updated_at').eq('status', 'published'),
-    supabase.from('categories').select('slug'),
+    supabase.from('categories').select('slug').is('deleted_at', null),
     supabase.from('products').select('slug, updated_at').eq('active', true),
   ]);
 

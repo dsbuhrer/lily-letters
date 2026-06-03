@@ -187,7 +187,7 @@ export default function BlogPostPage() {
       </header>
 
       <article className="max-w-6xl mx-auto px-6 pb-20 pt-10">
-        <div className="grid lg:grid-cols-[1fr_280px] gap-10 lg:gap-14 items-start">
+        <div className="grid lg:grid-cols-[1fr_280px] gap-10 lg:gap-14">
           <div className="min-w-0 text-left">
             {post.direct_answer && (
               <motion.div
@@ -230,10 +230,8 @@ export default function BlogPostPage() {
             <ArticleCta />
           </div>
 
-          <aside className="hidden lg:block">
-            <div className="sticky top-28">
-              {preparedContent && <TableOfContents contentHtml={preparedContent} sticky />}
-            </div>
+          <aside className="hidden lg:block min-h-0">
+            {preparedContent && <TableOfContents contentHtml={preparedContent} sticky />}
           </aside>
         </div>
 

@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, ChevronDown, SlidersHorizontal } from 'lucide-react';
-import { categories } from '../data/products';
 import { useProducts } from '../hooks/useProducts';
+import { useProductCategories } from '../hooks/useProductCategories';
 import ProductCard from '../components/ProductCard';
 
 const sortOptions = [
@@ -14,28 +14,9 @@ const sortOptions = [
   { value: 'reviews', label: 'Most Reviewed' },
 ];
 
-// Build grouped structure for sidebar
-const groupedCategories = (() => {
-  const groups = [];
-  const seen = new Set();
-
-  // "All" first
-  groups.push({ type: 'item', ...categories.find((c) => c.id === 'all') });
-
-  categories.forEach((cat) => {
-    if (cat.id === 'all') return;
-    if (cat.group && !seen.has(cat.group)) {
-      seen.add(cat.group);
-      groups.push({ type: 'group', label: cat.group });
-    }
-    groups.push({ type: 'item', ...cat });
-  });
-
-  return groups;
-})();
-
 export default function ProductsPage() {
   const { products } = useProducts();
+  const { grouped: groupedCategories } = useProductCategories();
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('default');
@@ -78,7 +59,7 @@ export default function ProductsPage() {
     });
 
   const activeCategoryLabel =
-    categories.find((c) => c.id === categoryParam)?.label || 'All Templates';
+    groupedCategories.find((c) => c.type === 'item' && c.id === categoryParam)?.label || 'All Templates';
 
   return (
     <main className="min-h-screen bg-cream pt-20">

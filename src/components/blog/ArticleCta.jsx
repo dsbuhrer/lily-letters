@@ -10,7 +10,7 @@ export default function ArticleCta() {
         <p className="text-xs font-body font-medium tracking-[0.2em] uppercase text-gold mb-3">
           Canva Templates
         </p>
-        <h2 className="font-display text-3xl md:text-4xl font-light mb-3 text-balance">
+        <h2 className="font-display text-3xl md:text-4xl font-light mb-3 text-balance text-cream">
           Make it yours in Canva
         </h2>
         <p className="font-body text-sm text-cream/75 max-w-lg mx-auto mb-8 leading-relaxed">

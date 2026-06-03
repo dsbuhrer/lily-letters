@@ -63,7 +63,7 @@ async function main() {
       .select('*, categories(id, slug, name)')
       .eq('status', 'published')
       .order('published_at', { ascending: false }),
-    supabase.from('categories').select('*').order('sort_order'),
+    supabase.from('categories').select('*').is('deleted_at', null).order('sort_order'),
     supabase.from('products').select('*').eq('active', true).order('id'),
   ]);
 

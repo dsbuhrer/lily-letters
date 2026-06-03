@@ -2,19 +2,20 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import api from '../../lib/api';
-import { productCategories } from '../../data/productCategories';
+import { staticProductCategories } from '../../lib/productCategoryUtils';
 import ProductImageUploader from '../../components/admin/ProductImageUploader';
+
+const defaultCategorySlug =
+  staticProductCategories[0]?.slug || staticProductCategories[0]?.id || 'wedding-extras';
 
 const emptyForm = () => ({
   name: '',
   subtitle: '',
-  category: 'wedding-extras',
+  category: defaultCategorySlug,
   price: 7,
   original_price: '',
   description: '',
   images: [],
-  etsy_url: '',
-  etsy_id: '',
   badge: '',
   collection: '',
   active: true,
@@ -30,8 +31,6 @@ function productToForm(p) {
     original_price: p.originalPrice ?? '',
     description: p.description || '',
     images: [...(p.images || [])],
-    etsy_url: p.etsyUrl || '',
-    etsy_id: p.etsyId || '',
     badge: p.badge || '',
     collection: p.collection || '',
     active: p.active !== false,
@@ -39,27 +38,39 @@ function productToForm(p) {
   };
 }
 
-const groupedCategories = productCategories.reduce((acc, cat) => {
-  const g = cat.group || 'Other';
-  if (!acc[g]) acc[g] = [];
-  acc[g].push(cat);
-  return acc;
-}, {});
-
 export default function AdminProductEditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isNew = id === 'new';
 
   const [form, setForm] = useState(emptyForm);
+  const [groupedCategories, setGroupedCategories] = useState({});
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
+    api.admin
+      .productCategories()
+      .then((r) => {
+        const list = r.categories || [];
+        const grouped = list.reduce((acc, cat) => {
+          const g = cat.group_name || 'Other';
+          if (!acc[g]) acc[g] = [];
+          acc[g].push(cat);
+          return acc;
+        }, {});
+        setGroupedCategories(grouped);
+        if (isNew && list.length) {
+          setForm((f) => ({ ...f, category: list[0].slug }));
+        }
+      })
+      .catch(() => {});
+  }, [isNew]);
+
+  useEffect(() => {
     if (isNew) {
-      setForm(emptyForm());
       setLoading(false);
       return;
     }
@@ -101,8 +112,6 @@ export default function AdminProductEditorPage() {
         original_price: form.original_price ? Number(form.original_price) : null,
         description: form.description,
         images: form.images,
-        etsy_url: form.etsy_url || undefined,
-        etsy_id: form.etsy_id || undefined,
         badge: form.badge || null,
         collection: form.collection || undefined,
         active: form.active,
@@ -172,7 +181,7 @@ export default function AdminProductEditorPage() {
             {Object.entries(groupedCategories).map(([group, items]) => (
               <optgroup key={group} label={group}>
                 {items.map((c) => (
-                  <option key={c.id} value={c.id}>
+                  <option key={c.slug} value={c.slug}>
                     {c.label}
                   </option>
                 ))}
@@ -218,11 +227,6 @@ export default function AdminProductEditorPage() {
         </label>
 
         <ProductImageUploader images={form.images} onChange={(urls) => set('images', urls)} onError={setError} />
-
-        <label className="block">
-          <span className="text-xs uppercase tracking-widest text-ink-subtle">Etsy URL</span>
-          <input className="input-field mt-1" value={form.etsy_url} onChange={(e) => set('etsy_url', e.target.value)} />
-        </label>
 
         <div className="flex flex-wrap gap-6">
           <label className="flex items-center gap-2 text-sm">

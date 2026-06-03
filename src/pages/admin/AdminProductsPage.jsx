@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../lib/api';
 import { getCategoryLabel } from '../../data/productCategories';
+import { useProductCategories } from '../../hooks/useProductCategories';
 import AdminListToolbar from '../../components/admin/AdminListToolbar';
 import { filterBySearch, sortByKey } from '../../utils/adminListFilter';
 
@@ -24,6 +25,7 @@ const productComparators = {
 };
 
 export default function AdminProductsPage() {
+  const { categories: productCategories } = useProductCategories();
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('name_asc');
@@ -39,11 +41,11 @@ export default function AdminProductsPage() {
       p.name,
       p.slug,
       String(p.id),
-      getCategoryLabel(p.category),
+      getCategoryLabel(p.category, productCategories),
       p.subtitle,
     ]);
     return sortByKey(matched, sort, productComparators);
-  }, [products, search, sort]);
+  }, [products, search, sort, productCategories]);
 
   return (
     <div className="admin-page">
@@ -95,7 +97,7 @@ export default function AdminProductsPage() {
                       <span className="font-medium text-ink">{p.name}</span>
                     </div>
                   </td>
-                  <td>{getCategoryLabel(p.category)}</td>
+                  <td>{getCategoryLabel(p.category, productCategories)}</td>
                   <td className="font-medium text-wine tabular-nums">${p.price}</td>
                   <td className="text-right">
                     <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1">

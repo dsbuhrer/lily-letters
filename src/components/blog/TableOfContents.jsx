@@ -41,9 +41,10 @@ export default function TableOfContents({ contentHtml, sticky = false }) {
   if (headings.length < 2) return null;
 
   return (
-    <aside
+    <nav
+      aria-label="In this article"
       className={`bg-white p-5 shadow-[0_4px_24px_-8px_rgba(76,34,51,0.1)] ring-1 ring-wine/5 ${
-        sticky ? '' : 'mb-8'
+        sticky ? 'sticky top-28 z-10' : 'mb-8'
       }`}
     >
       <div className="flex items-center gap-2 mb-4">
@@ -68,6 +69,6 @@ export default function TableOfContents({ contentHtml, sticky = false }) {
           </li>
         ))}
       </ul>
-    </aside>
+    </nav>
   );
 }

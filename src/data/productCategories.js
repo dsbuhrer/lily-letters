@@ -1,8 +1,6 @@
-import { categories } from './products';
-
-/** Shop catalog categories (excludes "all") for CMS product form */
-export const productCategories = categories.filter((c) => c.id !== 'all');
-
-export function getCategoryLabel(id) {
-  return productCategories.find((c) => c.id === id)?.label || id;
-}
+export {
+  staticProductCategories as productCategories,
+  getCategoryLabel,
+  buildGroupedProductCategories,
+  groupCategoriesForSelect,
+} from '../lib/productCategoryUtils';

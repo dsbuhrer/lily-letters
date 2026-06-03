@@ -28,9 +28,24 @@ export async function getProduct(idOrSlug) {
   return { product: mapProduct(data) };
 }
 
+export async function getProductCategories() {
+  const supabase = requireSupabase();
+  const { data, error } = await supabase
+    .from('product_categories')
+    .select('*')
+    .is('deleted_at', null)
+    .order('sort_order');
+  if (error) throw new Error(error.message);
+  return { categories: data || [] };
+}
+
 export async function getCategories() {
   const supabase = requireSupabase();
-  const { data, error } = await supabase.from('categories').select('*').order('sort_order');
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .is('deleted_at', null)
+    .order('sort_order');
   if (error) throw new Error(error.message);
   return { categories: data || [] };
 }
@@ -63,6 +78,7 @@ export async function getPosts(params = {}) {
       .from('categories')
       .select('id')
       .eq('slug', category)
+      .is('deleted_at', null)
       .maybeSingle();
     if (cat) query = query.eq('category_id', cat.id);
   }

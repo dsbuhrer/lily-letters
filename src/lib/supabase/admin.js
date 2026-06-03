@@ -122,11 +122,117 @@ export async function publishPost(id) {
   return { post: data };
 }
 
-export async function listCategories() {
+export async function listCategories(options = {}) {
   const supabase = requireSupabase();
-  const { data, error } = await supabase.from('categories').select('*').order('sort_order');
+  let query = supabase.from('categories').select('*').order('sort_order');
+  if (!options.includeDeleted) {
+    query = query.is('deleted_at', null);
+  }
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return { categories: data || [] };
+}
+
+export async function getBlogCategory(id) {
+  const supabase = requireSupabase();
+  const { data, error } = await supabase.from('categories').select('*').eq('id', id).maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error('Category not found');
+  return { category: data };
+}
+
+export async function saveBlogCategory(body, id) {
+  const supabase = requireSupabase();
+  const slug = (body.slug || slugify(body.name)).trim();
+  const row = {
+    name: body.name?.trim(),
+    slug,
+    description: body.description?.trim() || null,
+    meta_title: body.meta_title?.trim() || null,
+    meta_description: body.meta_description?.trim() || null,
+    sort_order: Number.isFinite(body.sort_order) ? body.sort_order : 0,
+    deleted_at: null,
+  };
+
+  if (id) {
+    const { data, error } = await supabase.from('categories').update(row).eq('id', id).select().single();
+    if (error) throw new Error(error.message);
+    return { category: data };
+  }
+  const { data, error } = await supabase.from('categories').insert(row).select().single();
+  if (error) throw new Error(error.message);
+  return { category: data };
+}
+
+export async function deleteBlogCategory(id) {
+  const supabase = requireSupabase();
+  const { error } = await supabase
+    .from('categories')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id)
+    .is('deleted_at', null);
+  if (error) throw new Error(error.message);
+  return { ok: true };
+}
+
+export async function listProductCategories(options = {}) {
+  const supabase = requireSupabase();
+  let query = supabase.from('product_categories').select('*').order('sort_order');
+  if (!options.includeDeleted) {
+    query = query.is('deleted_at', null);
+  }
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return { categories: data || [] };
+}
+
+export async function getProductCategory(id) {
+  const supabase = requireSupabase();
+  const { data, error } = await supabase
+    .from('product_categories')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error('Category not found');
+  return { category: data };
+}
+
+export async function saveProductCategory(body, id) {
+  const supabase = requireSupabase();
+  const slug = (body.slug || slugify(body.label)).trim();
+  const row = {
+    label: body.label?.trim(),
+    slug,
+    group_name: body.group_name?.trim() || null,
+    sort_order: Number.isFinite(body.sort_order) ? body.sort_order : 0,
+    deleted_at: null,
+  };
+
+  if (id) {
+    const { data, error } = await supabase
+      .from('product_categories')
+      .update(row)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return { category: data };
+  }
+  const { data, error } = await supabase.from('product_categories').insert(row).select().single();
+  if (error) throw new Error(error.message);
+  return { category: data };
+}
+
+export async function deleteProductCategory(id) {
+  const supabase = requireSupabase();
+  const { error } = await supabase
+    .from('product_categories')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id)
+    .is('deleted_at', null);
+  if (error) throw new Error(error.message);
+  return { ok: true };
 }
 
 export async function listProductsAdmin() {
@@ -149,8 +255,6 @@ export async function saveProduct(body, id) {
   const row = {
     name: body.name,
     slug: body.slug || slugify(body.name),
-    etsy_id: body.etsy_id,
-    etsy_url: body.etsy_url,
     subtitle: body.subtitle,
     category: body.category,
     price: body.price,
