@@ -17,6 +17,10 @@ export function buildOrganizationJsonLd() {
 export function buildArticleJsonLd(post, category) {
   const siteUrl = getSiteUrl();
   const url = `${siteUrl}/blog/${post.slug}`;
+  const tagKeywords = (post.tags || []).map((t) => t.name);
+  const seoKeywords = post.seo_keywords || [];
+  const keywords = [...new Set([...seoKeywords, ...tagKeywords].map((k) => String(k).trim()).filter(Boolean))];
+
   return {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -33,7 +37,16 @@ export function buildArticleJsonLd(post, category) {
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': url },
     articleSection: category?.name,
-    keywords: (post.seo_keywords || []).join(', '),
+    keywords: keywords.join(', '),
+    ...(post.tags?.length
+      ? {
+          about: post.tags.map((t) => ({
+            '@type': 'Thing',
+            name: t.name,
+            url: `${siteUrl}/blog/tag/${t.slug}`,
+          })),
+        }
+      : {}),
   };
 }
 
@@ -90,16 +103,19 @@ export function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
-export function buildMetaTags({ title, description, canonical, ogImage, type = 'website' }) {
+export function buildMetaTags({ title, description, canonical, ogImage, type = 'website', keywords }) {
   const siteUrl = getSiteUrl();
   const url = canonical || siteUrl;
   const img = ogImage || `${siteUrl}/logos/logo-horizontal.svg`;
   const t = escapeHtml(title);
   const d = escapeHtml(description);
+  const kw = Array.isArray(keywords) ? keywords.join(', ') : keywords;
+  const keywordsMeta = kw ? `<meta name="keywords" content="${escapeHtml(kw)}" />` : '';
 
   return `
     <title>${t}</title>
     <meta name="description" content="${d}" />
+    ${keywordsMeta}
     <link rel="canonical" href="${escapeHtml(url)}" />
     <meta property="og:type" content="${type}" />
     <meta property="og:title" content="${t}" />

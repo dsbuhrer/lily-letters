@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import { slugify, readingTime } from '../src/lib/utils/slug.js';
+import { normalizeTags, tagsToStorageSlugs } from '../src/lib/blogTags.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 config({ path: path.join(__dirname, '../.env') });
@@ -75,6 +76,7 @@ function sectionToHtml(s) {
 function postTemplate({ title, slug, categorySlug, excerpt, directAnswer, sections, productIds, tags }) {
   const content = sections.map(sectionToHtml).join('\n');
   const fullContent = content + '<p>Explore our editable Canva wedding templates to bring this look to life for your celebration.</p>';
+  const normalized = normalizeTags(tags);
   return {
     slug,
     title,
@@ -84,11 +86,11 @@ function postTemplate({ title, slug, categorySlug, excerpt, directAnswer, sectio
     status: 'published',
     meta_title: `${title} | The Lily Letters Co.`,
     meta_description: excerpt,
-    tag_slugs: tags,
+    tag_slugs: tagsToStorageSlugs(normalized),
     category_slug: categorySlug,
     faq: SAMPLE_FAQ,
     related_product_ids: productIds,
-    seo_keywords: tags,
+    seo_keywords: normalized.map((t) => t.name),
     featured: false,
     author_name: 'The Lily Letters Co.',
     author_bio: 'Curating elegant, editable wedding stationery for modern couples.',
@@ -379,6 +381,11 @@ export async function runSeed() {
     );
   }
 
+  const { error: seqError } = await supabase.rpc('sync_products_id_sequence');
+  if (seqError) {
+    console.warn('Could not sync products id sequence:', seqError.message);
+  }
+
   for (const post of SEED_POSTS) {
     const { category_slug, ...rest } = post;
     const row = {
@@ -386,6 +393,9 @@ export async function runSeed() {
       category_id: catMap[category_slug] || null,
     };
     await supabase.from('posts').upsert(row, { onConflict: 'slug' });
+    for (const tag of normalizeTags(post.tag_slugs || rest.tag_slugs || [])) {
+      await supabase.from('tags').upsert({ slug: tag.slug, name: tag.name }, { onConflict: 'slug' });
+    }
   }
 
   console.log('Seed complete: admin, categories, products, posts');

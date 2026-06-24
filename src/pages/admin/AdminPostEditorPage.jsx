@@ -12,6 +12,7 @@ import {
   BLOG_HERO_RECOMMENDED_NOTE,
 } from '../../constants/blogHeroImage';
 import { slugify } from '../../utils/slugify';
+import BlogTagInput from '../../components/admin/BlogTagInput';
 
 const STEPS = [
   { id: 'basics', label: 'Basics' },
@@ -61,7 +62,7 @@ const initialForm = () => ({
   meta_title: '',
   meta_description: '',
   category_id: '',
-  tag_slugs: '',
+  tag_slugs: [],
   hero_image: '',
   hero_alt: '',
   related_product_ids: [],
@@ -162,7 +163,7 @@ export default function AdminPostEditorPage() {
           meta_title: post.meta_title || '',
           meta_description: post.meta_description || '',
           category_id: post.category_id || '',
-          tag_slugs: (post.tag_slugs || []).join(', '),
+          tag_slugs: post.tag_slugs || [],
           hero_image: post.hero_image || '',
           hero_alt: post.hero_alt || '',
           related_product_ids: post.related_product_ids || [],
@@ -187,24 +188,26 @@ export default function AdminPostEditorPage() {
 
   const seoAutoRan = useRef(false);
 
-  const runSeoGeneration = useCallback(async () => {
+  const runSeoGeneration = useCallback(async ({ force = false } = {}) => {
     setSeoLoading(true);
     setSeoError('');
     try {
-      const tags = form.tag_slugs.split(',').map((t) => t.trim()).filter(Boolean);
+      const tags = form.tag_slugs;
       const seo = await api.admin.generateSeo({
         title: form.title,
-        excerpt: form.excerpt,
         direct_answer: form.direct_answer,
         content: editor?.getHTML() || '',
         tag_slugs: tags,
+        regenerate: force,
       });
       setForm((f) => ({
         ...f,
-        meta_title: seo.meta_title || f.meta_title,
-        meta_description: seo.meta_description || f.meta_description,
-        excerpt: seo.excerpt || f.excerpt,
-        seo_keywords: seo.seo_keywords || f.seo_keywords,
+        meta_title: seo.meta_title?.trim() || f.meta_title,
+        meta_description: force
+          ? (seo.meta_description ?? '')
+          : (seo.meta_description?.trim() || f.meta_description),
+        excerpt: force ? (seo.excerpt ?? '') : (seo.excerpt?.trim() || f.excerpt),
+        seo_keywords: seo.seo_keywords?.length ? seo.seo_keywords : f.seo_keywords,
       }));
       setSeoSource(
         seo.source === 'gemini' ? 'Generated with Gemini' : 'Generated automatically (no API key or fallback)',
@@ -215,7 +218,7 @@ export default function AdminPostEditorPage() {
     } finally {
       setSeoLoading(false);
     }
-  }, [form.title, form.excerpt, form.direct_answer, form.tag_slugs, editor]);
+  }, [form.title, form.direct_answer, form.tag_slugs, editor]);
 
   useEffect(() => {
     if (step !== 5) {
@@ -229,7 +232,7 @@ export default function AdminPostEditorPage() {
       return;
     }
     seoAutoRan.current = true;
-    runSeoGeneration();
+    runSeoGeneration({ force: false });
   }, [step, form.meta_title, form.meta_description, runSeoGeneration]);
 
   const goNext = () => {
@@ -269,7 +272,7 @@ export default function AdminPostEditorPage() {
     meta_title: form.meta_title,
     meta_description: form.meta_description,
     category_id: form.category_id || null,
-    tag_slugs: form.tag_slugs.split(',').map((t) => t.trim()).filter(Boolean),
+    tag_slugs: form.tag_slugs,
     hero_image: form.hero_image,
     hero_alt: form.hero_alt || form.title,
     related_product_ids: form.related_product_ids,
@@ -429,11 +432,9 @@ export default function AdminPostEditorPage() {
             </label>
             <label className="block">
               <span className="text-xs uppercase tracking-widest text-ink-subtle">Tags</span>
-              <input
-                className="input-field mt-1"
+              <BlogTagInput
                 value={form.tag_slugs}
-                onChange={(e) => set('tag_slugs', e.target.value)}
-                placeholder="wedding signs, bridal shower (comma-separated)"
+                onChange={(tags) => set('tag_slugs', tags)}
               />
             </label>
           </div>
@@ -590,7 +591,7 @@ export default function AdminPostEditorPage() {
                 type="button"
                 className="btn-ghost text-sm inline-flex items-center gap-2 shrink-0"
                 disabled={seoLoading}
-                onClick={runSeoGeneration}
+                onClick={() => runSeoGeneration({ force: true })}
               >
                 {seoLoading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
                 Regenerate SEO

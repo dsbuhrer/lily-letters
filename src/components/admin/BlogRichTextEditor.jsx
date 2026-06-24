@@ -244,7 +244,7 @@ export default function BlogRichTextEditor({ editor, onError }) {
         </ToolbarButton>
       </div>
 
-      <div className="rich-text-body prose-blog">
+      <div className="rich-text-body blog-article-body">
         <EditorContent editor={editor} />
       </div>
 

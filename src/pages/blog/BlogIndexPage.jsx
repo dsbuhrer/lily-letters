@@ -56,6 +56,7 @@ export default function BlogIndexPage() {
   const [trending, setTrending] = useState([]);
   const [popular, setPopular] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [popularTags, setPopularTags] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [q, setQ] = useState('');
@@ -87,6 +88,13 @@ export default function BlogIndexPage() {
       .then((d) => setCategories(d.categories || []))
       .catch(() => setCategories([]))
       .finally(() => setLoadingCategories(false));
+  }, []);
+
+  useEffect(() => {
+    api
+      .getTags({ sort: 'popular', minPosts: 1 })
+      .then((d) => setPopularTags((d.tags || []).slice(0, 12)))
+      .catch(() => setPopularTags([]));
   }, []);
 
   const search = (e) => {
@@ -199,6 +207,25 @@ export default function BlogIndexPage() {
               ))}
             </motion.nav>
           )
+        )}
+
+        {popularTags.length > 0 && (
+          <motion.nav
+            {...fadeUp}
+            aria-label="Popular topics"
+            className="flex flex-wrap justify-center gap-2 mb-12"
+          >
+            {popularTags.map((t) => (
+              <Link
+                key={t.slug}
+                to={`/blog/tag/${t.slug}`}
+                rel="tag"
+                className="px-3 py-1.5 bg-cream/80 text-xs font-body text-ink-muted ring-1 ring-taupe/40 hover:bg-sage/15 hover:text-sage hover:ring-sage/20 transition-colors"
+              >
+                {t.name}
+              </Link>
+            ))}
+          </motion.nav>
         )}
 
         {loadingPosts ? (

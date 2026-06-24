@@ -2,8 +2,21 @@ import { requireSupabase } from './client';
 import { mapProduct } from './mappers';
 import { sanitizePostContent } from '../sanitizePostHtml';
 import { slugify, readingTime } from '../utils/slug';
+import { normalizeTags, tagsToStorageSlugs, nameFromSlug } from '../blogTags';
 
-function preparePostRow(body, existingSlug) {
+async function syncPostTags(supabase, rawTags) {
+  const tags = normalizeTags(rawTags);
+  if (tags.length) {
+    const { error } = await supabase.from('tags').upsert(
+      tags.map((t) => ({ slug: t.slug, name: t.name })),
+      { onConflict: 'slug' },
+    );
+    if (error) throw new Error(error.message);
+  }
+  return tagsToStorageSlugs(tags);
+}
+
+function preparePostRow(body, existingSlug, tagSlugs) {
   const slug = existingSlug || slugify(body.title);
   const content = sanitizePostContent(body.content || '');
   return {
@@ -18,7 +31,7 @@ function preparePostRow(body, existingSlug) {
     canonical_url: body.canonical_url,
     og_image: body.og_image,
     category_id: body.category_id,
-    tag_slugs: body.tag_slugs,
+    tag_slugs: tagSlugs,
     faq: body.faq,
     related_product_ids: body.related_product_ids,
     author_name: body.author_name,
@@ -70,6 +83,17 @@ export async function getPostById(id) {
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) throw new Error('Post not found');
+
+  const normalized = normalizeTags(data.tag_slugs || []);
+  if (normalized.length) {
+    const slugs = normalized.map((t) => t.slug);
+    const { data: tagRows } = await supabase.from('tags').select('slug, name').in('slug', slugs);
+    const nameBySlug = Object.fromEntries((tagRows || []).map((t) => [t.slug, t.name]));
+    data.tag_slugs = slugs.map((s) => nameBySlug[s] || nameFromSlug(s));
+  } else {
+    data.tag_slugs = [];
+  }
+
   return { post: data };
 }
 
@@ -84,7 +108,8 @@ export async function savePost(body, id) {
       .maybeSingle();
     existing = data;
   }
-  const row = preparePostRow(body, existing?.slug);
+  const tagSlugs = await syncPostTags(supabase, body.tag_slugs);
+  const row = preparePostRow(body, existing?.slug, tagSlugs);
   if (row.status === 'published' && (!existing || existing.status !== 'published')) {
     row.published_at = new Date().toISOString();
   }
@@ -250,6 +275,17 @@ export async function getProductAdmin(id) {
   return { product: mapProduct(data) };
 }
 
+async function nextProductId(supabase) {
+  const { data, error } = await supabase
+    .from('products')
+    .select('id')
+    .order('id', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data?.id ?? 0) + 1;
+}
+
 export async function saveProduct(body, id) {
   const supabase = requireSupabase();
   const row = {
@@ -263,6 +299,7 @@ export async function saveProduct(body, id) {
     description: body.description,
     includes: body.includes,
     canva_link: body.canva_link,
+    pdf_url: body.pdf_url ?? null,
     images: body.images,
     tags: body.tags,
     colors: body.colors,
@@ -278,7 +315,11 @@ export async function saveProduct(body, id) {
     if (error) throw new Error(error.message);
     return { product: mapProduct(data) };
   }
-  const { data, error } = await supabase.from('products').insert(row).select().single();
+  const { data, error } = await supabase
+    .from('products')
+    .insert({ ...row, id: await nextProductId(supabase) })
+    .select()
+    .single();
   if (error) throw new Error(error.message);
   return { product: mapProduct(data) };
 }
@@ -333,6 +374,13 @@ export async function deleteContact(id) {
   const { error } = await supabase.from('contacts').delete().eq('id', id);
   if (error) throw new Error(error.message);
   return { ok: true };
+}
+
+export async function listTags() {
+  const supabase = requireSupabase();
+  const { data, error } = await supabase.from('tags').select('*').order('name');
+  if (error) throw new Error(error.message);
+  return { tags: data || [] };
 }
 
 export async function generatePostSeo(payload) {

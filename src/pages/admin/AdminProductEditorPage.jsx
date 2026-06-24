@@ -3,7 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import api from '../../lib/api';
 import { staticProductCategories } from '../../lib/productCategoryUtils';
-import ProductImageUploader from '../../components/admin/ProductImageUploader';
+import ProductMediaGallery from '../../components/admin/ProductMediaGallery';
+import ProductPdfUploader from '../../components/admin/ProductPdfUploader';
 
 const defaultCategorySlug =
   staticProductCategories[0]?.slug || staticProductCategories[0]?.id || 'wedding-extras';
@@ -16,6 +17,8 @@ const emptyForm = () => ({
   original_price: '',
   description: '',
   images: [],
+  pdf_url: '',
+  pdf_file_name: '',
   badge: '',
   collection: '',
   active: true,
@@ -31,6 +34,8 @@ function productToForm(p) {
     original_price: p.originalPrice ?? '',
     description: p.description || '',
     images: [...(p.images || [])],
+    pdf_url: p.pdfUrl || '',
+    pdf_file_name: p.pdfUrl ? p.pdfUrl.split('/').pop() : '',
     badge: p.badge || '',
     collection: p.collection || '',
     active: p.active !== false,
@@ -112,6 +117,7 @@ export default function AdminProductEditorPage() {
         original_price: form.original_price ? Number(form.original_price) : null,
         description: form.description,
         images: form.images,
+        pdf_url: form.pdf_url || null,
         badge: form.badge || null,
         collection: form.collection || undefined,
         active: form.active,
@@ -226,7 +232,16 @@ export default function AdminProductEditorPage() {
           />
         </label>
 
-        <ProductImageUploader images={form.images} onChange={(urls) => set('images', urls)} onError={setError} />
+        <ProductMediaGallery images={form.images} onChange={(urls) => set('images', urls)} onError={setError} />
+
+        <ProductPdfUploader
+          pdfPath={form.pdf_url}
+          fileName={form.pdf_file_name}
+          onChange={(path, name) => {
+            setForm((f) => ({ ...f, pdf_url: path, pdf_file_name: name }));
+          }}
+          onError={setError}
+        />
 
         <div className="flex flex-wrap gap-6">
           <label className="flex items-center gap-2 text-sm">

@@ -7,6 +7,7 @@ import {
 import { getSiteUrl } from './config.mjs';
 import { renderHtmlPage } from './htmlLayout.mjs';
 import { formatFaqAnswerHtml } from '../../src/lib/faqAnswerHtml.js';
+import { normalizeTags, nameFromSlug, mergeSeoKeywords } from '../../src/lib/blogTags.js';
 
 export function renderBlogIndex({ posts, categories }) {
   const siteUrl = getSiteUrl();
@@ -95,6 +96,11 @@ export function renderBlogPost({ post, category, related, relatedProducts = [], 
     )
     .join('');
 
+  const tags = normalizeTags(post.tag_slugs || []);
+  const tagsHtml = tags.length
+    ? `<nav aria-label="Article topics" class="mt-10 pt-6 border-t border-taupe/30"><p class="text-xs uppercase tracking-widest text-[#2d2020]/50 mb-3">Topics</p><ul class="flex flex-wrap gap-2">${tags.map((t) => `<li><a href="/blog/tag/${escapeHtml(t.slug)}" rel="tag" class="px-3 py-1 text-xs border border-taupe/50 text-[#2d2020]/70 hover:border-wine hover:text-wine">${escapeHtml(t.name)}</a></li>`).join('')}</ul></nav>`
+    : '';
+
   const body = `
     <main class="min-h-screen bg-cream pt-28 pb-16">
       <article class="max-w-3xl mx-auto px-6" itemscope itemtype="https://schema.org/Article">
@@ -109,6 +115,7 @@ export function renderBlogPost({ post, category, related, relatedProducts = [], 
         </header>
         ${post.direct_answer ? `<p class="text-lg font-body text-[#2d2020] leading-relaxed border-l-2 border-gold pl-4 mb-8" itemprop="description"><strong>Quick answer:</strong> ${escapeHtml(post.direct_answer)}</p>` : ''}
         <div class="prose-blog font-body text-[#2d2020] leading-relaxed space-y-4" itemprop="articleBody">${post.content}</div>
+        ${tagsHtml}
         ${faq?.length ? `<section class="mt-12" aria-labelledby="faq-heading"><h2 id="faq-heading" class="font-display text-2xl text-wine mb-4">Frequently Asked Questions</h2>${faqHtml}</section>` : ''}
         ${shopHtml ? `<section class="mt-12"><h2 class="font-display text-2xl text-wine mb-2">Shop the look</h2><p class="font-body text-sm text-[#2d2020]/60 mb-6">Editable Canva templates to match this inspiration.</p><div class="grid grid-cols-1 sm:grid-cols-2 gap-6">${shopHtml}</div></section>` : ''}
         <section class="mt-12 p-8 bg-wine text-cream text-center">
@@ -121,7 +128,7 @@ export function renderBlogPost({ post, category, related, relatedProducts = [], 
     </main>`;
 
   const jsonLd = [
-    buildArticleJsonLd(post, category),
+    buildArticleJsonLd({ ...post, tags }, category),
     buildFaqJsonLd(faq),
     buildBreadcrumbJsonLd([
       { name: 'Home', href: '/' },
@@ -137,6 +144,7 @@ export function renderBlogPost({ post, category, related, relatedProducts = [], 
     ogImage: post.og_image || post.hero_image,
     body,
     jsonLd,
+    keywords: mergeSeoKeywords(post.seo_keywords, tags),
     preloadImage: post.hero_image,
   });
 }
@@ -173,11 +181,11 @@ export function renderCategoryArchive({ category, posts }) {
   });
 }
 
-export function renderTagArchive({ tagSlug, posts }) {
+export function renderTagArchive({ tagSlug, tagName, posts }) {
   const siteUrl = getSiteUrl();
-  const name = tagSlug.replace(/-/g, ' ');
-  const title = `${name} | Wedding Blog`;
-  const description = `Articles tagged ${name}.`;
+  const name = tagName || nameFromSlug(tagSlug);
+  const title = `${name} | Wedding Blog | The Lily Letters Co.`;
+  const description = `Wedding articles and expert guides about ${name.toLowerCase()} — invitations, signage, and stationery inspiration.`;
 
   const listHtml = (posts || [])
     .map(
@@ -192,7 +200,7 @@ export function renderTagArchive({ tagSlug, posts }) {
   const body = `
     <main class="min-h-screen bg-cream pt-28 pb-16">
       <div class="max-w-3xl mx-auto px-6">
-        <h1 class="section-heading mb-4 capitalize">${escapeHtml(name)}</h1>
+        <h1 class="section-heading mb-4">${escapeHtml(name)}</h1>
         <p class="font-body text-[#2d2020]/70 mb-10">${escapeHtml(description)}</p>
         ${listHtml}
       </div>
@@ -202,6 +210,7 @@ export function renderTagArchive({ tagSlug, posts }) {
     title,
     description,
     canonical: `${siteUrl}/blog/tag/${tagSlug}`,
+    keywords: [name, 'wedding blog', 'wedding inspiration'],
     body,
   });
 }

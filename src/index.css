@@ -322,6 +322,11 @@
     @apply font-body text-sm text-ink-subtle mt-2 max-w-sm;
   }
 
+  /* —— Blog article body (editor + published post) —— */
+  .blog-article-body {
+    @apply prose-blog font-body text-ink leading-relaxed bg-white p-6 md:p-10 shadow-[0_4px_24px_-8px_rgba(76,34,51,0.08)] ring-1 ring-wine/5;
+  }
+
   /* —— Blog prose —— */
   .prose-blog h2 {
     @apply font-display text-2xl md:text-3xl font-light text-wine mt-10 mb-4 scroll-mt-28;
@@ -377,7 +382,7 @@
 
   /* —— TipTap admin editor —— */
   .rich-text-body .tiptap {
-    @apply min-h-[220px] px-4 py-4 outline-none;
+    @apply min-h-[220px] outline-none;
   }
 
   .rich-text-body .tiptap:focus {
@@ -390,7 +395,7 @@
   }
 
   .rich-text-body .tiptap img {
-    @apply w-full my-6 ring-1 ring-wine/10 cursor-default;
+    @apply cursor-default;
   }
 
   .rich-text-body .tiptap img.ProseMirror-selectednode {

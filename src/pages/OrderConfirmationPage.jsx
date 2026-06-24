@@ -5,7 +5,12 @@ import { Download, Mail, Check, ExternalLink, User, ArrowRight } from 'lucide-re
 import { useUiFeedback } from '../context/UiFeedbackContext';
 import { useAuth } from '../context/AuthContext';
 import { isEmailConfirmed } from '../lib/authEmail';
-import { downloadOrderLinksPdf } from '../lib/orderDownloads';
+import {
+  downloadOrderPdfs,
+  downloadOrderLinksPdf,
+  orderHasPdfDownload,
+  orderHasLegacyCanvaDownload,
+} from '../lib/orderDownloads';
 
 export default function OrderConfirmationPage() {
   const { toast } = useUiFeedback();
@@ -17,6 +22,7 @@ export default function OrderConfirmationPage() {
   const [password, setPassword] = useState('');
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState('');
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     if (user && isEmailConfirmed(user)) {
@@ -61,24 +67,49 @@ export default function OrderConfirmationPage() {
     }
   };
 
-  const handleDownload = () => {
-    const mockOrder = {
+  const buildOrderForDownload = () => {
+    const orderItems =
+      order.orderItems ||
+      (order.items || []).map((item) => ({
+        product_name: item.name,
+        pdf_url: item.pdfUrl || item.pdf_url || null,
+        pdf_signed_url: item.pdf_signed_url || null,
+        canva_link: item.canvaLink || item.canva_link || null,
+      }));
+
+    return {
       order_number: order.orderId,
       paid_at: new Date().toISOString(),
       created_at: new Date().toISOString(),
-      order_items: (order.items || []).map((item) => ({
-        product_name: item.name,
-        canva_link: item.canvaLink || item.canva_link || null,
-      })),
+      order_items: orderItems,
     };
+  };
 
-    const hasLinks = mockOrder.order_items.some((i) => i.canva_link);
-    if (hasLinks) {
-      downloadOrderLinksPdf(mockOrder);
-    } else if (user) {
-      navigate('/account');
-    } else {
-      toast.info('Create an account to access your Canva template links anytime.');
+  const handleDownload = async () => {
+    const mockOrder = buildOrderForDownload();
+    const hasPdf = orderHasPdfDownload(mockOrder);
+    const hasLegacy = orderHasLegacyCanvaDownload(mockOrder);
+
+    if (!hasPdf && !hasLegacy) {
+      if (user) {
+        navigate('/account');
+      } else {
+        toast.info('Create an account to access your downloads anytime.');
+      }
+      return;
+    }
+
+    setDownloading(true);
+    try {
+      if (hasPdf) {
+        await downloadOrderPdfs(mockOrder);
+      } else {
+        downloadOrderLinksPdf(mockOrder);
+      }
+    } catch (err) {
+      toast.error(err.message || 'Download failed.');
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -126,10 +157,10 @@ export default function OrderConfirmationPage() {
             </div>
             <div className="text-left">
               <h2 className="font-display text-xl font-light text-wine">
-                Your Templates Are Ready
+                Your Downloads Are Ready
               </h2>
               <p className="font-body text-xs text-ink-subtle">
-                Instant download available
+                Instant PDF download available
               </p>
             </div>
           </div>
@@ -144,23 +175,28 @@ export default function OrderConfirmationPage() {
                   <li key={item.id} className="flex items-center gap-2 font-body text-sm text-ink-muted">
                     <Check size={12} className="text-sage flex-shrink-0" />
                     <span>{item.name}</span>
-                    <span className="text-gold">— Canva Template Link</span>
+                    <span className="text-gold">— PDF download</span>
                   </li>
                 ))
               ) : (
-                <li className="font-body text-sm text-ink-muted">Your template(s) — Canva Links PDF</li>
+                <li className="font-body text-sm text-ink-muted">Your product PDF download</li>
               )}
             </ul>
           </div>
 
           <p className="font-body text-sm text-ink-muted mb-6 leading-relaxed">
-            Click below to download your file containing all Canva template links.
-            Open each link to access your editable templates in Canva (free account required).
+            Click below to download your PDF file(s). Save them to your device for easy access
+            anytime during your 1-year download period.
           </p>
 
-          <button type="button" onClick={handleDownload} className="btn-primary w-full justify-center">
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={downloading}
+            className="btn-primary w-full justify-center"
+          >
             <Download size={16} strokeWidth={1.5} />
-            Download Your Templates
+            {downloading ? 'Downloading…' : 'Download Your PDF'}
           </button>
 
           {user && (
@@ -190,11 +226,11 @@ export default function OrderConfirmationPage() {
           </h3>
           <div className="space-y-3">
             {[
-              'Open the PDF and click on your template link',
-              'Sign in to Canva (free account works perfectly!)',
-              'Click "Use template" to create your own copy',
-              'Customize with your names, dates, and details',
-              'Download as PDF and print at home or a print shop',
+              'Download your PDF using the button above',
+              'Open the file on your computer or mobile device',
+              'Print at home or at a local print shop',
+              'Keep your download safe — access is available for 1 year',
+              'Need help? Contact us anytime via the FAQ or support email',
             ].map((step, i) => (
               <div key={i} className="flex items-start gap-3">
                 <span className="w-6 h-6 rounded-full bg-wine/10 text-wine flex items-center justify-center font-body text-xs font-medium flex-shrink-0 mt-0.5">

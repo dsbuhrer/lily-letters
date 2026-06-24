@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Check } from 'lucide-react';
+import { ArrowLeft, Download, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
   fetchOrderByNumber,
@@ -10,7 +10,7 @@ import {
 } from '../../lib/accountApi';
 import OrderStatusBadge from '../../components/account/OrderStatusBadge';
 import DownloadButton from '../../components/account/DownloadButton';
-import { openCanvaLink } from '../../lib/orderDownloads';
+import { downloadItemPdf } from '../../lib/orderDownloads';
 
 export default function AccountOrderDetailPage() {
   const { orderNumber } = useParams();
@@ -18,6 +18,7 @@ export default function AccountOrderDetailPage() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [downloadingId, setDownloadingId] = useState(null);
 
   useEffect(() => {
     if (!supabase || !user || !orderNumber) return;
@@ -29,6 +30,17 @@ export default function AccountOrderDetailPage() {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [supabase, user, orderNumber]);
+
+  const handleItemDownload = async (item) => {
+    setDownloadingId(item.id);
+    try {
+      await downloadItemPdf(item, order.order_number);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   if (loading) {
     return <p className="font-body text-sm text-ink-subtle">Loading order…</p>;
@@ -96,7 +108,7 @@ export default function AccountOrderDetailPage() {
         </Link>
       </div>
 
-      <h3 className="font-display text-lg text-wine mb-4">Templates in this order</h3>
+      <h3 className="font-display text-lg text-wine mb-4">Items in this order</h3>
       <div className="space-y-3">
         {items.map((item) => (
           <div
@@ -107,17 +119,20 @@ export default function AccountOrderDetailPage() {
               <Check size={14} className="text-sage mt-1 shrink-0" />
               <div className="min-w-0">
                 <p className="font-body text-sm font-medium text-ink">{item.product_name}</p>
-                <p className="font-body text-xs text-gold">Canva template</p>
+                <p className="font-body text-xs text-gold">
+                  {item.pdf_url ? 'PDF download' : item.canva_link ? 'Canva template (legacy)' : 'Digital product'}
+                </p>
               </div>
             </div>
-            {downloadable && item.canva_link ? (
+            {downloadable && item.pdf_url ? (
               <button
                 type="button"
-                onClick={() => openCanvaLink(item.canva_link)}
+                onClick={() => handleItemDownload(item)}
+                disabled={downloadingId === item.id}
                 className="btn-secondary text-xs py-2 px-4 shrink-0"
               >
-                <ExternalLink size={14} />
-                Open in Canva
+                <Download size={14} />
+                {downloadingId === item.id ? 'Downloading…' : 'Download PDF'}
               </button>
             ) : (
               <span className="font-body text-xs text-ink-faint">Unavailable</span>

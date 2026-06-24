@@ -1,6 +1,21 @@
 import { requireSupabase } from './client';
 import { mapProduct, mapPost } from './mappers';
 import { slugify } from '../utils/slug';
+import { normalizeTags, nameFromSlug } from '../blogTags';
+
+async function enrichTags(supabase, tagSlugs) {
+  const normalized = normalizeTags(tagSlugs);
+  if (!normalized.length) return [];
+
+  const slugs = normalized.map((t) => t.slug);
+  const { data } = await supabase.from('tags').select('slug, name').in('slug', slugs);
+  const nameBySlug = Object.fromEntries((data || []).map((t) => [t.slug, t.name]));
+
+  return normalized.map((t) => ({
+    slug: t.slug,
+    name: nameBySlug[t.slug] || t.name,
+  }));
+}
 
 export async function getProducts(params = {}) {
   const supabase = requireSupabase();
@@ -84,8 +99,9 @@ export async function getPosts(params = {}) {
   }
 
   if (tag) {
+    const slug = slugify(tag);
     const humanLabel = tag.replace(/-/g, ' ');
-    const variants = [...new Set([tag, humanLabel, slugify(humanLabel)])].filter(Boolean);
+    const variants = [...new Set([slug, tag, humanLabel, slugify(humanLabel)])].filter(Boolean);
     const orFilter = variants
       .map((v) => `tag_slugs.cs.${JSON.stringify([v])}`)
       .join(',');
@@ -156,9 +172,74 @@ export async function getPost(slug) {
     relatedProducts = (prods || []).map(mapProduct);
   }
 
+  const enrichedTags = await enrichTags(supabase, post.tag_slugs);
+  const mapped = mapPost(post, post.categories);
+
   return {
-    post: mapPost(post, post.categories),
+    post: {
+      ...mapped,
+      tags: enrichedTags,
+      tag_slugs: enrichedTags.map((t) => t.slug),
+    },
     related,
     relatedProducts,
   };
+}
+
+export async function getTags(params = {}) {
+  const supabase = requireSupabase();
+  const { data: tags, error } = await supabase.from('tags').select('*').order('name');
+  if (error) throw new Error(error.message);
+
+  const { data: posts } = await supabase
+    .from('posts')
+    .select('tag_slugs')
+    .eq('status', 'published');
+
+  const counts = {};
+  for (const post of posts || []) {
+    for (const t of normalizeTags(post.tag_slugs || [])) {
+      counts[t.slug] = (counts[t.slug] || 0) + 1;
+    }
+  }
+
+  let result = (tags || []).map((t) => ({
+    ...t,
+    post_count: counts[t.slug] || 0,
+  }));
+
+  if (params.minPosts) {
+    const min = parseInt(params.minPosts, 10) || 1;
+    result = result.filter((t) => t.post_count >= min);
+  }
+
+  if (params.sort === 'popular') {
+    result.sort((a, b) => b.post_count - a.post_count || a.name.localeCompare(b.name));
+  }
+
+  return { tags: result };
+}
+
+export async function getTag(slug) {
+  const supabase = requireSupabase();
+  const normalized = slugify(slug);
+  const { data, error } = await supabase
+    .from('tags')
+    .select('*')
+    .eq('slug', normalized)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+
+  const tag = data || { slug: normalized, name: nameFromSlug(normalized) };
+
+  const humanLabel = normalized.replace(/-/g, ' ');
+  const variants = [...new Set([normalized, humanLabel])];
+  const orFilter = variants.map((v) => `tag_slugs.cs.${JSON.stringify([v])}`).join(',');
+  const { count } = await supabase
+    .from('posts')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'published')
+    .or(orFilter);
+
+  return { tag: { ...tag, post_count: count || 0 } };
 }

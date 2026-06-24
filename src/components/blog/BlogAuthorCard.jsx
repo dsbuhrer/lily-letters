@@ -1,5 +1,3 @@
-import { Link } from 'react-router-dom';
-
 const GAU_AVATAR = '/images/about/gau.jpg';
 const DEFAULT_BIO = 'Curating elegant, editable wedding stationery for modern couples.';
 
@@ -8,7 +6,6 @@ export default function BlogAuthorCard({
   authorName = 'Gau Silva',
   bio,
   avatarUrl,
-  tags = [],
 }) {
   const displayBio = bio?.trim() || DEFAULT_BIO;
   const avatar = avatarUrl?.trim() || GAU_AVATAR;
@@ -38,24 +35,6 @@ export default function BlogAuthorCard({
           </p>
         </div>
       </div>
-
-      {tags.length > 0 && (
-        <ul
-          className="mt-6 pt-5 border-t border-taupe/35 flex flex-wrap gap-2"
-          aria-label="Article tags"
-        >
-          {tags.map((tag) => (
-            <li key={tag.slug}>
-              <Link
-                to={`/blog/tag/${tag.slug}`}
-                className="inline-block px-3 py-1.5 rounded-full bg-cream text-xs font-body font-medium tracking-wide text-ink-muted hover:bg-sage/15 hover:text-sage transition-colors"
-              >
-                #{tag.name}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
     </aside>
   );
 }

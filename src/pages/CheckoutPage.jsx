@@ -199,9 +199,11 @@ export default function CheckoutPage() {
       };
 
       let orderId = `TLLC-${Date.now().toString(36).toUpperCase()}`;
+      let orderItems = null;
       try {
         const result = await api.createOrder(payload);
         if (result.orderId) orderId = result.orderId;
+        if (result.items) orderItems = result.items;
       } catch (err) {
         console.warn('Order persistence failed, continuing with local confirmation:', err);
       }
@@ -212,6 +214,7 @@ export default function CheckoutPage() {
           email: info.email,
           firstName: info.firstName,
           items,
+          orderItems,
           total: subtotal,
           orderId,
           billing: payload.billing,

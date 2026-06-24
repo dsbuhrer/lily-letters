@@ -6,16 +6,19 @@ export default function SeoHead({
   canonical,
   ogImage,
   type = 'website',
+  keywords,
   jsonLd,
 }) {
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const url = canonical || (typeof window !== 'undefined' ? window.location.href : siteUrl);
   const image = ogImage || `${siteUrl}/logos/logo-horizontal.svg`;
+  const keywordsStr = Array.isArray(keywords) ? keywords.join(', ') : keywords;
 
   return (
     <Helmet>
       <title>{title}</title>
       <meta name="description" content={description} />
+      {keywordsStr && <meta name="keywords" content={keywordsStr} />}
       {canonical && <link rel="canonical" href={canonical} />}
       <meta property="og:type" content={type} />
       <meta property="og:title" content={title} />

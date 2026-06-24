@@ -6,10 +6,13 @@ import * as mutations from './supabase/mutations';
 import * as adminApi from './supabase/admin';
 import * as ordersApi from './supabase/orders';
 import { uploadImage } from './uploadImage';
+import { uploadProductPdf } from './uploadPdf';
 
 export const api = {
   getPosts: publicApi.getPosts,
   getPost: publicApi.getPost,
+  getTags: publicApi.getTags,
+  getTag: publicApi.getTag,
   getProducts: publicApi.getProducts,
   getProduct: publicApi.getProduct,
   getCategories: publicApi.getCategories,
@@ -26,6 +29,7 @@ export const api = {
     deletePost: adminApi.deletePost,
     publishPost: adminApi.publishPost,
     generateSeo: adminApi.generatePostSeo,
+    tags: adminApi.listTags,
     categories: adminApi.listCategories,
     category: adminApi.getBlogCategory,
     saveCategory: adminApi.saveBlogCategory,
@@ -43,6 +47,7 @@ export const api = {
     updateContact: adminApi.updateContact,
     deleteContact: adminApi.deleteContact,
     upload: uploadImage,
+    uploadPdf: uploadProductPdf,
   },
 };
 

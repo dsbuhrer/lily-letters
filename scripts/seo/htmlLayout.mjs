@@ -19,6 +19,7 @@ export function renderHtmlPage({
   jsonLd = [],
   preloadImage,
   ogType = 'article',
+  keywords,
 }) {
   const assets = getAssetTags();
   const meta = buildMetaTags({
@@ -27,6 +28,7 @@ export function renderHtmlPage({
     canonical,
     ogImage,
     type: ogType,
+    keywords,
   });
   const ld = [buildOrganizationJsonLd(), ...jsonLd].map(jsonLdScript).join('\n');
   const preload = preloadImage

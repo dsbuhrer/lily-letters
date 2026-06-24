@@ -11,7 +11,9 @@ import TableOfContents from '../../components/blog/TableOfContents';
 import BlogFaq from '../../components/blog/BlogFaq';
 import ShareButtons from '../../components/blog/ShareButtons';
 import BlogAuthorCard from '../../components/blog/BlogAuthorCard';
+import BlogTagList from '../../components/blog/BlogTagList';
 import ArticleCta from '../../components/blog/ArticleCta';
+import { mergeSeoKeywords } from '../../lib/blogTags';
 import ShopTheLook from '../../components/blog/ShopTheLook';
 import NewsletterBlock from '../../components/blog/NewsletterBlock';
 import BlogCard from '../../components/blog/BlogCard';
@@ -100,6 +102,8 @@ export default function BlogPostPage() {
     year: 'numeric',
   });
 
+  const keywords = mergeSeoKeywords(post.seo_keywords, post.tags);
+
   const jsonLd = [
     {
       '@context': 'https://schema.org',
@@ -110,6 +114,10 @@ export default function BlogPostPage() {
       datePublished: post.published_at,
       dateModified: post.updated_at,
       author: { '@type': 'Person', name: post.author_name },
+      keywords: keywords.join(', '),
+      ...(post.tags?.length
+        ? { about: post.tags.map((t) => ({ '@type': 'Thing', name: t.name, url: `${origin}/blog/tag/${t.slug}` })) }
+        : {}),
     },
     post.faq?.length
       ? {
@@ -139,6 +147,7 @@ export default function BlogPostPage() {
         canonical={post.canonical_url || url}
         ogImage={post.og_image || post.hero_image}
         type="article"
+        keywords={keywords}
         jsonLd={jsonLd.length === 1 ? jsonLd[0] : jsonLd}
       />
 
@@ -205,7 +214,7 @@ export default function BlogPostPage() {
               <motion.div
                 {...fadeUp}
                 transition={{ delay: 0.05 }}
-                className="prose-blog font-body text-ink leading-relaxed bg-white p-6 md:p-10 shadow-[0_4px_24px_-8px_rgba(76,34,51,0.08)] ring-1 ring-wine/5"
+                className="blog-article-body"
                 dangerouslySetInnerHTML={{ __html: preparedContent }}
               />
             ) : (
@@ -214,12 +223,17 @@ export default function BlogPostPage() {
 
             <BlogFaq faq={post.faq} />
 
+            {post.tags?.length > 0 && (
+              <motion.div {...fadeUp} className="mt-8">
+                <BlogTagList tags={post.tags} />
+              </motion.div>
+            )}
+
             <motion.div {...fadeUp}>
               <BlogAuthorCard
                 brandName={post.author_name}
                 bio={post.author_bio}
                 avatarUrl={post.author_avatar}
-                tags={post.tags}
               />
             </motion.div>
 

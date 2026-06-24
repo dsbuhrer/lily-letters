@@ -17,6 +17,7 @@ import {
   renderTagArchive,
 } from './seo/blogHtml.mjs';
 import { renderProductPage } from './seo/productHtml.mjs';
+import { normalizeTags } from '../src/lib/blogTags.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, '..');
@@ -72,9 +73,32 @@ async function main() {
     renderBlogIndex({ posts: posts || [], categories: categories || [] }),
   );
 
-  const tagSlugs = new Set();
+  const tagSlugSet = new Set();
   for (const post of posts || []) {
-    (post.tag_slugs || []).forEach((t) => tagSlugs.add(t));
+    normalizeTags(post.tag_slugs || []).forEach((t) => tagSlugSet.add(t.slug));
+  }
+
+  const { data: allTags } = await supabase.from('tags').select('slug, name');
+  const tagNameBySlug = Object.fromEntries((allTags || []).map((t) => [t.slug, t.name]));
+
+  for (const tagSlug of tagSlugSet) {
+    const humanLabel = tagSlug.replace(/-/g, ' ');
+    const variants = [tagSlug, humanLabel];
+    const orFilter = variants.map((v) => `tag_slugs.cs.${JSON.stringify([v])}`).join(',');
+    const { data: tagPosts } = await supabase
+      .from('posts')
+      .select('slug, title, excerpt, published_at')
+      .eq('status', 'published')
+      .or(orFilter)
+      .order('published_at', { ascending: false });
+    writeFile(
+      path.join(dist, 'blog', 'tag', tagSlug, 'index.html'),
+      renderTagArchive({
+        tagSlug,
+        tagName: tagNameBySlug[tagSlug],
+        posts: tagPosts || [],
+      }),
+    );
   }
 
   for (const category of categories || []) {
@@ -87,19 +111,6 @@ async function main() {
     writeFile(
       path.join(dist, 'blog', 'category', category.slug, 'index.html'),
       renderCategoryArchive({ category, posts: catPosts || [] }),
-    );
-  }
-
-  for (const tagSlug of tagSlugs) {
-    const { data: tagPosts } = await supabase
-      .from('posts')
-      .select('slug, title, excerpt, published_at')
-      .eq('status', 'published')
-      .contains('tag_slugs', [tagSlug])
-      .order('published_at', { ascending: false });
-    writeFile(
-      path.join(dist, 'blog', 'tag', tagSlug, 'index.html'),
-      renderTagArchive({ tagSlug, posts: tagPosts || [] }),
     );
   }
 

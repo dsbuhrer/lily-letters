@@ -1,4 +1,5 @@
-import { slugify, readingTime } from '../utils/slug';
+import { readingTime } from '../utils/slug';
+import { normalizeTags } from '../blogTags';
 
 function normalizeFaq(faq) {
   if (!faq) return [];
@@ -12,17 +13,6 @@ function normalizeFaq(faq) {
   }
   if (!Array.isArray(parsed)) return [];
   return parsed.filter((item) => item?.question?.trim() && item?.answer?.trim());
-}
-
-function normalizeTagSlugs(tagSlugs) {
-  if (!Array.isArray(tagSlugs)) return [];
-  return tagSlugs
-    .map((raw) => {
-      const name = String(raw).trim();
-      if (!name) return null;
-      return { slug: slugify(name), name };
-    })
-    .filter(Boolean);
 }
 
 function normalizeRelatedProductIds(ids) {
@@ -50,6 +40,7 @@ export function mapProduct(row) {
     description: row.description,
     includes: row.includes || [],
     canvaLink: row.canva_link,
+    pdfUrl: row.pdf_url,
     images: row.images || [],
     tags: row.tags || [],
     colors: row.colors || [],
@@ -67,7 +58,7 @@ export function mapPost(row, category) {
   const cat = category || row.categories;
   const content = row.content || '';
   const faq = normalizeFaq(row.faq);
-  const tags = normalizeTagSlugs(row.tag_slugs);
+  const tags = normalizeTags(row.tag_slugs);
   const related_product_ids = normalizeRelatedProductIds(row.related_product_ids);
 
   return {
@@ -75,7 +66,7 @@ export function mapPost(row, category) {
     content,
     faq,
     tags,
-    tag_slugs: tags.map((t) => t.name),
+    tag_slugs: tags.map((t) => t.slug),
     related_product_ids,
     reading_time_minutes:
       row.reading_time_minutes ||

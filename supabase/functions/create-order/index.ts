@@ -1,8 +1,23 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
 
+const SIGNED_URL_TTL = 3600;
+
 function generateOrderNumber() {
   return `TLLC-${Date.now().toString(36).toUpperCase()}`;
+}
+
+async function signedPdfUrl(
+  supabase: ReturnType<typeof createClient>,
+  path: string | null,
+): Promise<string | null> {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+  const { data, error } = await supabase.storage
+    .from('product-downloads')
+    .createSignedUrl(path, SIGNED_URL_TTL);
+  if (error || !data?.signedUrl) return null;
+  return data.signedUrl;
 }
 
 Deno.serve(async (req) => {
@@ -41,7 +56,7 @@ Deno.serve(async (req) => {
     const productIds = items.map((i: { productId: number }) => i.productId);
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, slug, canva_link, price, active')
+      .select('id, slug, canva_link, pdf_url, price, active')
       .in('id', productIds);
 
     if (productsError) throw productsError;
@@ -55,6 +70,7 @@ Deno.serve(async (req) => {
       product_slug: string | null;
       price_cents: number;
       canva_link: string | null;
+      pdf_url: string | null;
     }> = [];
 
     for (const item of items) {
@@ -70,6 +86,7 @@ Deno.serve(async (req) => {
         product_slug: item.slug || product.slug || null,
         price_cents: priceCents,
         canva_link: product.canva_link || null,
+        pdf_url: product.pdf_url || null,
       });
     }
 
@@ -108,7 +125,20 @@ Deno.serve(async (req) => {
     const { error: itemsError } = await supabase.from('order_items').insert(rows);
     if (itemsError) throw itemsError;
 
-    return jsonResponse({ orderId: order.order_number, id: order.id }, 201);
+    const responseItems = await Promise.all(
+      orderItems.map(async (item) => ({
+        product_id: item.product_id,
+        product_name: item.product_name,
+        pdf_url: item.pdf_url,
+        pdf_signed_url: await signedPdfUrl(supabase, item.pdf_url),
+        canva_link: item.canva_link,
+      })),
+    );
+
+    return jsonResponse(
+      { orderId: order.order_number, id: order.id, items: responseItems },
+      201,
+    );
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Failed to create order';
     return jsonResponse({ error: message }, 500);
