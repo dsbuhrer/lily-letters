@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import api from '../../lib/api';
+import { useUiFeedback } from '../../context/UiFeedbackContext';
 import { staticProductCategories } from '../../lib/productCategoryUtils';
 import ProductMediaGallery from '../../components/admin/ProductMediaGallery';
 import ProductPdfUploader from '../../components/admin/ProductPdfUploader';
@@ -46,12 +47,14 @@ function productToForm(p) {
 export default function AdminProductEditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { confirm, toast } = useUiFeedback();
   const isNew = id === 'new';
 
   const [form, setForm] = useState(emptyForm);
   const [groupedCategories, setGroupedCategories] = useState({});
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
   const [loadError, setLoadError] = useState('');
 
@@ -129,6 +132,29 @@ export default function AdminProductEditorPage() {
       setError(e.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const remove = async () => {
+    const ok = await confirm({
+      title: 'Delete product?',
+      message: form.name
+        ? `"${form.name}" will be removed from the shop. You can reactivate it later by editing the product.`
+        : 'This product will be removed from the shop.',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
+    setDeleting(true);
+    setError('');
+    try {
+      await api.admin.deleteProduct(id);
+      toast.success('Product deleted.');
+      navigate('/admin/products');
+    } catch (e) {
+      setError(e.message || 'Could not delete product.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -254,13 +280,23 @@ export default function AdminProductEditorPage() {
           </label>
         </div>
 
-        <div className="flex gap-3 pt-4">
-          <button type="button" className="btn-primary" disabled={saving} onClick={save}>
+        <div className="flex flex-wrap items-center gap-3 pt-4">
+          <button type="button" className="btn-primary" disabled={saving || deleting} onClick={save}>
             {saving ? 'Saving…' : 'Save product'}
           </button>
           <Link to="/admin/products" className="btn-ghost">
             Cancel
           </Link>
+          {!isNew && form.active !== false && (
+            <button
+              type="button"
+              className="btn-ghost text-red-800 hover:text-red-900 ml-auto"
+              disabled={saving || deleting}
+              onClick={remove}
+            >
+              {deleting ? 'Deleting…' : 'Delete product'}
+            </button>
+          )}
         </div>
       </div>
     </div>

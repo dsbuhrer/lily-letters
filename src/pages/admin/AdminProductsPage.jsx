@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import api from '../../lib/api';
 import { getCategoryLabel } from '../../data/productCategories';
 import { useProductCategories } from '../../hooks/useProductCategories';
+import { useUiFeedback } from '../../context/UiFeedbackContext';
 import AdminListToolbar from '../../components/admin/AdminListToolbar';
 import { filterBySearch, sortByKey } from '../../utils/adminListFilter';
 
@@ -25,10 +26,12 @@ const productComparators = {
 };
 
 export default function AdminProductsPage() {
+  const { confirm, toast } = useUiFeedback();
   const { categories: productCategories } = useProductCategories();
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('name_asc');
+  const [showInactive, setShowInactive] = useState(false);
 
   const load = () => api.admin.products().then((r) => setProducts(r.products || []));
 
@@ -36,8 +39,11 @@ export default function AdminProductsPage() {
     load();
   }, []);
 
+  const activeCount = products.filter((p) => p.active !== false).length;
+
   const filteredProducts = useMemo(() => {
-    const matched = filterBySearch(products, search, (p) => [
+    const visible = showInactive ? products : products.filter((p) => p.active !== false);
+    const matched = filterBySearch(visible, search, (p) => [
       p.name,
       p.slug,
       String(p.id),
@@ -45,7 +51,28 @@ export default function AdminProductsPage() {
       p.subtitle,
     ]);
     return sortByKey(matched, sort, productComparators);
-  }, [products, search, sort, productCategories]);
+  }, [products, search, sort, productCategories, showInactive]);
+
+  const remove = async (product) => {
+    const ok = await confirm({
+      title: 'Delete product?',
+      message: product?.name
+        ? `"${product.name}" will be removed from the shop. You can reactivate it later by editing the product.`
+        : 'This product will be removed from the shop.',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
+    try {
+      await api.admin.deleteProduct(product.id);
+      setProducts((list) =>
+        list.map((p) => (p.id === product.id ? { ...p, active: false } : p)),
+      );
+      toast.success('Product deleted.');
+    } catch (e) {
+      toast.error(e.message || 'Could not delete product.');
+    }
+  };
 
   return (
     <div className="admin-page">
@@ -56,6 +83,18 @@ export default function AdminProductsPage() {
         </Link>
       </header>
 
+      <div className="flex flex-wrap items-center gap-4 mb-4">
+        <label className="flex items-center gap-2 text-sm text-ink-muted cursor-pointer select-none">
+          <input
+            type="checkbox"
+            className="accent-wine"
+            checked={showInactive}
+            onChange={(e) => setShowInactive(e.target.checked)}
+          />
+          Show inactive
+        </label>
+      </div>
+
       <AdminListToolbar
         search={search}
         onSearchChange={setSearch}
@@ -64,7 +103,7 @@ export default function AdminProductsPage() {
         onSortChange={setSort}
         sortOptions={PRODUCT_SORT_OPTIONS}
         filteredCount={filteredProducts.length}
-        totalCount={products.length}
+        totalCount={showInactive ? products.length : activeCount}
       />
 
       <div className="table-shell overflow-x-auto">
@@ -75,19 +114,20 @@ export default function AdminProductsPage() {
               <th>Name</th>
               <th>Category</th>
               <th>Price</th>
+              <th>Status</th>
               <th className="text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredProducts.length === 0 ? (
               <tr>
-                <td colSpan={5} className="data-table-empty">
+                <td colSpan={6} className="data-table-empty">
                   {products.length === 0 ? 'No products yet.' : 'No products match your search.'}
                 </td>
               </tr>
             ) : (
               filteredProducts.map((p) => (
-                <tr key={p.id}>
+                <tr key={p.id} className={p.active === false ? 'opacity-60' : undefined}>
                   <td className="tabular-nums text-ink-subtle">{p.id}</td>
                   <td>
                     <div className="flex items-center gap-3">
@@ -99,6 +139,13 @@ export default function AdminProductsPage() {
                   </td>
                   <td>{getCategoryLabel(p.category, productCategories)}</td>
                   <td className="font-medium text-wine tabular-nums">${p.price}</td>
+                  <td>
+                    {p.active === false ? (
+                      <span className="badge bg-ink/[0.06] text-ink-muted border-taupe/60">Inactive</span>
+                    ) : (
+                      <span className="badge bg-sage/15 text-wine border-sage/40">Active</span>
+                    )}
+                  </td>
                   <td className="text-right">
                     <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1">
                       {p.active !== false && (p.slug || p.id) && (
@@ -114,6 +161,11 @@ export default function AdminProductsPage() {
                       <Link to={`/admin/products/${p.id}`} className="table-action">
                         Edit
                       </Link>
+                      {p.active !== false && (
+                        <button type="button" onClick={() => remove(p)} className="table-action-danger">
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
