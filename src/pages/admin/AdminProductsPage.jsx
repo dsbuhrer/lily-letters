@@ -45,6 +45,7 @@ export default function AdminProductsPage() {
     const visible = showInactive ? products : products.filter((p) => p.active !== false);
     const matched = filterBySearch(visible, search, (p) => [
       p.name,
+      p.sku,
       p.slug,
       String(p.id),
       getCategoryLabel(p.category, productCategories),
@@ -98,7 +99,7 @@ export default function AdminProductsPage() {
       <AdminListToolbar
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search name, ID, category, slug…"
+        searchPlaceholder="Search name, SKU, ID, category, slug…"
         sort={sort}
         onSortChange={setSort}
         sortOptions={PRODUCT_SORT_OPTIONS}
@@ -111,6 +112,7 @@ export default function AdminProductsPage() {
           <thead>
             <tr>
               <th>ID</th>
+              <th>SKU</th>
               <th>Name</th>
               <th>Category</th>
               <th>Price</th>
@@ -121,7 +123,7 @@ export default function AdminProductsPage() {
           <tbody>
             {filteredProducts.length === 0 ? (
               <tr>
-                <td colSpan={6} className="data-table-empty">
+                <td colSpan={7} className="data-table-empty">
                   {products.length === 0 ? 'No products yet.' : 'No products match your search.'}
                 </td>
               </tr>
@@ -129,6 +131,7 @@ export default function AdminProductsPage() {
               filteredProducts.map((p) => (
                 <tr key={p.id} className={p.active === false ? 'opacity-60' : undefined}>
                   <td className="tabular-nums text-ink-subtle">{p.id}</td>
+                  <td className="font-mono text-xs text-ink-subtle tabular-nums">{p.sku || '—'}</td>
                   <td>
                     <div className="flex items-center gap-3">
                       {p.images?.[0] && (

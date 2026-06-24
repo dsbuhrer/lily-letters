@@ -340,6 +340,12 @@
     @apply mb-5 leading-relaxed text-ink-muted;
   }
 
+  .prose-blog br {
+    display: block;
+    margin-bottom: 1.25em;
+    line-height: 1.625;
+  }
+
   .prose-blog ul {
     @apply list-none pl-0 mb-5 space-y-2;
   }

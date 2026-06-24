@@ -35,12 +35,23 @@ export async function getProduct(idOrSlug) {
   const supabase = requireSupabase();
   const key = String(idOrSlug);
   const isNumeric = /^\d+$/.test(key);
-  let query = supabase.from('products').select('*').eq('active', true);
-  query = isNumeric ? query.eq('id', Number(key)) : query.eq('slug', key);
-  const { data, error } = await query.maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error('Product not found');
-  return { product: mapProduct(data) };
+  const base = () => supabase.from('products').select('*').eq('active', true);
+
+  if (isNumeric) {
+    const { data, error } = await base().eq('id', Number(key)).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('Product not found');
+    return { product: mapProduct(data) };
+  }
+
+  const { data: bySlug, error: slugError } = await base().eq('slug', key).maybeSingle();
+  if (slugError) throw new Error(slugError.message);
+  if (bySlug) return { product: mapProduct(bySlug) };
+
+  const { data: bySku, error: skuError } = await base().eq('sku', key).maybeSingle();
+  if (skuError) throw new Error(skuError.message);
+  if (!bySku) throw new Error('Product not found');
+  return { product: mapProduct(bySku) };
 }
 
 export async function getProductCategories() {

@@ -125,7 +125,7 @@ export default function BlogRichTextEditor({ editor, onError }) {
   return (
     <div className="rich-text-editor border border-taupe bg-white shadow-soft">
       <div
-        className="rich-text-toolbar flex flex-wrap items-center gap-0.5 p-2 border-b border-taupe/60 bg-cream/40"
+        className="rich-text-toolbar sticky top-0 z-20 flex flex-wrap items-center gap-0.5 p-2 border-b border-taupe/60 bg-cream shadow-[0_1px_0_rgba(76,34,51,0.06)]"
         role="toolbar"
         aria-label="Article formatting"
       >

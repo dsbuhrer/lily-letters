@@ -45,6 +45,7 @@ export default function ProductsPage() {
       const matchSearch =
         search === '' ||
         p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.sku?.toLowerCase().includes(search.toLowerCase()) ||
         p.tags.some((t) => t.includes(search.toLowerCase()));
       return matchCat && matchSearch;
     })
@@ -84,7 +85,7 @@ export default function ProductsPage() {
             <Search size={16} strokeWidth={1.5} className="absolute left-3 top-1/2 -translate-y-1/2 text-gold" />
             <input
               type="text"
-              placeholder="Search templates..."
+              placeholder="Search by name, SKU or tag…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="input-field pl-9 pr-8"

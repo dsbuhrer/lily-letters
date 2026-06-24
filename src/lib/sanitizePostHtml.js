@@ -1,4 +1,5 @@
 import DOMPurify from 'dompurify';
+import { preserveBlogLineBreaks } from './blogContent';
 
 export const sanitizeOptions = {
   ADD_TAGS: ['figure'],
@@ -6,5 +7,7 @@ export const sanitizeOptions = {
 };
 
 export function sanitizePostContent(html) {
-  return DOMPurify.sanitize(html || '', sanitizeOptions);
+  const normalized = preserveBlogLineBreaks(html || '');
+  const sanitized = DOMPurify.sanitize(normalized, sanitizeOptions);
+  return preserveBlogLineBreaks(sanitized);
 }

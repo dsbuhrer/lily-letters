@@ -183,6 +183,11 @@ export default function ProductDetailPage() {
               <p className="font-body text-sm text-ink-subtle mb-1">
                 {product.subtitle}
               </p>
+              {product.sku && (
+                <p className="font-body text-xs text-ink-faint font-mono mb-1">
+                  SKU: {product.sku}
+                </p>
+              )}
               {product.collection && (
                 <p className="font-body text-xs tracking-widest uppercase text-gold/80 mb-4">
                   {product.collection} Collection

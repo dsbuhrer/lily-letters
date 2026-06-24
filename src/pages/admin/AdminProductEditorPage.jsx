@@ -13,6 +13,7 @@ const defaultCategorySlug =
 const emptyForm = () => ({
   name: '',
   subtitle: '',
+  sku: '',
   category: defaultCategorySlug,
   price: 7,
   original_price: '',
@@ -30,6 +31,7 @@ function productToForm(p) {
   return {
     name: p.name,
     subtitle: p.subtitle || '',
+    sku: p.sku || '',
     category: p.category,
     price: p.price,
     original_price: p.originalPrice ?? '',
@@ -115,6 +117,7 @@ export default function AdminProductEditorPage() {
       const payload = {
         name: form.name.trim(),
         subtitle: form.subtitle || undefined,
+        sku: form.sku.trim() || null,
         category: form.category,
         price: Number(form.price),
         original_price: form.original_price ? Number(form.original_price) : null,
@@ -205,6 +208,19 @@ export default function AdminProductEditorPage() {
         <label className="block">
           <span className="text-xs uppercase tracking-widest text-ink-subtle">Subtitle</span>
           <input className="input-field mt-1" value={form.subtitle} onChange={(e) => set('subtitle', e.target.value)} />
+        </label>
+
+        <label className="block">
+          <span className="text-xs uppercase tracking-widest text-ink-subtle">SKU</span>
+          <input
+            className="input-field mt-1 font-mono"
+            value={form.sku}
+            onChange={(e) => set('sku', e.target.value)}
+            placeholder="e.g. LL-WED-001"
+          />
+          <span className="block mt-1 text-xs text-ink-subtle">
+            Unique code to find this product in the admin and shop search.
+          </span>
         </label>
 
         <label className="block">

@@ -27,6 +27,7 @@ export function mapProduct(row) {
   return {
     id: row.id,
     slug: row.slug,
+    sku: row.sku || null,
     etsyId: row.etsy_id,
     etsyUrl: row.etsy_url,
     name: row.name,
