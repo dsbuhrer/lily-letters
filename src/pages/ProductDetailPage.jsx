@@ -1,22 +1,21 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   ShoppingBag, Star, Download, Check, ArrowLeft,
-  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useProduct, useProducts } from '../hooks/useProducts';
 import useCartStore from '../store/cartStore';
 import ProductCard from '../components/ProductCard';
 import WishlistButton from '../components/WishlistButton';
 import SeoHead from '../components/seo/SeoHead';
+import ProductMediaCarousel from '../components/ProductMediaCarousel';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { product, loading } = useProduct(id);
   const { products: allProducts } = useProducts();
-  const [selectedImg, setSelectedImg] = useState(0);
   const [added, setAdded] = useState(false);
   const { addItem, openCart } = useCartStore();
 
@@ -71,11 +70,6 @@ export default function ProductDetailPage() {
     }, 1200);
   };
 
-  const prevImg = () =>
-    setSelectedImg((i) => (i === 0 ? product.images.length - 1 : i - 1));
-  const nextImg = () =>
-    setSelectedImg((i) => (i === product.images.length - 1 ? 0 : i + 1));
-
   return (
     <>
       <SeoHead
@@ -102,70 +96,15 @@ export default function ProductDetailPage() {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
-          {/* Images */}
-          <div className="space-y-4">
-            {/* Main image */}
-            <div className="relative overflow-hidden bg-white aspect-[4/3]">
-              <AnimatePresence mode="wait">
-                <motion.img
-                  key={selectedImg}
-                  src={product.images[selectedImg]}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                  initial={{ opacity: 0, scale: 1.02 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.4 }}
-                />
-              </AnimatePresence>
-
-              {product.images.length > 1 && (
-                <>
-                  <button
-                    onClick={prevImg}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-cream/90 flex items-center justify-center hover:bg-cream transition-colors"
-                  >
-                    <ChevronLeft size={18} strokeWidth={1.5} className="text-wine" />
-                  </button>
-                  <button
-                    onClick={nextImg}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-cream/90 flex items-center justify-center hover:bg-cream transition-colors"
-                  >
-                    <ChevronRight size={18} strokeWidth={1.5} className="text-wine" />
-                  </button>
-                </>
-              )}
-
-              {product.badge && (
-                <span className={`absolute top-3 left-3 px-3 py-1 text-xs font-body font-medium tracking-wider uppercase ${
-                  product.badge === 'Sale' ? 'bg-wine text-cream' : 
-                  product.badge === 'New' ? 'bg-sage text-cream' :
-                  'bg-gold text-cream'
-                }`}>
-                  {product.badge === 'Sale' && product.originalPrice
-                    ? `-${Math.round((1 - product.price / product.originalPrice) * 100)}% OFF`
-                    : product.badge}
-                </span>
-              )}
-            </div>
-
-            {/* Thumbnails */}
-            {product.images.length > 1 && (
-              <div className="flex gap-2">
-                {product.images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedImg(i)}
-                    className={`w-20 h-20 overflow-hidden border-2 transition-all ${
-                      selectedImg === i ? 'border-wine' : 'border-transparent opacity-60 hover:opacity-100'
-                    }`}
-                  >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Images & videos */}
+          <ProductMediaCarousel
+            images={product.images}
+            videos={product.videos}
+            name={product.name}
+            badge={product.badge}
+            originalPrice={product.originalPrice}
+            price={product.price}
+          />
 
           {/* Info */}
           <div>

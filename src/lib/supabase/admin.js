@@ -311,6 +311,7 @@ export async function saveProduct(body, id) {
     pdf_url: body.pdf_url ?? null,
     pdf_file_name: body.pdf_file_name?.trim() || null,
     images: body.images,
+    videos: body.videos ?? [],
     tags: body.tags,
     colors: body.colors,
     collection: body.collection,

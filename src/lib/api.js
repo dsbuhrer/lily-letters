@@ -7,6 +7,7 @@ import * as adminApi from './supabase/admin';
 import * as ordersApi from './supabase/orders';
 import { uploadImage } from './uploadImage';
 import { uploadProductPdf } from './uploadPdf';
+import { uploadProductVideo } from './uploadVideo';
 
 export const api = {
   getPosts: publicApi.getPosts,
@@ -48,6 +49,7 @@ export const api = {
     deleteContact: adminApi.deleteContact,
     upload: uploadImage,
     uploadPdf: uploadProductPdf,
+    uploadVideo: uploadProductVideo,
   },
 };
 

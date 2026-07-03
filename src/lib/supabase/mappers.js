@@ -44,6 +44,7 @@ export function mapProduct(row) {
     pdfUrl: row.pdf_url,
     pdfFileName: row.pdf_file_name || null,
     images: row.images || [],
+    videos: row.videos || [],
     tags: row.tags || [],
     colors: row.colors || [],
     editableIn: row.editable_in,

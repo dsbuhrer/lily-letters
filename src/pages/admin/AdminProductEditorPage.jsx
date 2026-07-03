@@ -19,6 +19,7 @@ const emptyForm = () => ({
   original_price: '',
   description: '',
   images: [],
+  videos: [],
   pdf_url: '',
   pdf_file_name: '',
   badge: '',
@@ -37,6 +38,7 @@ function productToForm(p) {
     original_price: p.originalPrice ?? '',
     description: p.description || '',
     images: [...(p.images || [])],
+    videos: [...(p.videos || [])],
     pdf_url: p.pdfUrl || '',
     pdf_file_name: p.pdfFileName || '',
     badge: p.badge || '',
@@ -123,6 +125,7 @@ export default function AdminProductEditorPage() {
         original_price: form.original_price ? Number(form.original_price) : null,
         description: form.description,
         images: form.images,
+        videos: form.videos,
         pdf_url: form.pdf_url || null,
         pdf_file_name: form.pdf_file_name?.trim() || null,
         badge: form.badge || null,
@@ -275,7 +278,13 @@ export default function AdminProductEditorPage() {
           />
         </label>
 
-        <ProductMediaGallery images={form.images} onChange={(urls) => set('images', urls)} onError={setError} />
+        <ProductMediaGallery
+          images={form.images}
+          onChange={(urls) => set('images', urls)}
+          videos={form.videos}
+          onVideosChange={(urls) => set('videos', urls)}
+          onError={setError}
+        />
 
         <ProductPdfUploader
           pdfPath={form.pdf_url}
