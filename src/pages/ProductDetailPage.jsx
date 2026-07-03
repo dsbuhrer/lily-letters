@@ -229,41 +229,9 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              <p className="font-body text-sm text-ink-muted leading-relaxed mb-6">
+              <p className="font-body text-sm text-ink-muted leading-relaxed whitespace-pre-wrap mb-6">
                 {product.description}
               </p>
-
-              {/* What's included */}
-              <div className="mb-6">
-                <h3 className="font-body text-xs tracking-widest uppercase text-gold font-medium mb-3">
-                  What's Included
-                </h3>
-                <ul className="space-y-1.5">
-                  {product.includes.map((item) => (
-                    <li key={item} className="flex items-center gap-2 font-body text-sm text-ink-muted">
-                      <Check size={14} className="text-sage flex-shrink-0" strokeWidth={2} />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Colors */}
-              <div className="mb-6">
-                <h3 className="font-body text-xs tracking-widest uppercase text-gold font-medium mb-2">
-                  Color Palette
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {product.colors.map((color) => (
-                    <span
-                      key={color}
-                      className="font-body text-xs text-ink-muted border border-taupe px-3 py-1"
-                    >
-                      {color}
-                    </span>
-                  ))}
-                </div>
-              </div>
 
               {/* Features */}
               <div className="flex flex-wrap gap-4 mb-8 py-4 border-y border-taupe/30">

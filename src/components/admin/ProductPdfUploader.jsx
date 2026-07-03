@@ -1,17 +1,31 @@
 import { useRef, useState, useEffect } from 'react';
-import { FileText, Upload, X, Loader2, RefreshCw } from 'lucide-react';
+import { FileText, Upload, X, Loader2, RefreshCw, Pencil, Check } from 'lucide-react';
 import api from '../../lib/api';
 
 const MAX_BYTES = 10 * 1024 * 1024;
 
+function ensurePdfExtension(name) {
+  const trimmed = (name || '').trim();
+  if (!trimmed) return '';
+  return /\.pdf$/i.test(trimmed) ? trimmed : `${trimmed}.pdf`;
+}
+
 export default function ProductPdfUploader({ pdfPath = '', fileName = '', onChange, onError }) {
   const inputRef = useRef(null);
+  const renameInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [displayName, setDisplayName] = useState(fileName);
+  const [editingName, setEditingName] = useState(false);
+  const [renameDraft, setRenameDraft] = useState(fileName);
 
   useEffect(() => {
     setDisplayName(fileName);
-  }, [fileName]);
+    if (!editingName) setRenameDraft(fileName);
+  }, [fileName, editingName]);
+
+  useEffect(() => {
+    if (editingName) renameInputRef.current?.focus();
+  }, [editingName]);
 
   const reportError = (message) => {
     if (onError) onError(message);
@@ -33,6 +47,8 @@ export default function ProductPdfUploader({ pdfPath = '', fileName = '', onChan
       const { path } = await api.admin.uploadPdf(file);
       onChange(path, file.name);
       setDisplayName(file.name);
+      setRenameDraft(file.name);
+      setEditingName(false);
     } catch (e) {
       reportError(e.message || 'PDF upload failed');
     } finally {
@@ -43,6 +59,30 @@ export default function ProductPdfUploader({ pdfPath = '', fileName = '', onChan
   const handleRemove = () => {
     onChange('', '');
     setDisplayName('');
+    setRenameDraft('');
+    setEditingName(false);
+  };
+
+  const startRename = () => {
+    setRenameDraft(displayName);
+    setEditingName(true);
+  };
+
+  const cancelRename = () => {
+    setRenameDraft(displayName);
+    setEditingName(false);
+  };
+
+  const saveRename = () => {
+    const next = ensurePdfExtension(renameDraft);
+    if (!next) {
+      reportError('Enter a file name.');
+      return;
+    }
+    setDisplayName(next);
+    setRenameDraft(next);
+    setEditingName(false);
+    onChange(pdfPath, next);
   };
 
   return (
@@ -61,15 +101,62 @@ export default function ProductPdfUploader({ pdfPath = '', fileName = '', onChan
         <div className="flex items-center gap-3 p-4 border border-taupe rounded-md bg-white">
           <FileText size={32} className="text-wine shrink-0" strokeWidth={1.25} />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-ink truncate">{displayName || 'product.pdf'}</p>
-            <p className="text-xs text-ink-subtle truncate">{pdfPath}</p>
+            {editingName ? (
+              <div className="flex items-center gap-2">
+                <input
+                  ref={renameInputRef}
+                  type="text"
+                  value={renameDraft}
+                  onChange={(e) => setRenameDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') saveRename();
+                    if (e.key === 'Escape') cancelRename();
+                  }}
+                  className="input-field text-sm py-1.5 flex-1 min-w-0"
+                  aria-label="PDF file name"
+                />
+                <button
+                  type="button"
+                  className="p-2 text-sage hover:text-wine transition-colors"
+                  onClick={saveRename}
+                  aria-label="Save file name"
+                  title="Save name"
+                >
+                  <Check size={16} />
+                </button>
+                <button
+                  type="button"
+                  className="p-2 text-ink-subtle hover:text-wine transition-colors"
+                  onClick={cancelRename}
+                  aria-label="Cancel rename"
+                  title="Cancel"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <p className="text-sm font-medium text-ink truncate">{displayName || 'product.pdf'}</p>
+            )}
+            <p className="text-xs text-ink-subtle mt-1">Customers download using this file name.</p>
           </div>
           <div className="flex gap-2 shrink-0">
+            {!editingName && (
+              <button
+                type="button"
+                className="p-2 text-ink-subtle hover:text-wine transition-colors"
+                onClick={startRename}
+                disabled={uploading}
+                aria-label="Rename PDF"
+                title="Rename"
+              >
+                <Pencil size={16} />
+              </button>
+            )}
             <button
               type="button"
               className="p-2 text-ink-subtle hover:text-wine transition-colors"
               onClick={() => inputRef.current?.click()}
-              disabled={uploading}
+              disabled={uploading || editingName}
               aria-label="Replace PDF"
               title="Replace"
             >
@@ -79,7 +166,7 @@ export default function ProductPdfUploader({ pdfPath = '', fileName = '', onChan
               type="button"
               className="p-2 text-ink-subtle hover:text-wine transition-colors"
               onClick={handleRemove}
-              disabled={uploading}
+              disabled={uploading || editingName}
               aria-label="Remove PDF"
               title="Remove"
             >

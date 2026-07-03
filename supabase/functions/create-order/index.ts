@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     const productIds = items.map((i: { productId: number }) => i.productId);
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, slug, canva_link, pdf_url, price, active')
+      .select('id, slug, canva_link, pdf_url, pdf_file_name, price, active')
       .in('id', productIds);
 
     if (productsError) throw productsError;
@@ -71,6 +71,7 @@ Deno.serve(async (req) => {
       price_cents: number;
       canva_link: string | null;
       pdf_url: string | null;
+      pdf_file_name: string | null;
     }> = [];
 
     for (const item of items) {
@@ -87,6 +88,7 @@ Deno.serve(async (req) => {
         price_cents: priceCents,
         canva_link: product.canva_link || null,
         pdf_url: product.pdf_url || null,
+        pdf_file_name: product.pdf_file_name || null,
       });
     }
 
@@ -130,6 +132,7 @@ Deno.serve(async (req) => {
         product_id: item.product_id,
         product_name: item.product_name,
         pdf_url: item.pdf_url,
+        pdf_file_name: item.pdf_file_name,
         pdf_signed_url: await signedPdfUrl(supabase, item.pdf_url),
         canva_link: item.canva_link,
       })),

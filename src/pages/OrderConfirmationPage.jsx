@@ -73,6 +73,7 @@ export default function OrderConfirmationPage() {
       (order.items || []).map((item) => ({
         product_name: item.name,
         pdf_url: item.pdfUrl || item.pdf_url || null,
+        pdf_file_name: item.pdf_file_name || item.pdfFileName || null,
         pdf_signed_url: item.pdf_signed_url || null,
         canva_link: item.canvaLink || item.canva_link || null,
       }));

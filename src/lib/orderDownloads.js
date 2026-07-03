@@ -4,6 +4,19 @@
 
 import { getSignedDownloadUrl, isStoragePath } from './downloadUrl';
 
+function sanitizePdfFileName(name) {
+  const trimmed = (name || '').trim();
+  if (!trimmed) return 'download.pdf';
+  const withExt = /\.pdf$/i.test(trimmed) ? trimmed : `${trimmed}.pdf`;
+  return withExt.replace(/[/\\?%*:|"<>]/g, '-');
+}
+
+function resolveDownloadFilename(item, orderNumber) {
+  if (item.pdf_file_name) return sanitizePdfFileName(item.pdf_file_name);
+  const safeName = (item.product_name || 'template').replace(/[^\w\s-]/g, '').trim() || 'template';
+  return `${orderNumber}-${safeName}.pdf`;
+}
+
 async function triggerBlobDownload(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -32,8 +45,7 @@ export async function downloadItemPdf(item, orderNumber) {
   if (!response.ok) throw new Error('Could not download PDF.');
 
   const blob = await response.blob();
-  const safeName = (item.product_name || 'template').replace(/[^\w\s-]/g, '').trim() || 'template';
-  const filename = `${orderNumber}-${safeName}.pdf`;
+  const filename = resolveDownloadFilename(item, orderNumber);
   triggerBlobDownload(blob, filename);
 }
 

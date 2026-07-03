@@ -25,7 +25,7 @@ export function renderProductPage(product) {
           <span itemprop="price" content="${Number(product.price)}">$${Number(product.price).toFixed(2)}</span>
           <meta itemprop="priceCurrency" content="USD" />
         </p>
-        ${product.description ? `<div class="mt-6 font-body text-[#2d2020]/80 leading-relaxed">${escapeHtml(product.description)}</div>` : ''}
+        ${product.description ? `<div class="mt-6 font-body text-[#2d2020]/80 leading-relaxed whitespace-pre-wrap">${escapeHtml(product.description)}</div>` : ''}
         <p class="mt-8"><a href="/products/${escapeHtml(product.slug)}" class="inline-block bg-wine text-cream px-8 py-3 text-xs uppercase tracking-widest">View in shop</a></p>
       </article>
     </main>`;

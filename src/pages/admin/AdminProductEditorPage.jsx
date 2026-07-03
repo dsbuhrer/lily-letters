@@ -38,7 +38,7 @@ function productToForm(p) {
     description: p.description || '',
     images: [...(p.images || [])],
     pdf_url: p.pdfUrl || '',
-    pdf_file_name: p.pdfUrl ? p.pdfUrl.split('/').pop() : '',
+    pdf_file_name: p.pdfFileName || '',
     badge: p.badge || '',
     collection: p.collection || '',
     active: p.active !== false,
@@ -124,6 +124,7 @@ export default function AdminProductEditorPage() {
         description: form.description,
         images: form.images,
         pdf_url: form.pdf_url || null,
+        pdf_file_name: form.pdf_file_name?.trim() || null,
         badge: form.badge || null,
         collection: form.collection || undefined,
         active: form.active,
@@ -267,8 +268,8 @@ export default function AdminProductEditorPage() {
         <label className="block">
           <span className="text-xs uppercase tracking-widest text-ink-subtle">Description</span>
           <textarea
-            className="input-field mt-1"
-            rows={4}
+            className="input-field mt-1 min-h-[200px] resize-y"
+            rows={8}
             value={form.description}
             onChange={(e) => set('description', e.target.value)}
           />

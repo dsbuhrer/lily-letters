@@ -42,6 +42,7 @@ export function mapProduct(row) {
     includes: row.includes || [],
     canvaLink: row.canva_link,
     pdfUrl: row.pdf_url,
+    pdfFileName: row.pdf_file_name || null,
     images: row.images || [],
     tags: row.tags || [],
     colors: row.colors || [],
