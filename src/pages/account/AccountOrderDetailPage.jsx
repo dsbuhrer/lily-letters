@@ -88,14 +88,6 @@ export default function AccountOrderDetailPage() {
               {formatCents(order.subtotal_cents, order.currency)}
             </p>
           </div>
-          {order.download_expires_at && (
-            <div>
-              <p className="text-ink-faint uppercase tracking-widest text-xs mb-1">
-                Download access until
-              </p>
-              <p className="text-ink-muted">{formatOrderDate(order.download_expires_at)}</p>
-            </div>
-          )}
         </div>
 
         <DownloadButton order={order} />

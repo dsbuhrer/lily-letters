@@ -31,7 +31,7 @@ npm install
 cp .env.example .env
 ```
 
-Fill in `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `SITE_URL`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD`.
+Fill in `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SITE_URL`, `VITE_STRIPE_PUBLISHABLE_KEY`, `SITE_URL`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD`.
 
 Enable **Email** auth in Supabase Dashboard → Authentication → Providers. Add redirect URLs (e.g. `http://localhost:5173/**` and your production domain).
 
@@ -50,16 +50,18 @@ npm run seed
 
 This creates a Supabase Auth user (`ADMIN_EMAIL` / `ADMIN_PASSWORD`) and a row in `staff_roles` with role `admin`.
 
-5. Deploy Edge Functions (checkout, SEO, Payoneer stub, auto-deploy):
+5. Deploy Edge Functions (checkout, Stripe, SEO, auto-deploy):
 
 ```bash
 supabase functions deploy create-order
+supabase functions deploy complete-order-payment
+supabase functions deploy get-order-confirmation
+supabase functions deploy stripe-webhook
 supabase functions deploy generate-post-seo
-supabase functions deploy payoneer-webhook
 supabase functions deploy trigger-rebuild
 ```
 
-Set secrets in Supabase Dashboard → Edge Functions → Secrets: `GEMINI_API_KEY` (optional), `MOCK_CHECKOUT` (`false` when Payoneer is live).
+Set secrets in Supabase Dashboard → Edge Functions → Secrets: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `SITE_URL`, and optionally `GEMINI_API_KEY`. See [`docs/STRIPE.md`](docs/STRIPE.md) for Stripe webhook setup.
 
 **Auto-deploy on blog publish/edit:** configure GitHub Actions + Database Webhook — see [`docs/AUTO_DEPLOY.md`](docs/AUTO_DEPLOY.md).
 
@@ -87,7 +89,7 @@ The included `.htaccess` serves pre-rendered blog/product pages when those files
 
 | Variable | Where |
 |----------|--------|
-| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | Embedded in JS at **build** — required for login and data |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_STRIPE_PUBLISHABLE_KEY`, `VITE_SITE_URL` | Embedded in JS at **build** — required for login, checkout, and data |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Build only** (prerender + seed), never in browser |
 | Edge Function secrets | Supabase Dashboard |
 
@@ -121,7 +123,7 @@ VALUES ('<auth.users uuid>', 'admin');
 
 Orders are stored in Supabase (`orders`, `order_items`, `profiles`). Guest orders link to an account only after **email confirmation** (app + `claim_orders_by_email` RPC). In production, enable **Confirm email** under Supabase Dashboard → Authentication → Email.
 
-Payoneer webhook integration is documented in [`docs/PAYONEER_WEBHOOK.md`](docs/PAYONEER_WEBHOOK.md).
+Stripe checkout is documented in [`docs/STRIPE.md`](docs/STRIPE.md).
 
 ## Stack
 

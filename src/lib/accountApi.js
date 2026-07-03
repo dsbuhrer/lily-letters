@@ -10,7 +10,6 @@ export async function fetchOrders(supabase, userId) {
       subtotal_cents,
       currency,
       paid_at,
-      download_expires_at,
       created_at,
       order_items (
         id,
@@ -43,7 +42,6 @@ export async function fetchOrderByNumber(supabase, userId, orderNumber) {
       subtotal_cents,
       currency,
       paid_at,
-      download_expires_at,
       billing_name,
       billing_address,
       created_at,
@@ -84,9 +82,7 @@ export function formatOrderDate(iso) {
 }
 
 export function isDownloadAvailable(order) {
-  if (order.status !== 'paid') return false;
-  if (!order.download_expires_at) return true;
-  return new Date(order.download_expires_at) > new Date();
+  return order.status === 'paid';
 }
 
 export function orderStatusLabel(status) {

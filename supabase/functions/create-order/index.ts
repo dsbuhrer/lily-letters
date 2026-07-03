@@ -1,24 +1,6 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
-
-const SIGNED_URL_TTL = 3600;
-
-function generateOrderNumber() {
-  return `TLLC-${Date.now().toString(36).toUpperCase()}`;
-}
-
-async function signedPdfUrl(
-  supabase: ReturnType<typeof createClient>,
-  path: string | null,
-): Promise<string | null> {
-  if (!path) return null;
-  if (path.startsWith('http')) return path;
-  const { data, error } = await supabase.storage
-    .from('product-downloads')
-    .createSignedUrl(path, SIGNED_URL_TTL);
-  if (error || !data?.signedUrl) return null;
-  return data.signedUrl;
-}
+import { getStripe } from '../_shared/stripe.ts';
+import { generateOrderNumber, getServiceSupabase } from '../_shared/orders.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -29,11 +11,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const mockCheckout = Deno.env.get('MOCK_CHECKOUT') !== 'false';
-
-    const supabase = createClient(supabaseUrl, serviceKey);
+    const supabase = getServiceSupabase();
+    const stripe = getStripe();
 
     const body = await req.json();
     const email = String(body.email || '').toLowerCase().trim();
@@ -92,10 +71,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    const now = new Date();
-    const expiresAt = new Date(now);
-    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-
     const orderNumber = generateOrderNumber();
     const billingName = [firstName, lastName].filter(Boolean).join(' ').trim();
 
@@ -105,12 +80,10 @@ Deno.serve(async (req) => {
         order_number: orderNumber,
         email,
         user_id: userId,
-        status: mockCheckout ? 'paid' : 'pending',
+        status: 'pending',
         subtotal_cents: subtotalCents,
         currency: 'USD',
-        payment_provider: mockCheckout ? 'mock' : 'payoneer',
-        paid_at: mockCheckout ? now.toISOString() : null,
-        download_expires_at: mockCheckout ? expiresAt.toISOString() : null,
+        payment_provider: 'stripe',
         billing_name: billingName || firstName,
         billing_address: billing,
       })
@@ -127,19 +100,37 @@ Deno.serve(async (req) => {
     const { error: itemsError } = await supabase.from('order_items').insert(rows);
     if (itemsError) throw itemsError;
 
-    const responseItems = await Promise.all(
-      orderItems.map(async (item) => ({
-        product_id: item.product_id,
-        product_name: item.product_name,
-        pdf_url: item.pdf_url,
-        pdf_file_name: item.pdf_file_name,
-        pdf_signed_url: await signedPdfUrl(supabase, item.pdf_url),
-        canva_link: item.canva_link,
-      })),
-    );
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: subtotalCents,
+      currency: 'usd',
+      payment_method_types: ['card'],
+      receipt_email: email,
+      description: `Order ${orderNumber} — Lilly Letters`,
+      statement_descriptor_suffix: 'LILLY LETTERS',
+      metadata: {
+        order_id: order.id,
+        order_number: orderNumber,
+      },
+    });
+
+    const { error: piUpdateError } = await supabase
+      .from('orders')
+      .update({ stripe_payment_intent_id: paymentIntent.id })
+      .eq('id', order.id);
+
+    if (piUpdateError) throw piUpdateError;
+
+    if (!paymentIntent.client_secret) {
+      throw new Error('Stripe did not return a client secret.');
+    }
 
     return jsonResponse(
-      { orderId: order.order_number, id: order.id, items: responseItems },
+      {
+        orderId: order.order_number,
+        id: order.id,
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+      },
       201,
     );
   } catch (e) {

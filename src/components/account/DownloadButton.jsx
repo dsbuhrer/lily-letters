@@ -16,11 +16,14 @@ export default function DownloadButton({ order, variant = 'primary' }) {
   const hasLegacy = orderHasLegacyCanvaDownload(order);
 
   if (!available) {
+    const messages = {
+      pending: 'Downloads will be available once payment is confirmed.',
+      failed: 'Payment failed — downloads are not available for this order.',
+      refunded: 'This order was refunded — downloads are no longer available.',
+    };
     return (
       <p className="font-body text-sm text-ink-subtle">
-        {order.status === 'pending'
-          ? 'Downloads will be available once payment is confirmed.'
-          : 'Download access has expired or is unavailable.'}
+        {messages[order.status] || 'Download access is unavailable.'}
       </p>
     );
   }

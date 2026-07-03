@@ -1,11 +1,15 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, CreditCard, ChevronRight, Check, ShieldCheck, Mail } from 'lucide-react';
+import { Lock, ChevronRight, Check, Mail } from 'lucide-react';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 import useCartStore from '../store/cartStore';
 import CheckoutEmailNotice from '../components/CheckoutEmailNotice';
+import CheckoutPaymentForm from '../components/CheckoutPaymentForm';
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import { clearCheckoutSession } from '../lib/stripeCheckout';
 import {
   normalizeEmail,
   isValidEmail,
@@ -13,6 +17,9 @@ import {
 } from '../utils/emailHelpers';
 
 const inputBase = 'input-field';
+const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
+  : null;
 
 export default function CheckoutPage() {
   const { items, clearCart } = useCartStore();
@@ -21,7 +28,6 @@ export default function CheckoutPage() {
   const subtotal = items.reduce((s, i) => s + i.price, 0);
 
   const [step, setStep] = useState(1); // 1: contact, 2: billing, 3: payment
-  const [loading, setLoading] = useState(false);
 
   const [info, setInfo] = useState({
     email: '',
@@ -36,12 +42,24 @@ export default function CheckoutPage() {
     country: 'US',
   });
   const [billingErrors, setBillingErrors] = useState({});
-  const [payment, setPayment] = useState({
-    cardNumber: '',
-    expiry: '',
-    cvv: '',
-    nameOnCard: '',
+  const [paymentSession, setPaymentSession] = useState({
+    clientSecret: null,
+    orderNumber: null,
+    paymentIntentId: null,
+    loading: false,
+    error: null,
   });
+
+  const emailLocked = Boolean(user?.email);
+
+  useEffect(() => {
+    if (user?.email) {
+      setInfo((prev) => ({ ...prev, email: user.email }));
+      setShowDeliveryPreview(true);
+      setEmailTouched(true);
+      setEmailError('');
+    }
+  }, [user?.email]);
 
   const emailInputRef = useRef(null);
   const [emailTouched, setEmailTouched] = useState(false);
@@ -83,6 +101,7 @@ export default function CheckoutPage() {
   };
 
   const handleEmailChange = (value) => {
+    if (emailLocked) return;
     setInfo((prev) => ({ ...prev, email: value }));
     if (emailError) setEmailError('');
     setShowTypoPromptOnSubmit(false);
@@ -101,8 +120,75 @@ export default function CheckoutPage() {
   };
 
   const goToStep = (nextStep) => {
+    if (step === 3 && nextStep < 3) {
+      setPaymentSession({
+        clientSecret: null,
+        orderNumber: null,
+        paymentIntentId: null,
+        loading: false,
+        error: null,
+      });
+    }
     setStep(nextStep);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const buildOrderPayload = () => ({
+    email: info.email,
+    firstName: info.firstName,
+    lastName: info.lastName,
+    items: items.map((item) => ({
+      productId: item.id,
+      name: item.name,
+      price: item.price,
+      slug: item.slug,
+    })),
+    billing: {
+      street: billing.street.trim(),
+      postalCode: billing.postalCode.trim(),
+      city: billing.city.trim(),
+      stateProvince: billing.stateProvince.trim(),
+      country: billing.country,
+    },
+    userId: user?.id,
+  });
+
+  const startPaymentSession = async () => {
+    if (!stripePromise) {
+      setPaymentSession((prev) => ({
+        ...prev,
+        loading: false,
+        error: 'Stripe is not configured. Add VITE_STRIPE_PUBLISHABLE_KEY to your environment.',
+      }));
+      return;
+    }
+
+    setPaymentSession({
+      clientSecret: null,
+      orderNumber: null,
+      paymentIntentId: null,
+      loading: true,
+      error: null,
+    });
+
+    try {
+      const result = await api.createOrder(buildOrderPayload());
+      setPaymentSession({
+        clientSecret: result.clientSecret,
+        orderNumber: result.orderId,
+        paymentIntentId: result.paymentIntentId,
+        loading: false,
+        error: null,
+      });
+    } catch (err) {
+      setPaymentSession({
+        clientSecret: null,
+        orderNumber: null,
+        paymentIntentId: null,
+        loading: false,
+        error: err.message || 'Could not start payment. Please try again.',
+      });
+    }
   };
 
   const proceedToBilling = () => {
@@ -130,9 +216,10 @@ export default function CheckoutPage() {
     return Object.keys(errors).length === 0;
   };
 
-  const proceedToPayment = () => {
+  const proceedToPayment = async () => {
     if (!validateBilling()) return;
     goToStep(3);
+    await startPaymentSession();
   };
 
   const handleInfoSubmit = (e) => {
@@ -158,9 +245,9 @@ export default function CheckoutPage() {
     proceedToBilling();
   };
 
-  const handleBillingSubmit = (e) => {
+  const handleBillingSubmit = async (e) => {
     e.preventDefault();
-    proceedToPayment();
+    await proceedToPayment();
   };
 
   const updateBilling = (field, value) => {
@@ -174,67 +261,38 @@ export default function CheckoutPage() {
     }
   };
 
-  const handlePaymentSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const payload = {
-        email: info.email,
-        firstName: info.firstName,
-        lastName: info.lastName,
-        items: items.map((item) => ({
-          productId: item.id,
-          name: item.name,
-          price: item.price,
-          slug: item.slug,
-        })),
-        billing: {
-          street: billing.street.trim(),
-          postalCode: billing.postalCode.trim(),
-          city: billing.city.trim(),
-          stateProvince: billing.stateProvince.trim(),
-          country: billing.country,
-        },
-        userId: user?.id,
-      };
-
-      let orderId = `TLLC-${Date.now().toString(36).toUpperCase()}`;
-      let orderItems = null;
-      try {
-        const result = await api.createOrder(payload);
-        if (result.orderId) orderId = result.orderId;
-        if (result.items) orderItems = result.items;
-      } catch (err) {
-        console.warn('Order persistence failed, continuing with local confirmation:', err);
-      }
-
-      clearCart();
-      navigate('/order-confirmation', {
-        state: {
-          email: info.email,
-          firstName: info.firstName,
-          items,
-          orderItems,
-          total: subtotal,
-          orderId,
-          billing: payload.billing,
-        },
-      });
-    } finally {
-      setLoading(false);
-    }
+  const handlePaymentSuccess = (result) => {
+    clearCart();
+    clearCheckoutSession();
+    navigate('/order-confirmation', {
+      state: {
+        email: result.email,
+        firstName: result.firstName,
+        orderId: result.orderId,
+        orderItems: result.items,
+        total: result.total,
+        status: result.status,
+      },
+    });
   };
 
-  const formatCard = (val) => {
-    const digits = val.replace(/\D/g, '').slice(0, 16);
-    return digits.replace(/(.{4})/g, '$1 ').trim();
-  };
-
-  const formatExpiry = (val) => {
-    const digits = val.replace(/\D/g, '').slice(0, 4);
-    if (digits.length >= 3) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-    return digits;
-  };
+  const stripeElementsOptions = useMemo(
+    () =>
+      paymentSession.clientSecret
+        ? {
+            clientSecret: paymentSession.clientSecret,
+            appearance: {
+              theme: 'stripe',
+              variables: {
+                colorPrimary: '#5c2430',
+                colorText: '#2c2420',
+                fontFamily: 'Inter, system-ui, sans-serif',
+              },
+            },
+          }
+        : null,
+    [paymentSession.clientSecret],
+  );
 
   if (items.length === 0) {
     return (
@@ -357,6 +415,8 @@ export default function CheckoutPage() {
                         value={info.email}
                         onChange={(e) => handleEmailChange(e.target.value)}
                         onBlur={handleEmailBlur}
+                        disabled={emailLocked}
+                        readOnly={emailLocked}
                         animate={emailShake ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
                         transition={{ duration: 0.4 }}
                         className={getEmailInputClass()}
@@ -422,6 +482,13 @@ export default function CheckoutPage() {
                           </motion.div>
                         )}
                       </AnimatePresence>
+
+                      {emailLocked && (
+                        <p className="font-body text-xs text-ink-subtle mt-2">
+                          Signed in as{' '}
+                          <strong className="text-wine font-medium">{info.email}</strong>
+                        </p>
+                      )}
 
                       <AnimatePresence>
                         {showDeliveryPreview && isValidEmail(info.email) && !emailError && (
@@ -691,128 +758,68 @@ export default function CheckoutPage() {
                             {info.email}
                           </p>
                           <p className="font-body text-xs text-ink-muted mt-1.5 leading-relaxed">
-                            Your templates will be sent here — tap Change if this looks wrong.
+                            {emailLocked
+                              ? 'Receipt and download details will be sent to your account email.'
+                              : 'Your templates will be sent here — tap Change if this looks wrong.'}
                           </p>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => goToStep(1)}
-                        className="font-body text-xs text-gold hover:text-wine flex-shrink-0 transition-colors"
-                      >
-                        Change
-                      </button>
+                      {!emailLocked && (
+                        <button
+                          type="button"
+                          onClick={() => goToStep(1)}
+                          className="font-body text-xs text-gold hover:text-wine flex-shrink-0 transition-colors"
+                        >
+                          Change
+                        </button>
+                      )}
                     </div>
                   </div>
 
-                  <form onSubmit={handlePaymentSubmit} className="space-y-4">
-                    <div>
-                      <label className="form-label">
-                        Card Number *
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          required
-                          placeholder="1234 5678 9012 3456"
-                          value={payment.cardNumber}
-                          onChange={(e) =>
-                            setPayment({ ...payment, cardNumber: formatCard(e.target.value) })
-                          }
-                          maxLength={19}
-                          className={`${inputBase} pr-12`}
-                        />
-                        <CreditCard
-                          size={18}
-                          strokeWidth={1.5}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-taupe"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="form-label">
-                          Expiry Date *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="MM/YY"
-                          value={payment.expiry}
-                          onChange={(e) =>
-                            setPayment({ ...payment, expiry: formatExpiry(e.target.value) })
-                          }
-                          maxLength={5}
-                          className={inputBase}
-                        />
-                      </div>
-                      <div>
-                        <label className="form-label">
-                          CVV *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="123"
-                          value={payment.cvv}
-                          onChange={(e) =>
-                            setPayment({
-                              ...payment,
-                              cvv: e.target.value.replace(/\D/g, '').slice(0, 4),
-                            })
-                          }
-                          maxLength={4}
-                          className={inputBase}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="form-label">
-                        Name on Card *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="As it appears on your card"
-                        value={payment.nameOnCard}
-                        onChange={(e) => setPayment({ ...payment, nameOnCard: e.target.value })}
-                        className={inputBase}
+                  {paymentSession.loading && (
+                    <div className="py-12 text-center">
+                      <motion.span
+                        animate={{ rotate: 360 }}
+                        transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                        className="w-8 h-8 border-2 border-wine border-t-transparent rounded-full inline-block"
                       />
-                    </div>
-
-                    {/* Trust badges */}
-                    <div className="flex items-center gap-3 py-3 border-y border-taupe/20">
-                      <ShieldCheck size={18} strokeWidth={1.5} className="text-gold flex-shrink-0" />
-                      <p className="font-body text-xs text-ink-subtle">
-                        Your payment is protected by 256-bit SSL encryption. We never store your card details.
+                      <p className="font-body text-sm text-ink-subtle mt-4">
+                        Preparing secure payment…
                       </p>
                     </div>
+                  )}
 
-                    <motion.button
-                      type="submit"
-                      disabled={loading}
-                      whileTap={{ scale: 0.98 }}
-                      className={`btn-primary w-full ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                    >
-                      {loading ? (
-                        <span className="flex items-center gap-2">
-                          <motion.span
-                            animate={{ rotate: 360 }}
-                            transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                            className="w-4 h-4 border-2 border-cream border-t-transparent rounded-full inline-block"
-                          />
-                          Processing...
-                        </span>
-                      ) : (
-                        <>
-                          <Lock size={14} strokeWidth={2} />
-                          Pay ${subtotal.toFixed(2)} — Complete Order
-                        </>
-                      )}
-                    </motion.button>
-                  </form>
+                  {paymentSession.error && (
+                    <div className="p-4 mb-4 bg-red-50 border border-red-200 text-red-800 font-body text-sm">
+                      {paymentSession.error}
+                      <button
+                        type="button"
+                        onClick={startPaymentSession}
+                        className="block mt-3 font-body text-xs text-wine underline"
+                      >
+                        Try again
+                      </button>
+                    </div>
+                  )}
+
+                  {!paymentSession.loading &&
+                    !paymentSession.error &&
+                    stripeElementsOptions &&
+                    stripePromise && (
+                      <Elements stripe={stripePromise} options={stripeElementsOptions}>
+                        <CheckoutPaymentForm
+                          orderNumber={paymentSession.orderNumber}
+                          paymentIntentId={paymentSession.paymentIntentId}
+                          email={info.email}
+                          firstName={info.firstName}
+                          lastName={info.lastName}
+                          billing={billing}
+                          subtotal={subtotal}
+                          userId={user?.id}
+                          onSuccess={handlePaymentSuccess}
+                        />
+                      </Elements>
+                    )}
                 </motion.div>
               )}
             </AnimatePresence>
