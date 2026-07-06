@@ -1,7 +1,11 @@
 import Stripe from 'https://esm.sh/stripe@17.7.0?target=deno';
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
 import { getStripe } from '../_shared/stripe.ts';
-import { getServiceSupabase, markOrderPaid } from '../_shared/orders.ts';
+import {
+  getServiceSupabase,
+  markOrderPaid,
+  sendOrderConfirmationEmailIfNeeded,
+} from '../_shared/orders.ts';
 
 async function handlePaymentIntentSucceeded(
   supabase: ReturnType<typeof getServiceSupabase>,
@@ -20,6 +24,11 @@ async function handlePaymentIntentSucceeded(
   if (paymentIntent.amount !== order.subtotal_cents) return;
 
   await markOrderPaid(supabase, order.id, paymentIntent);
+  try {
+    await sendOrderConfirmationEmailIfNeeded(supabase, order.id);
+  } catch (emailError) {
+    console.error('Order confirmation email failed:', emailError);
+  }
 }
 
 async function handlePaymentIntentFailed(

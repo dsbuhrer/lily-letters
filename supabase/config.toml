@@ -29,3 +29,6 @@ verify_jwt = true
 
 [functions.trigger-rebuild]
 verify_jwt = false
+
+[functions.submit-contact]
+verify_jwt = false

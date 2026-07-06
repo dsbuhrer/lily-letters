@@ -9,7 +9,8 @@ Checkout uses **Stripe Payment Element** with Supabase Edge Functions. Card data
 3. Payment Element confirms payment in the browser
 4. `complete-order-payment` verifies the PaymentIntent and marks the order `paid`
 5. `stripe-webhook` keeps order status in sync (`succeeded`, `failed`, `refunded`)
-6. `/order-confirmation` loads the paid order via `get-order-confirmation` and enables PDF downloads
+6. On `paid`, an SMTP confirmation email with PDF attachment(s) is sent to the customer
+7. `/order-confirmation` loads the paid order via `get-order-confirmation` and enables PDF downloads
 
 ## Edge Functions
 
@@ -36,6 +37,11 @@ supabase functions deploy stripe-webhook
 | `STRIPE_SECRET_KEY` | Stripe secret key (`sk_test_...` or `sk_live_...`) |
 | `STRIPE_WEBHOOK_SECRET` | Webhook signing secret (`whsec_...`) |
 | `SITE_URL` | `https://thelilylettersco.com` (3DS return URL base) |
+| `SMTP_HOST` | `smtp.hostinger.com` |
+| `SMTP_PORT` | `465` (TLS/SSL) |
+| `SMTP_USER` | `no-reply@thelilylettersco.com` |
+| `SMTP_PASSWORD` | Mailbox password for the sender account |
+| `ORDER_FROM_EMAIL` | `The Lily Letters Co. <no-reply@thelilylettersco.com>` |
 
 ## Frontend env (`.env` / build)
 

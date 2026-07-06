@@ -5,6 +5,7 @@ import {
   fetchOrderItems,
   getServiceSupabase,
   markOrderPaid,
+  sendOrderConfirmationEmailIfNeeded,
   validatePaymentIntent,
 } from '../_shared/orders.ts';
 
@@ -72,6 +73,12 @@ Deno.serve(async (req) => {
     let paidOrder = order;
     if (order.status !== 'paid') {
       paidOrder = await markOrderPaid(supabase, order.id, paymentIntent);
+    }
+
+    try {
+      await sendOrderConfirmationEmailIfNeeded(supabase, order.id);
+    } catch (emailError) {
+      console.error('Order confirmation email failed:', emailError);
     }
 
     const orderItems = await fetchOrderItems(supabase, order.id);

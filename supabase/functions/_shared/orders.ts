@@ -1,5 +1,6 @@
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@17.7.0?target=deno';
+import { sendOrderConfirmationEmail } from './orderEmail.ts';
 
 const SIGNED_URL_TTL = 3600;
 
@@ -109,4 +110,41 @@ export async function fetchOrderItems(supabase: SupabaseClient, orderId: string)
 
   if (error) throw error;
   return (data || []) as OrderItemRow[];
+}
+
+export async function sendOrderConfirmationEmailIfNeeded(
+  supabase: SupabaseClient,
+  orderId: string,
+) {
+  const { data: claimed, error: claimError } = await supabase
+    .from('orders')
+    .update({ confirmation_email_sent_at: new Date().toISOString() })
+    .eq('id', orderId)
+    .eq('status', 'paid')
+    .is('confirmation_email_sent_at', null)
+    .select('id, order_number, email, billing_name')
+    .maybeSingle();
+
+  if (claimError) throw claimError;
+  if (!claimed) return { sent: false, reason: 'already_sent' as const };
+
+  try {
+    const items = await fetchOrderItems(supabase, orderId);
+    const result = await sendOrderConfirmationEmail(supabase, claimed, items);
+
+    if (!result.sent) {
+      await supabase
+        .from('orders')
+        .update({ confirmation_email_sent_at: null })
+        .eq('id', orderId);
+    }
+
+    return result;
+  } catch (error) {
+    await supabase
+      .from('orders')
+      .update({ confirmation_email_sent_at: null })
+      .eq('id', orderId);
+    throw error;
+  }
 }
