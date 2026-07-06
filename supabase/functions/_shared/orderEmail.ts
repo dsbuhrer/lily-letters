@@ -1,5 +1,5 @@
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts';
+import { sendSmtpMail } from './smtp.ts';
 
 export type OrderEmailDetails = {
   order_number: string;
@@ -155,29 +155,11 @@ function buildOrderEmailText(
   return lines.join('\n');
 }
 
-function getSmtpConfig() {
-  const host = Deno.env.get('SMTP_HOST') || 'smtp.hostinger.com';
-  const port = Number(Deno.env.get('SMTP_PORT') || '465');
-  const user = Deno.env.get('SMTP_USER') || 'no-reply@thelilylettersco.com';
-  const password = Deno.env.get('SMTP_PASSWORD');
-  const fromEmail =
-    Deno.env.get('ORDER_FROM_EMAIL') || 'The Lily Letters Co. <no-reply@thelilylettersco.com>';
-
-  return { host, port, user, password, fromEmail };
-}
-
 export async function sendOrderConfirmationEmail(
   supabase: SupabaseClient,
   order: OrderEmailDetails,
   items: OrderEmailItem[],
 ) {
-  const { host, port, user, password, fromEmail } = getSmtpConfig();
-
-  if (!password) {
-    console.warn('SMTP_PASSWORD is not configured; order paid but confirmation email not sent.');
-    return { sent: false, reason: 'missing_smtp_password' as const };
-  }
-
   if (!items.length) {
     console.warn(`Order ${order.order_number} has no items; confirmation email skipped.`);
     return { sent: false, reason: 'no_items' as const };
@@ -188,34 +170,15 @@ export async function sendOrderConfirmationEmail(
   const productNames = items.map((item) => item.product_name).join(', ');
   const subject = `Order Confirmed: ${productNames} (${order.order_number})`;
 
-  const client = new SMTPClient({
-    connection: {
-      hostname: host,
-      port,
-      tls: true,
-      auth: {
-        username: user,
-        password,
-      },
-    },
+  return sendSmtpMail({
+    to: order.email,
+    subject,
+    content: buildOrderEmailText(order, items, siteUrl),
+    html: buildOrderEmailHtml(order, items, siteUrl),
+    attachments: attachments.map((attachment) => ({
+      filename: attachment.filename,
+      content: attachment.content,
+      encoding: 'binary',
+    })),
   });
-
-  try {
-    await client.send({
-      from: fromEmail,
-      to: order.email,
-      subject,
-      content: buildOrderEmailText(order, items, siteUrl),
-      html: buildOrderEmailHtml(order, items, siteUrl),
-      attachments: attachments.map((attachment) => ({
-        filename: attachment.filename,
-        content: attachment.content,
-        encoding: 'binary',
-      })),
-    });
-  } finally {
-    await client.close();
-  }
-
-  return { sent: true as const };
 }

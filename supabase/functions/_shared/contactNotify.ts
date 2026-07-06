@@ -1,4 +1,4 @@
-const RESEND_API = 'https://api.resend.com/emails';
+import { sendSmtpMail } from './smtp.ts';
 
 export type ContactNotification = {
   name: string;
@@ -52,37 +52,29 @@ function buildContactEmailHtml(contact: ContactNotification) {
   `.trim();
 }
 
-export async function sendContactNotification(contact: ContactNotification) {
-  const apiKey = Deno.env.get('RESEND_API_KEY');
-  const notifyEmail = Deno.env.get('CONTACT_NOTIFY_EMAIL') || 'dsbuhrer@gmail.com';
-  const fromEmail =
-    Deno.env.get('CONTACT_FROM_EMAIL') || 'The Lily Letters <onboarding@resend.dev>';
-
-  if (!apiKey) {
-    console.warn('RESEND_API_KEY is not configured; contact saved but email not sent.');
-    return { sent: false, reason: 'missing_api_key' as const };
-  }
-
+function buildContactEmailText(contact: ContactNotification) {
   const topic = contact.topic || 'General';
-  const response = await fetch(RESEND_API, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: fromEmail,
-      to: [notifyEmail],
-      reply_to: contact.email,
-      subject: `New contact: ${topic} — ${contact.name}`,
-      html: buildContactEmailHtml(contact),
-    }),
+  return [
+    `New contact form message from ${contact.name}`,
+    '',
+    `Email: ${contact.email}`,
+    `Topic: ${topic}`,
+    `Received: ${contact.createdAt}`,
+    '',
+    'Message:',
+    contact.message,
+  ].join('\n');
+}
+
+export async function sendContactNotification(contact: ContactNotification) {
+  const notifyEmail = Deno.env.get('CONTACT_NOTIFY_EMAIL') || 'dsbuhrer@gmail.com';
+  const topic = contact.topic || 'General';
+
+  return sendSmtpMail({
+    to: notifyEmail,
+    replyTo: contact.email,
+    subject: `New contact: ${topic} — ${contact.name}`,
+    content: buildContactEmailText(contact),
+    html: buildContactEmailHtml(contact),
   });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Resend failed (${response.status}): ${text}`);
-  }
-
-  return { sent: true as const };
 }
