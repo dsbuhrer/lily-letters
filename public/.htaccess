@@ -2,10 +2,8 @@
   RewriteEngine On
   RewriteBase /
 
-  # Serve existing files and directories
-  RewriteCond %{REQUEST_FILENAME} -f [OR]
-  RewriteCond %{REQUEST_FILENAME} -d
-  RewriteRule ^ - [L]
+  # Products listing (SPA — products/ directory exists for prerendered detail pages)
+  RewriteRule ^products/?$ index.html [L]
 
   # Pre-rendered blog posts (only if static HTML exists)
   RewriteCond %{DOCUMENT_ROOT}/blog/$1/index.html -f
@@ -26,6 +24,11 @@
   # Pre-rendered product pages
   RewriteCond %{DOCUMENT_ROOT}/products/$1/index.html -f
   RewriteRule ^products/([^/]+)/?$ products/$1/index.html [L]
+
+  # Serve existing files and directories
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
 
   # SPA fallback (new posts before rebuild finishes still work via Supabase)
   RewriteRule ^ index.html [L]
