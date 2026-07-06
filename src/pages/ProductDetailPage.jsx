@@ -84,7 +84,7 @@ export default function ProductDetailPage() {
         type="product"
         jsonLd={productJsonLd}
       />
-    <main className="min-h-screen bg-cream pt-20">
+    <main className="min-h-screen bg-cream pt-20 pb-44 sm:pb-40">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 mb-8 font-body text-xs text-ink-faint">
@@ -171,53 +171,6 @@ export default function ProductDetailPage() {
               <p className="font-body text-sm text-ink-muted leading-relaxed whitespace-pre-wrap mb-6">
                 {product.description}
               </p>
-
-              {/* Features */}
-              <div className="flex flex-wrap gap-4 mb-8 py-4 border-y border-taupe/30">
-                <div className="flex items-center gap-1.5 text-xs font-body text-ink-muted">
-                  <Download size={14} className="text-gold" strokeWidth={1.5} />
-                  Instant Digital Download
-                </div>
-                <div className="flex items-center gap-1.5 text-xs font-body text-ink-muted">
-                  <Check size={14} className="text-gold" strokeWidth={1.5} />
-                  Editable in Free Canva
-                </div>
-                <div className="flex items-center gap-1.5 text-xs font-body text-ink-muted">
-                  <Check size={14} className="text-gold" strokeWidth={1.5} />
-                  Print at Home or Anywhere
-                </div>
-              </div>
-
-              {/* CTA */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <motion.button
-                  onClick={handleAddToCart}
-                  whileTap={{ scale: 0.97 }}
-                  className={`flex-1 flex items-center justify-center gap-2 py-4 font-body text-sm font-medium tracking-widest uppercase transition-all duration-300 ${
-                    added
-                      ? 'bg-sage text-cream cursor-default'
-                      : 'bg-wine text-cream hover:bg-[#3a1926]'
-                  }`}
-                >
-                  {added ? (
-                    <>
-                      <Check size={16} strokeWidth={2} />
-                      Added to Cart!
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingBag size={16} strokeWidth={1.5} />
-                      Add to Cart
-                    </>
-                  )}
-                </motion.button>
-                <WishlistButton product={product} variant="detail" />
-              </div>
-
-              <p className="font-body text-xs text-ink-faint mt-3 flex items-center gap-1">
-                <Check size={12} className="text-sage" />
-                Secure checkout · Instant PDF with all Canva links
-              </p>
             </motion.div>
           </div>
         </div>
@@ -235,6 +188,60 @@ export default function ProductDetailPage() {
             </div>
           </section>
         )}
+      </div>
+
+      {/* Sticky purchase bar */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-40 bg-cream/95 backdrop-blur-md border-t border-taupe/35 shadow-[0_-4px_24px_rgba(44,34,51,0.08)]"
+        role="region"
+        aria-label="Purchase options"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="flex flex-wrap justify-center sm:justify-start gap-x-4 gap-y-1.5 mb-3">
+            <div className="flex items-center gap-1.5 text-xs font-body text-ink-muted">
+              <Download size={14} className="text-gold shrink-0" strokeWidth={1.5} />
+              Instant Digital Download
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-body text-ink-muted">
+              <Check size={14} className="text-gold shrink-0" strokeWidth={1.5} />
+              Editable in Free Canva
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-body text-ink-muted">
+              <Check size={14} className="text-gold shrink-0" strokeWidth={1.5} />
+              Print at Home or Anywhere
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <motion.button
+              onClick={handleAddToCart}
+              whileTap={{ scale: 0.97 }}
+              className={`flex-1 flex items-center justify-center gap-2 py-3.5 sm:py-4 font-body text-sm font-medium tracking-widest uppercase transition-all duration-300 ${
+                added
+                  ? 'bg-sage text-cream cursor-default'
+                  : 'bg-wine text-cream hover:bg-[#3a1926]'
+              }`}
+            >
+              {added ? (
+                <>
+                  <Check size={16} strokeWidth={2} />
+                  Added to Cart!
+                </>
+              ) : (
+                <>
+                  <ShoppingBag size={16} strokeWidth={1.5} />
+                  Add to Cart
+                </>
+              )}
+            </motion.button>
+            <WishlistButton product={product} variant="detail" />
+          </div>
+
+          <p className="font-body text-xs text-ink-faint mt-2.5 flex items-center justify-center sm:justify-start gap-1">
+            <Check size={12} className="text-sage shrink-0" />
+            Secure checkout · Instant PDF with all Canva links
+          </p>
+        </div>
       </div>
     </main>
     </>

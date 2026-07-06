@@ -17,12 +17,13 @@ export function generateOrderNumber() {
 export async function signedPdfUrl(
   supabase: SupabaseClient,
   path: string | null,
+  expiresIn = SIGNED_URL_TTL,
 ): Promise<string | null> {
   if (!path) return null;
   if (path.startsWith('http')) return path;
   const { data, error } = await supabase.storage
     .from('product-downloads')
-    .createSignedUrl(path, SIGNED_URL_TTL);
+    .createSignedUrl(path, expiresIn);
   if (error || !data?.signedUrl) return null;
   return data.signedUrl;
 }
@@ -37,12 +38,47 @@ export type OrderItemRow = {
   pdf_file_name: string | null;
 };
 
+export async function enrichOrderItemsWithProductPdfNames(
+  supabase: SupabaseClient,
+  orderItems: OrderItemRow[],
+): Promise<OrderItemRow[]> {
+  const missingProductIds = [
+    ...new Set(
+      orderItems
+        .filter((item) => !item.pdf_file_name?.trim() && item.product_id)
+        .map((item) => item.product_id),
+    ),
+  ];
+
+  if (!missingProductIds.length) return orderItems;
+
+  const { data: products, error } = await supabase
+    .from('products')
+    .select('id, pdf_file_name')
+    .in('id', missingProductIds);
+
+  if (error) throw error;
+
+  const nameByProductId = new Map(
+    (products || []).map((product) => [product.id, product.pdf_file_name as string | null]),
+  );
+
+  return orderItems.map((item) => ({
+    ...item,
+    pdf_file_name: item.pdf_file_name?.trim()
+      ? item.pdf_file_name
+      : nameByProductId.get(item.product_id) || null,
+  }));
+}
+
 export async function buildOrderItemsResponse(
   supabase: SupabaseClient,
   orderItems: OrderItemRow[],
 ) {
+  const enrichedItems = await enrichOrderItemsWithProductPdfNames(supabase, orderItems);
+
   return Promise.all(
-    orderItems.map(async (item) => ({
+    enrichedItems.map(async (item) => ({
       product_id: item.product_id,
       product_name: item.product_name,
       product_slug: item.product_slug,
@@ -129,7 +165,10 @@ export async function sendOrderConfirmationEmailIfNeeded(
   if (!claimed) return { sent: false, reason: 'already_sent' as const };
 
   try {
-    const items = await fetchOrderItems(supabase, orderId);
+    const items = await enrichOrderItemsWithProductPdfNames(
+      supabase,
+      await fetchOrderItems(supabase, orderId),
+    );
     const result = await sendOrderConfirmationEmail(supabase, claimed, items);
 
     if (!result.sent) {

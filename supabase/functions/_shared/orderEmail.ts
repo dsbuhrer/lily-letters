@@ -1,6 +1,8 @@
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { sendSmtpMail } from './smtp.ts';
 
+const EMAIL_PDF_URL_TTL = 7 * 24 * 3600;
+
 export type OrderEmailDetails = {
   order_number: string;
   email: string;
@@ -12,6 +14,10 @@ type OrderEmailItem = {
   canva_link: string | null;
   pdf_url: string | null;
   pdf_file_name: string | null;
+};
+
+type OrderEmailItemWithLinks = OrderEmailItem & {
+  pdf_download_url: string | null;
 };
 
 type PdfAttachment = {
@@ -77,17 +83,47 @@ async function buildPdfAttachments(
   return attachments;
 }
 
+async function signedPdfUrlForEmail(
+  supabase: SupabaseClient,
+  path: string | null,
+): Promise<string | null> {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+  const { data, error } = await supabase.storage
+    .from('product-downloads')
+    .createSignedUrl(path, EMAIL_PDF_URL_TTL);
+  if (error || !data?.signedUrl) return null;
+  return data.signedUrl;
+}
+
+async function resolveItemsWithPdfLinks(
+  supabase: SupabaseClient,
+  items: OrderEmailItem[],
+): Promise<OrderEmailItemWithLinks[]> {
+  return Promise.all(
+    items.map(async (item) => ({
+      ...item,
+      pdf_download_url: await signedPdfUrlForEmail(supabase, item.pdf_url),
+    })),
+  );
+}
+
+function templateLinkForItem(item: OrderEmailItemWithLinks) {
+  return item.pdf_download_url || item.canva_link;
+}
+
 function buildOrderEmailHtml(
   order: OrderEmailDetails,
-  items: OrderEmailItem[],
+  items: OrderEmailItemWithLinks[],
   siteUrl: string,
 ) {
   const firstName = (order.billing_name || 'there').split(' ')[0] || 'there';
   const productLines = items
     .map((item) => {
       const hasPdf = Boolean(item.pdf_url);
-      const canva = item.canva_link
-        ? `<br><a href="${escapeHtml(item.canva_link)}" style="color: #5c1a33;">Open Canva template</a>`
+      const templateLink = templateLinkForItem(item);
+      const canva = templateLink
+        ? `<br><a href="${escapeHtml(templateLink)}" style="color: #5c1a33;">Open Canva template</a>`
         : '';
       const delivery = hasPdf ? 'PDF attached to this email' : item.canva_link ? 'Canva template link below' : '';
       return `<li style="margin-bottom: 10px;"><strong>${escapeHtml(item.product_name)}</strong>${
@@ -132,7 +168,7 @@ function buildOrderEmailHtml(
 
 function buildOrderEmailText(
   order: OrderEmailDetails,
-  items: OrderEmailItem[],
+  items: OrderEmailItemWithLinks[],
   siteUrl: string,
 ) {
   const firstName = (order.billing_name || 'there').split(' ')[0] || 'there';
@@ -148,7 +184,8 @@ function buildOrderEmailText(
   for (const item of items) {
     lines.push(`- ${item.product_name}`);
     if (item.pdf_url) lines.push('  PDF attached to this email');
-    if (item.canva_link) lines.push(`  Canva: ${item.canva_link}`);
+    const templateLink = templateLinkForItem(item);
+    if (templateLink) lines.push(`  Open Canva template: ${templateLink}`);
   }
 
   lines.push('', `Order confirmation: ${confirmationUrl}`, '', 'The Lily Letters Co.');
@@ -166,6 +203,7 @@ export async function sendOrderConfirmationEmail(
   }
 
   const siteUrl = Deno.env.get('SITE_URL') || 'https://thelilylettersco.com';
+  const itemsWithLinks = await resolveItemsWithPdfLinks(supabase, items);
   const attachments = await buildPdfAttachments(supabase, order.order_number, items);
   const productNames = items.map((item) => item.product_name).join(', ');
   const subject = `Order Confirmed: ${productNames} (${order.order_number})`;
@@ -173,8 +211,8 @@ export async function sendOrderConfirmationEmail(
   return sendSmtpMail({
     to: order.email,
     subject,
-    content: buildOrderEmailText(order, items, siteUrl),
-    html: buildOrderEmailHtml(order, items, siteUrl),
+    content: buildOrderEmailText(order, itemsWithLinks, siteUrl),
+    html: buildOrderEmailHtml(order, itemsWithLinks, siteUrl),
     attachments: attachments.map((attachment) => ({
       filename: attachment.filename,
       content: attachment.content,

@@ -11,8 +11,17 @@ function sanitizePdfFileName(name) {
   return withExt.replace(/[/\\?%*:|"<>]/g, '-');
 }
 
+function resolveItemPdfFileName(item) {
+  const fromItem = item.pdf_file_name?.trim();
+  if (fromItem) return fromItem;
+  const fromProduct = item.products?.pdf_file_name?.trim();
+  if (fromProduct) return fromProduct;
+  return null;
+}
+
 function resolveDownloadFilename(item, orderNumber) {
-  if (item.pdf_file_name) return sanitizePdfFileName(item.pdf_file_name);
+  const registeredName = resolveItemPdfFileName(item);
+  if (registeredName) return sanitizePdfFileName(registeredName);
   const safeName = (item.product_name || 'template').replace(/[^\w\s-]/g, '').trim() || 'template';
   return `${orderNumber}-${safeName}.pdf`;
 }

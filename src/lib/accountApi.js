@@ -19,7 +19,10 @@ export async function fetchOrders(supabase, userId) {
         price_cents,
         canva_link,
         pdf_url,
-        pdf_file_name
+        pdf_file_name,
+        products (
+          pdf_file_name
+        )
       )
     `,
     )
@@ -53,7 +56,10 @@ export async function fetchOrderByNumber(supabase, userId, orderNumber) {
         price_cents,
         canva_link,
         pdf_url,
-        pdf_file_name
+        pdf_file_name,
+        products (
+          pdf_file_name
+        )
       )
     `,
     )
