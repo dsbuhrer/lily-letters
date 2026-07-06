@@ -48,12 +48,14 @@ function preparePostRow(body, existingSlug, tagSlugs) {
 
 export async function getStats() {
   const supabase = requireSupabase();
-  const [drafts, published, subs, contacts, contactsUnread] = await Promise.all([
+  const [drafts, published, subs, contacts, contactsUnread, orders, ordersPaid] = await Promise.all([
     supabase.from('posts').select('id', { count: 'exact', head: true }).eq('status', 'draft'),
     supabase.from('posts').select('id', { count: 'exact', head: true }).eq('status', 'published'),
     supabase.from('subscribers').select('id', { count: 'exact', head: true }).is('unsubscribed_at', null),
     supabase.from('contacts').select('id', { count: 'exact', head: true }),
     supabase.from('contacts').select('id', { count: 'exact', head: true }).is('read_at', null),
+    supabase.from('orders').select('id', { count: 'exact', head: true }),
+    supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'paid'),
   ]);
   return {
     drafts: drafts.count || 0,
@@ -61,7 +63,56 @@ export async function getStats() {
     subscribers: subs.count || 0,
     contacts: contacts.count || 0,
     contacts_unread: contactsUnread.count || 0,
+    orders: orders.count || 0,
+    orders_paid: ordersPaid.count || 0,
   };
+}
+
+const ORDER_SELECT = `
+  id,
+  order_number,
+  email,
+  user_id,
+  status,
+  subtotal_cents,
+  currency,
+  payment_provider,
+  stripe_payment_intent_id,
+  stripe_charge_id,
+  paid_at,
+  billing_name,
+  billing_address,
+  created_at,
+  updated_at,
+  order_items (
+    id,
+    product_id,
+    product_name,
+    product_slug,
+    price_cents,
+    canva_link,
+    pdf_url,
+    pdf_file_name
+  )
+`;
+
+export async function listOrders(params = {}) {
+  const supabase = requireSupabase();
+  let query = supabase.from('orders').select(ORDER_SELECT).order('created_at', { ascending: false });
+  if (params.status) query = query.eq('status', params.status);
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return { orders: data || [] };
+}
+
+export async function refundOrder(orderId) {
+  const supabase = requireSupabase();
+  const { data, error } = await supabase.functions.invoke('refund-order', {
+    body: { orderId },
+  });
+  if (error) throw new Error(error.message);
+  if (data?.error) throw new Error(data.error);
+  return data;
 }
 
 export async function listPosts() {

@@ -14,10 +14,17 @@ export default function AdminDashboardPage() {
       <header className="admin-page-header">
         <h1 className="page-title">Dashboard</h1>
       </header>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6 mb-10">
         {[
           { label: 'Draft posts', value: stats?.drafts ?? '—' },
           { label: 'Published', value: stats?.published ?? '—' },
+          {
+            label: 'Orders',
+            value:
+              stats?.orders_paid != null
+                ? `${stats.orders_paid} paid`
+                : (stats?.orders ?? '—'),
+          },
           {
             label: 'Contacts',
             value:
@@ -39,6 +46,9 @@ export default function AdminDashboardPage() {
         </Link>
         <Link to="/admin/products" className="btn-secondary">
           Manage products
+        </Link>
+        <Link to="/admin/orders" className="btn-secondary">
+          View orders
         </Link>
         <Link to="/admin/contacts" className="btn-secondary">
           View contacts

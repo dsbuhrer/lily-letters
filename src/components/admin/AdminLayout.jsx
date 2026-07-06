@@ -7,6 +7,7 @@ import {
   Package,
   Mail,
   MessageSquare,
+  ShoppingBag,
   LogOut,
 } from 'lucide-react';
 import { useAdminAuth } from '../../context/AdminAuthContext';
@@ -17,6 +18,7 @@ const links = [
   { to: '/admin/categories', label: 'Post categories', icon: FolderOpen },
   { to: '/admin/products', label: 'Products', icon: Package },
   { to: '/admin/product-categories', label: 'Product categories', icon: Layers },
+  { to: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { to: '/admin/contacts', label: 'Contacts', icon: MessageSquare },
   { to: '/admin/subscribers', label: 'Subscribers', icon: Mail },
 ];

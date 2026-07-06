@@ -47,6 +47,8 @@ export const api = {
     contacts: adminApi.listContacts,
     updateContact: adminApi.updateContact,
     deleteContact: adminApi.deleteContact,
+    orders: adminApi.listOrders,
+    refundOrder: adminApi.refundOrder,
     upload: uploadImage,
     uploadPdf: uploadProductPdf,
     uploadVideo: uploadProductVideo,
