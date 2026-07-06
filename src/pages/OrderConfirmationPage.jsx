@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useLocation, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Download, Mail, Check, ExternalLink, User, ArrowRight, AlertCircle } from 'lucide-react';
@@ -17,11 +17,12 @@ import {
   clearCheckoutSession,
   readCheckoutSession,
 } from '../lib/stripeCheckout';
+import OrderAccessPanel from '../components/OrderAccessPanel';
 
 export default function OrderConfirmationPage() {
   const { clearCart } = useCartStore();
   const { toast } = useUiFeedback();
-  const { signUp, configured, user } = useAuth();
+  const { signUp, signIn, configured, user } = useAuth();
   const navigate = useNavigate();
   const { state } = useLocation();
   const [searchParams] = useSearchParams();
@@ -33,11 +34,23 @@ export default function OrderConfirmationPage() {
   const [downloading, setDownloading] = useState(false);
   const [loadingOrder, setLoadingOrder] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [accessError, setAccessError] = useState('');
+  const [accessLoading, setAccessLoading] = useState(false);
+  const [verifiedEmail, setVerifiedEmail] = useState('');
   const [order, setOrder] = useState(null);
 
   const queryOrderNumber = searchParams.get('order');
   const redirectPaymentIntentId =
     searchParams.get('payment_intent') || searchParams.get('payment_intent_id');
+
+  const checkoutSession = readCheckoutSession();
+
+  const orderNumber = queryOrderNumber || state?.orderId || checkoutSession?.orderNumber || '';
+  const autoEmail = state?.email || checkoutSession?.email || user?.email || '';
+  const email = autoEmail || verifiedEmail;
+  const paymentIntentId =
+    redirectPaymentIntentId || checkoutSession?.paymentIntentId || null;
+  const needsEmailGate = Boolean(orderNumber && !email && !order);
 
   useEffect(() => {
     if (user && isEmailConfirmed(user)) {
@@ -48,41 +61,28 @@ export default function OrderConfirmationPage() {
     return () => clearTimeout(timer);
   }, [user]);
 
-  useEffect(() => {
-    let cancelled = false;
+  const loadOrder = useCallback(
+    async (emailToUse, userId = user?.id) => {
+      if (!orderNumber || !emailToUse) return false;
 
-    async function loadOrder() {
       setLoadingOrder(true);
       setLoadError('');
-
-      const session = readCheckoutSession();
-      const orderNumber = queryOrderNumber || state?.orderId || session?.orderNumber;
-      const email = state?.email || session?.email || user?.email || '';
-      const paymentIntentId = redirectPaymentIntentId || session?.paymentIntentId || null;
-
-      if (!orderNumber || !email) {
-        if (!cancelled) {
-          setLoadError('We could not find your order details. Please check your email or contact support.');
-          setLoadingOrder(false);
-        }
-        return;
-      }
+      setAccessError('');
 
       try {
         const result = await getOrderConfirmation({
           orderNumber,
-          email,
-          userId: user?.id,
+          email: emailToUse,
+          userId,
           paymentIntentId,
         });
-
-        if (cancelled) return;
 
         if (result.status === 'paid') {
           clearCheckoutSession();
           clearCart();
         }
 
+        setVerifiedEmail(emailToUse);
         setOrder({
           email: result.email,
           firstName: result.firstName || state?.firstName || 'there',
@@ -95,20 +95,105 @@ export default function OrderConfirmationPage() {
             name: item.product_name,
           })),
         });
+        return true;
       } catch (err) {
-        if (!cancelled) {
-          setLoadError(err.message || 'Could not load your order.');
-        }
+        const message = err.message || 'Could not load your order.';
+        setLoadError(message);
+        setAccessError(message);
+        return false;
       } finally {
-        if (!cancelled) setLoadingOrder(false);
+        setLoadingOrder(false);
       }
+    },
+    [orderNumber, paymentIntentId, state?.firstName, user?.id, clearCart],
+  );
+
+  useEffect(() => {
+    if (!orderNumber) {
+      setLoadError('We could not find your order details. Please check your email or contact support.');
+      setLoadingOrder(false);
+      return;
     }
 
-    loadOrder();
-    return () => {
-      cancelled = true;
-    };
-  }, [queryOrderNumber, redirectPaymentIntentId, state, user?.email, user?.id]);
+    if (!email) {
+      setLoadingOrder(false);
+      return;
+    }
+
+    loadOrder(email, user?.id);
+  }, [orderNumber, email, user?.id, loadOrder]);
+
+  const handleGuestAccess = async (guestEmail) => {
+    setAccessLoading(true);
+    setAccessError('');
+    await loadOrder(guestEmail);
+    setAccessLoading(false);
+  };
+
+  const handleSignUpAccess = async (signupEmail, signupPassword) => {
+    if (!configured) {
+      await handleGuestAccess(signupEmail);
+      return;
+    }
+
+    setAccessLoading(true);
+    setAccessError('');
+
+    try {
+      const { session, user: newUser } = await signUp(signupEmail, signupPassword, {
+        firstName: state?.firstName,
+      });
+
+      const loaded = await loadOrder(signupEmail, newUser?.id);
+
+      if (loaded) {
+        if (session && newUser?.email_confirmed_at) {
+          setAccountCreated(true);
+          toast.success('Account created! Your purchases are saved.');
+        } else {
+          setAccountCreated(true);
+          toast.info('Check your email to confirm your account. Your order is ready below.');
+        }
+      }
+    } catch (err) {
+      const message = err.message || 'Could not create account';
+      if (message.toLowerCase().includes('already registered')) {
+        setAccessError('An account with this email already exists. Switch to Sign in.');
+      } else {
+        setAccessError(message);
+      }
+    } finally {
+      setAccessLoading(false);
+    }
+  };
+
+  const handleSignInAccess = async (signinEmail, signinPassword) => {
+    if (!configured) {
+      await handleGuestAccess(signinEmail);
+      return;
+    }
+
+    setAccessLoading(true);
+    setAccessError('');
+
+    try {
+      const { user: signedInUser } = await signIn(signinEmail, signinPassword);
+      const loaded = await loadOrder(signinEmail, signedInUser?.id);
+
+      if (loaded) {
+        setAccountCreated(true);
+        if (signedInUser?.email_confirmed_at) {
+          toast.success('Signed in! Your order is ready.');
+        } else {
+          toast.info('Please confirm your email to save purchases to your account.');
+        }
+      }
+    } catch (err) {
+      setAccessError(err.message || 'Sign in failed');
+    } finally {
+      setAccessLoading(false);
+    }
+  };
 
   const handleCreateAccount = async (e) => {
     e.preventDefault();
@@ -127,6 +212,7 @@ export default function OrderConfirmationPage() {
         toast.success('Account created! Your purchases are saved.');
         setTimeout(() => navigate('/account'), 1500);
       } else {
+        setAccountCreated(true);
         toast.info('Check your email to confirm your account. Purchases link after you confirm.');
       }
     } catch (err) {
@@ -176,11 +262,25 @@ export default function OrderConfirmationPage() {
     }
   };
 
-  if (loadingOrder) {
+  if (loadingOrder && !needsEmailGate) {
     return (
       <main className="min-h-screen bg-cream pt-20 flex items-center justify-center">
         <p className="font-body text-sm text-ink-subtle">Loading your order…</p>
       </main>
+    );
+  }
+
+  if (needsEmailGate) {
+    return (
+      <OrderAccessPanel
+        orderNumber={orderNumber}
+        configured={configured}
+        loading={accessLoading}
+        error={accessError}
+        onGuestAccess={handleGuestAccess}
+        onSignUp={handleSignUpAccess}
+        onSignIn={handleSignInAccess}
+      />
     );
   }
 
@@ -193,9 +293,25 @@ export default function OrderConfirmationPage() {
           </div>
           <h1 className="font-display text-3xl text-wine mb-3">Order unavailable</h1>
           <p className="font-body text-sm text-ink-muted mb-8">{loadError}</p>
-          <Link to="/checkout" className="btn-primary inline-flex">
-            Return to checkout
-          </Link>
+          {orderNumber ? (
+            <button
+              type="button"
+              onClick={() => {
+                clearCheckoutSession();
+                setVerifiedEmail('');
+                setOrder(null);
+                setLoadError('');
+                setAccessError('');
+              }}
+              className="btn-primary inline-flex"
+            >
+              Try again with your email
+            </button>
+          ) : (
+            <Link to="/checkout" className="btn-primary inline-flex">
+              Return to checkout
+            </Link>
+          )}
         </div>
       </main>
     );
@@ -368,7 +484,7 @@ export default function OrderConfirmationPage() {
           </motion.div>
         )}
 
-        {isPaid && showAccountPrompt && !accountCreated && configured && (
+        {isPaid && showAccountPrompt && !accountCreated && !user && configured && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}

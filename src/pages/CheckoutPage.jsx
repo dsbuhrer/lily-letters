@@ -263,7 +263,6 @@ export default function CheckoutPage() {
 
   const handlePaymentSuccess = (result) => {
     clearCart();
-    clearCheckoutSession();
     navigate('/order-confirmation', {
       state: {
         email: result.email,
