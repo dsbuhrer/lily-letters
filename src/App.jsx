@@ -27,6 +27,8 @@ import AccountOrdersPage from './pages/account/AccountOrdersPage';
 import AccountOrderDetailPage from './pages/account/AccountOrderDetailPage';
 import AccountSettingsPage from './pages/account/AccountSettingsPage';
 import AccountConfirmEmailPage from './pages/account/AccountConfirmEmailPage';
+import AccountResetPasswordPage from './pages/account/AccountResetPasswordPage';
+import AuthHashRedirect from './components/account/AuthHashRedirect';
 
 const BlogIndexPage = lazy(() => import('./pages/blog/BlogIndexPage'));
 const BlogPostPage = lazy(() => import('./pages/blog/BlogPostPage'));
@@ -73,6 +75,7 @@ export default function App() {
   return (
     <>
       <ScrollToTop />
+      <AuthHashRedirect />
       {!hideLayout && <Header />}
       {!hideLayout && <CartDrawer />}
 
@@ -91,6 +94,7 @@ export default function App() {
           <Route path="/account/login" element={<AccountLoginPage />} />
           <Route path="/account/register" element={<AccountRegisterPage />} />
           <Route path="/account/confirm-email" element={<AccountConfirmEmailPage />} />
+          <Route path="/account/reset-password" element={<AccountResetPasswordPage />} />
           <Route element={<AccountGuard />}>
             <Route element={<AccountLayout />}>
               <Route path="/account" element={<AccountDashboardPage />} />

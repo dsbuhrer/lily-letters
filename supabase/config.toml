@@ -2,7 +2,7 @@
 # Hosted projects: Dashboard → Authentication → Providers → Email → Confirm email.
 [auth]
 site_url = "http://127.0.0.1:5173"
-additional_redirect_urls = ["http://127.0.0.1:5173/account"]
+additional_redirect_urls = ["http://127.0.0.1:5173/account", "http://127.0.0.1:5173/account/reset-password"]
 
 [auth.email]
 enable_signup = true

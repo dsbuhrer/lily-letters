@@ -152,8 +152,17 @@ export function AuthProvider({ children }) {
     async (email) => {
       if (!supabase) throw new Error('Account system is not configured');
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/account/settings`,
+        redirectTo: `${window.location.origin}/account/reset-password`,
       });
+      if (error) throw error;
+    },
+    [supabase],
+  );
+
+  const updatePassword = useCallback(
+    async (password) => {
+      if (!supabase) throw new Error('Account system is not configured');
+      const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
     },
     [supabase],
@@ -195,6 +204,7 @@ export function AuthProvider({ children }) {
       signIn,
       signOut,
       resetPassword,
+      updatePassword,
       resendConfirmationEmail,
       updateProfile,
       refreshProfile,
@@ -210,6 +220,7 @@ export function AuthProvider({ children }) {
       signIn,
       signOut,
       resetPassword,
+      updatePassword,
       resendConfirmationEmail,
       updateProfile,
       refreshProfile,

@@ -33,7 +33,12 @@ cp .env.example .env
 
 Fill in `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_SITE_URL`, `VITE_STRIPE_PUBLISHABLE_KEY`, `SITE_URL`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD`.
 
-Enable **Email** auth in Supabase Dashboard → Authentication → Providers. Add redirect URLs (e.g. `http://localhost:5173/**` and your production domain).
+Enable **Email** auth in Supabase Dashboard → Authentication → Providers. Under **URL Configuration**, set **Site URL** to your production domain (e.g. `https://thelilylettersco.com`) and add these **Redirect URLs**:
+
+- `https://thelilylettersco.com/account`
+- `https://thelilylettersco.com/account/reset-password`
+- `http://127.0.0.1:5173/account` (local dev)
+- `http://127.0.0.1:5173/account/reset-password` (local dev)
 
 3. Apply database migrations:
 
