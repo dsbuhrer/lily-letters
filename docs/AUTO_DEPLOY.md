@@ -27,9 +27,11 @@ Em **Settings → Secrets and variables → Actions** do repositório `lily-lett
 |--------|-----------|
 | `VITE_SUPABASE_URL` | URL do projeto Supabase |
 | `VITE_SUPABASE_ANON_KEY` | Chave anon (build do frontend) |
+| `VITE_SITE_URL` | URL pública do site (ex.: `https://thelilylettersco.com`) |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | Chave publicável do Stripe (`pk_test_...` ou `pk_live_...`) |
 | `SUPABASE_URL` | Mesma URL (pré-render) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role (só CI — nunca no site) |
-| `SITE_URL` | Ex.: `https://thelilyletters.co` |
+| `SITE_URL` | Ex.: `https://thelilylettersco.com` |
 | `FTP_SERVER` | Host FTP do cPanel (ex.: `ftp.thelilyletters.co`) |
 | `FTP_USERNAME` | Usuário FTP |
 | `FTP_PASSWORD` | Senha FTP |

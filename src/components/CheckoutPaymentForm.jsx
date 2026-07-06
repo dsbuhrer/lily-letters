@@ -85,7 +85,19 @@ export default function CheckoutPaymentForm({
         options={{
           layout: 'tabs',
           fields: {
-            billingDetails: 'never',
+            billingDetails: {
+              name: 'never',
+              email: 'never',
+              phone: 'auto',
+              address: {
+                country: 'never',
+                line1: 'never',
+                line2: 'never',
+                city: 'never',
+                state: 'never',
+                postalCode: 'never',
+              },
+            },
           },
           wallets: {
             applePay: 'never',
