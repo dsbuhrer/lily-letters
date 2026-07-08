@@ -1,5 +1,5 @@
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
-import { createBrlQuoteFromUsd, retrieveBrlQuote } from '../_shared/fxQuotes.ts';
+import { convertUsdToBrl, validateQuotedBrlCents } from '../_shared/fxQuotes.ts';
 import { getStripe } from '../_shared/stripe.ts';
 import { getServiceSupabase } from '../_shared/orders.ts';
 
@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
     const userId = body.userId || null;
     const preview = Boolean(body.preview);
     const confirm = Boolean(body.confirm);
-    const fxQuoteId = String(body.fxQuoteId || '').trim();
+    const quotedBrlCents = Number(body.quotedBrlCents);
 
     if (!orderNumber) {
       return jsonResponse({ error: 'Order number is required.' }, 400);
@@ -99,8 +99,8 @@ Deno.serve(async (req) => {
     if (!preview && !confirm) {
       return jsonResponse({ error: 'Either preview or confirm must be true.' }, 400);
     }
-    if (confirm && !fxQuoteId) {
-      return jsonResponse({ error: 'FX quote ID is required for confirmation.' }, 400);
+    if (confirm && (!Number.isFinite(quotedBrlCents) || quotedBrlCents <= 0)) {
+      return jsonResponse({ error: 'Quoted BRL amount is required for confirmation.' }, 400);
     }
 
     const order = await loadOrder(supabase, orderNumber);
@@ -112,26 +112,29 @@ Deno.serve(async (req) => {
     const usdCents = getUsdCents(order);
 
     if (preview) {
-      const quote = await createBrlQuoteFromUsd(stripe, usdCents);
+      const quote = await convertUsdToBrl(usdCents);
       return jsonResponse({
         brlAmount: quote.brlCents / 100,
         brlCents: quote.brlCents,
         usdAmount: quote.usdCents / 100,
         usdCents: quote.usdCents,
-        fxQuoteId: quote.fxQuoteId,
         exchangeRate: quote.exchangeRate,
-        lockExpiresAt: quote.lockExpiresAt,
+        baseRate: quote.baseRate,
+        marginPercent: quote.marginPercent,
         currency: 'BRL',
       });
     }
 
     let quote;
     try {
-      quote = await retrieveBrlQuote(stripe, fxQuoteId, usdCents);
+      quote = await validateQuotedBrlCents(usdCents, quotedBrlCents);
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'FX quote validation failed.';
-      if (message === 'fx_quote_expired') {
-        return jsonResponse({ error: 'FX quote expired. Please preview again.', code: 'fx_quote_expired' }, 409);
+      const message = e instanceof Error ? e.message : 'Rate validation failed.';
+      if (message === 'rate_changed') {
+        return jsonResponse(
+          { error: 'Exchange rate changed. Please review the new amount.', code: 'rate_changed' },
+          409,
+        );
       }
       throw e;
     }
@@ -155,7 +158,6 @@ Deno.serve(async (req) => {
       receipt_email: email,
       description: `Order ${order.order_number} — Lilly Letters`,
       statement_descriptor_suffix: 'LILLY LETTERS',
-      fx_quote: quote.fxQuoteId,
       metadata: {
         order_id: order.id,
         order_number: order.order_number,
@@ -178,7 +180,6 @@ Deno.serve(async (req) => {
         stripe_payment_intent_id: paymentIntent.id,
         original_subtotal_cents: usdCents,
         original_currency: 'USD',
-        stripe_fx_quote_id: quote.fxQuoteId,
         updated_at: now,
       })
       .eq('id', order.id);
@@ -192,7 +193,6 @@ Deno.serve(async (req) => {
       brlCents: quote.brlCents,
       usdAmount: quote.usdCents / 100,
       usdCents: quote.usdCents,
-      fxQuoteId: quote.fxQuoteId,
       exchangeRate: quote.exchangeRate,
       currency: 'BRL',
     });

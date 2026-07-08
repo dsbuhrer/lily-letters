@@ -307,7 +307,7 @@ export default function CheckoutPage() {
     try {
       const confirmResult = await retryOrderBrl({
         confirm: true,
-        fxQuoteId: preview.fxQuoteId,
+        quotedBrlCents: preview.brlCents,
         orderNumber,
         email: info.email,
         userId: user?.id,
@@ -326,7 +326,8 @@ export default function CheckoutPage() {
         },
       }));
     } catch (confirmErr) {
-      if (String(confirmErr.message || '').toLowerCase().includes('expired')) {
+      const msg = String(confirmErr.message || '').toLowerCase();
+      if (msg.includes('changed') || msg.includes('rate')) {
         const freshPreview = await retryOrderBrl({
           preview: true,
           orderNumber,

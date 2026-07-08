@@ -8,7 +8,7 @@ Checkout uses **Stripe Payment Element** with Supabase Edge Functions. Card data
 2. `create-order` validates cart prices, creates `orders` row (`status: pending`), creates Stripe PaymentIntent in **USD**
 3. Payment Element confirms payment in the browser
 4. If Stripe returns `currency_not_supported` (Brazilian cards that require BRL), the checkout:
-   - calls `retry-order-brl` (preview) to quote USD→BRL via Stripe **FX Quotes API**
+   - calls `retry-order-brl` (preview) to convert USD→BRL using a live external FX rate
    - shows a confirmation modal with the BRL amount
    - on accept, `retry-order-brl` (confirm) creates a new PaymentIntent in **BRL** and retries with the same card
 5. `complete-order-payment` verifies the PaymentIntent and marks the order `paid`
@@ -46,14 +46,20 @@ When a Brazilian card is charged in USD, Stripe may decline with:
 The system then:
 
 1. Keeps the order `pending` (webhook ignores this decline code)
-2. Quotes BRL via Stripe FX Quotes API (`lock_duration: hour`, BRL is Group 2 → ~0.15% fee)
+2. Fetches a live USD→BRL rate from a free FX API (`open.er-api.com`, no key) and applies an optional safety margin
 3. Shows the customer a confirmation modal with the BRL total
-4. Creates a new PaymentIntent in `brl` with `fx_quote` attached
+4. On accept, re-validates the rate (re-quotes if it drifted more than 2%) and creates a new PaymentIntent in `brl`
 5. Retries payment with `confirmCardPayment` using the same payment method
 
-Orders store audit fields: `original_subtotal_cents`, `original_currency`, `stripe_fx_quote_id`.
+Since the Stripe account settles in **BRL**, charging in BRL involves no Stripe FX conversion — the external rate only converts the USD catalog price into the BRL amount to charge.
 
-**Requirement:** Edge Functions use Stripe API version `2025-07-30.preview` for FX Quotes.
+> Note: Stripe's FX Quotes API is **not available for Brazil-based accounts**, which is why the rate is sourced externally.
+
+Orders store audit fields: `original_subtotal_cents`, `original_currency`.
+
+**Optional secrets:**
+- `USD_BRL_MARGIN_PERCENT` — safety margin added to the live rate (default `0`)
+- `FX_RATE_API_URL` — override the FX rate endpoint (default `https://open.er-api.com/v6/latest/USD`)
 
 ## Secrets (Supabase Dashboard → Edge Functions → Secrets)
 

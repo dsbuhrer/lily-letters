@@ -6,9 +6,6 @@ export function getStripe(): Stripe {
   if (stripeClient) return stripeClient;
   const key = Deno.env.get('STRIPE_SECRET_KEY');
   if (!key) throw new Error('STRIPE_SECRET_KEY is not configured');
-  stripeClient = new Stripe(key, {
-    apiVersion: '2025-07-30.preview',
-    httpClient: Stripe.createFetchHttpClient(),
-  });
+  stripeClient = new Stripe(key, { httpClient: Stripe.createFetchHttpClient() });
   return stripeClient;
 }
