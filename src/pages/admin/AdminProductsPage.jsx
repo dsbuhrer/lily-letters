@@ -58,7 +58,7 @@ export default function AdminProductsPage() {
     const ok = await confirm({
       title: 'Delete product?',
       message: product?.name
-        ? `"${product.name}" will be removed from the shop. You can reactivate it later by editing the product.`
+        ? `"${product.name}" will be removed from the shop (set to inactive). You can reactivate it later by editing the product.`
         : 'This product will be removed from the shop.',
       confirmLabel: 'Delete',
       variant: 'danger',

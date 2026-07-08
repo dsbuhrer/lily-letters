@@ -223,7 +223,7 @@ export default function AdminProductEditorPage() {
             placeholder="e.g. LL-WED-001"
           />
           <span className="block mt-1 text-xs text-ink-subtle">
-            Unique code to find this product in the admin and shop search.
+            Unique code for this product. To group items in a collection, use the Collection field.
           </span>
         </label>
 
