@@ -12,6 +12,9 @@ enable_confirmations = true
 [functions.create-order]
 verify_jwt = false
 
+[functions.retry-order-brl]
+verify_jwt = false
+
 [functions.complete-order-payment]
 verify_jwt = false
 

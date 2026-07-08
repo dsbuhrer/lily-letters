@@ -55,6 +55,10 @@ export async function createOrder(payload) {
   return invokeFunction('create-order', payload);
 }
 
+export async function retryOrderBrl(payload) {
+  return invokeFunction('retry-order-brl', payload);
+}
+
 export async function completeOrderPayment(payload) {
   return invokeFunction('complete-order-payment', payload);
 }

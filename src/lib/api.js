@@ -21,6 +21,7 @@ export const api = {
   subscribe: mutations.subscribe,
   submitContact: mutations.submitContact,
   createOrder: ordersApi.createOrder,
+  retryOrderBrl: ordersApi.retryOrderBrl,
 
   admin: {
     stats: adminApi.getStats,

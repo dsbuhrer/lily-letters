@@ -35,6 +35,11 @@ async function handlePaymentIntentFailed(
   supabase: ReturnType<typeof getServiceSupabase>,
   paymentIntent: Stripe.PaymentIntent,
 ) {
+  const declineCode = paymentIntent.last_payment_error?.decline_code;
+  if (declineCode === 'currency_not_supported') {
+    return;
+  }
+
   const orderNumber = paymentIntent.metadata?.order_number;
   if (!orderNumber) return;
 

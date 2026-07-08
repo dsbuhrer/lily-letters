@@ -5,18 +5,23 @@ Checkout uses **Stripe Payment Element** with Supabase Edge Functions. Card data
 ## Flow
 
 1. Customer completes contact + billing on `/checkout`
-2. `create-order` validates cart prices, creates `orders` row (`status: pending`), creates Stripe PaymentIntent
+2. `create-order` validates cart prices, creates `orders` row (`status: pending`), creates Stripe PaymentIntent in **USD**
 3. Payment Element confirms payment in the browser
-4. `complete-order-payment` verifies the PaymentIntent and marks the order `paid`
-5. `stripe-webhook` keeps order status in sync (`succeeded`, `failed`, `refunded`)
-6. On `paid`, an SMTP confirmation email with PDF attachment(s) is sent to the customer
-7. `/order-confirmation` loads the paid order via `get-order-confirmation` and enables PDF downloads
+4. If Stripe returns `currency_not_supported` (Brazilian cards that require BRL), the checkout:
+   - calls `retry-order-brl` (preview) to quote USD→BRL via Stripe **FX Quotes API**
+   - shows a confirmation modal with the BRL amount
+   - on accept, `retry-order-brl` (confirm) creates a new PaymentIntent in **BRL** and retries with the same card
+5. `complete-order-payment` verifies the PaymentIntent and marks the order `paid`
+6. `stripe-webhook` keeps order status in sync (`succeeded`, `failed`, `refunded`)
+7. On `paid`, an SMTP confirmation email with PDF attachment(s) is sent to the customer
+8. `/order-confirmation` loads the paid order via `get-order-confirmation` and enables PDF downloads
 
 ## Edge Functions
 
 | Function | Purpose |
 |----------|---------|
-| `create-order` | Pending order + PaymentIntent (`clientSecret`) |
+| `create-order` | Pending order + PaymentIntent (`clientSecret`) in USD |
+| `retry-order-brl` | Preview/confirm BRL retry after `currency_not_supported` |
 | `complete-order-payment` | Verify PI succeeded → `paid` + signed PDF URLs |
 | `get-order-confirmation` | Load confirmation page data (guest: order number + email) |
 | `stripe-webhook` | Async status updates from Stripe |
@@ -25,10 +30,30 @@ Deploy:
 
 ```bash
 supabase functions deploy create-order
+supabase functions deploy retry-order-brl
 supabase functions deploy complete-order-payment
 supabase functions deploy get-order-confirmation
 supabase functions deploy stripe-webhook
 ```
+
+## BRL retry (Brazilian cards)
+
+When a Brazilian card is charged in USD, Stripe may decline with:
+
+- `decline_code: currency_not_supported`
+- message: *"Your card is not supported for this currency. You can only charge Brazilian cards in BRL in Brazil."*
+
+The system then:
+
+1. Keeps the order `pending` (webhook ignores this decline code)
+2. Quotes BRL via Stripe FX Quotes API (`lock_duration: hour`, BRL is Group 2 → ~0.15% fee)
+3. Shows the customer a confirmation modal with the BRL total
+4. Creates a new PaymentIntent in `brl` with `fx_quote` attached
+5. Retries payment with `confirmCardPayment` using the same payment method
+
+Orders store audit fields: `original_subtotal_cents`, `original_currency`, `stripe_fx_quote_id`.
+
+**Requirement:** Edge Functions use Stripe API version `2025-07-30.preview` for FX Quotes.
 
 ## Secrets (Supabase Dashboard → Edge Functions → Secrets)
 

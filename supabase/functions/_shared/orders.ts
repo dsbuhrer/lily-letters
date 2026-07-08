@@ -93,7 +93,7 @@ export async function buildOrderItemsResponse(
 
 export function validatePaymentIntent(
   paymentIntent: Stripe.PaymentIntent,
-  order: { order_number: string; subtotal_cents: number },
+  order: { order_number: string; subtotal_cents: number; currency?: string },
 ) {
   if (paymentIntent.status !== 'succeeded') {
     throw new Error('Payment has not succeeded yet.');
@@ -103,6 +103,12 @@ export function validatePaymentIntent(
   }
   if (paymentIntent.amount !== order.subtotal_cents) {
     throw new Error('Payment amount does not match order total.');
+  }
+  if (
+    order.currency &&
+    paymentIntent.currency.toLowerCase() !== order.currency.toLowerCase()
+  ) {
+    throw new Error('Payment currency does not match order currency.');
   }
 }
 

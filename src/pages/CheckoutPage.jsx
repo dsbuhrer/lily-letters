@@ -8,7 +8,9 @@ import useCartStore from '../store/cartStore';
 import CheckoutEmailNotice from '../components/CheckoutEmailNotice';
 import CheckoutPaymentForm from '../components/CheckoutPaymentForm';
 import api from '../lib/api';
+import { retryOrderBrl } from '../lib/supabase/orders';
 import { useAuth } from '../context/AuthContext';
+import { useUiFeedback } from '../context/UiFeedbackContext';
 import { clearCheckoutSession } from '../lib/stripeCheckout';
 import {
   normalizeEmail,
@@ -21,9 +23,30 @@ const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
   : null;
 
+function createEmptyPaymentSession(chargeAmount = 0) {
+  return {
+    clientSecret: null,
+    orderNumber: null,
+    paymentIntentId: null,
+    loading: false,
+    error: null,
+    currency: 'USD',
+    chargeAmount,
+    autoRetryBrl: null,
+  };
+}
+
+function formatChargeAmount(amount, currency = 'USD') {
+  return new Intl.NumberFormat(currency === 'BRL' ? 'pt-BR' : 'en-US', {
+    style: 'currency',
+    currency,
+  }).format(amount);
+}
+
 export default function CheckoutPage() {
   const { items, clearCart } = useCartStore();
   const { user } = useAuth();
+  const { confirm } = useUiFeedback();
   const navigate = useNavigate();
   const subtotal = items.reduce((s, i) => s + i.price, 0);
 
@@ -42,13 +65,7 @@ export default function CheckoutPage() {
     country: 'US',
   });
   const [billingErrors, setBillingErrors] = useState({});
-  const [paymentSession, setPaymentSession] = useState({
-    clientSecret: null,
-    orderNumber: null,
-    paymentIntentId: null,
-    loading: false,
-    error: null,
-  });
+  const [paymentSession, setPaymentSession] = useState(() => createEmptyPaymentSession());
 
   const emailLocked = Boolean(user?.email);
 
@@ -121,13 +138,7 @@ export default function CheckoutPage() {
 
   const goToStep = (nextStep) => {
     if (step === 3 && nextStep < 3) {
-      setPaymentSession({
-        clientSecret: null,
-        orderNumber: null,
-        paymentIntentId: null,
-        loading: false,
-        error: null,
-      });
+      setPaymentSession(createEmptyPaymentSession(subtotal));
     }
     setStep(nextStep);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -164,11 +175,8 @@ export default function CheckoutPage() {
     }
 
     setPaymentSession({
-      clientSecret: null,
-      orderNumber: null,
-      paymentIntentId: null,
+      ...createEmptyPaymentSession(subtotal),
       loading: true,
-      error: null,
     });
 
     try {
@@ -179,13 +187,13 @@ export default function CheckoutPage() {
         paymentIntentId: result.paymentIntentId,
         loading: false,
         error: null,
+        currency: 'USD',
+        chargeAmount: subtotal,
+        autoRetryBrl: null,
       });
     } catch (err) {
       setPaymentSession({
-        clientSecret: null,
-        orderNumber: null,
-        paymentIntentId: null,
-        loading: false,
+        ...createEmptyPaymentSession(subtotal),
         error: err.message || 'Could not start payment. Please try again.',
       });
     }
@@ -274,6 +282,106 @@ export default function CheckoutPage() {
       },
     });
   };
+
+  const confirmBrlRetry = async (preview, paymentMethodId, orderNumber) => {
+    const accepted = await confirm({
+      title: 'Cobrança em reais (BRL)',
+      message:
+        `Seu cartão brasileiro só pode ser cobrado em reais (BRL). ` +
+        `O novo valor será ${formatChargeAmount(preview.brlAmount, 'BRL')} ` +
+        `(equivalente a ${formatChargeAmount(preview.usdAmount, 'USD')} USD). Deseja continuar?`,
+      confirmLabel: 'Aceitar e pagar em BRL',
+      cancelLabel: 'Cancelar',
+    });
+
+    if (!accepted) {
+      setPaymentSession((prev) => ({
+        ...prev,
+        error:
+          'Pagamento em USD não é suportado para este cartão. Aceite a cobrança em BRL ou use outro cartão.',
+        autoRetryBrl: null,
+      }));
+      return;
+    }
+
+    try {
+      const confirmResult = await retryOrderBrl({
+        confirm: true,
+        fxQuoteId: preview.fxQuoteId,
+        orderNumber,
+        email: info.email,
+        userId: user?.id,
+      });
+
+      setPaymentSession((prev) => ({
+        ...prev,
+        clientSecret: confirmResult.clientSecret,
+        paymentIntentId: confirmResult.paymentIntentId,
+        currency: 'BRL',
+        chargeAmount: confirmResult.brlAmount,
+        error: null,
+        autoRetryBrl: {
+          clientSecret: confirmResult.clientSecret,
+          paymentMethodId,
+        },
+      }));
+    } catch (confirmErr) {
+      if (String(confirmErr.message || '').toLowerCase().includes('expired')) {
+        const freshPreview = await retryOrderBrl({
+          preview: true,
+          orderNumber,
+          email: info.email,
+          userId: user?.id,
+        });
+        await confirmBrlRetry(freshPreview, paymentMethodId, orderNumber);
+        return;
+      }
+      throw confirmErr;
+    }
+  };
+
+  const handleBrlRetryRequired = async ({ paymentMethodId }) => {
+    if (!paymentSession.orderNumber) return;
+
+    if (!paymentMethodId) {
+      setPaymentSession((prev) => ({
+        ...prev,
+        error: 'Não foi possível reutilizar o cartão. Tente novamente ou use outro cartão.',
+      }));
+      return;
+    }
+
+    setPaymentSession((prev) => ({ ...prev, error: null, loading: true }));
+
+    try {
+      const preview = await retryOrderBrl({
+        preview: true,
+        orderNumber: paymentSession.orderNumber,
+        email: info.email,
+        userId: user?.id,
+      });
+
+      setPaymentSession((prev) => ({ ...prev, loading: false }));
+      await confirmBrlRetry(preview, paymentMethodId, paymentSession.orderNumber);
+    } catch (err) {
+      setPaymentSession((prev) => ({
+        ...prev,
+        loading: false,
+        error: err.message || 'Não foi possível converter o pagamento para BRL.',
+      }));
+    }
+  };
+
+  const handleAutoRetryBrlHandled = () => {
+    setPaymentSession((prev) => ({
+      ...prev,
+      autoRetryBrl: null,
+    }));
+  };
+
+  const displayCurrency = step === 3 && paymentSession.currency === 'BRL' ? 'BRL' : 'USD';
+  const displayTotal =
+    step === 3 && paymentSession.currency === 'BRL' ? paymentSession.chargeAmount : subtotal;
 
   const stripeElementsOptions = useMemo(
     () =>
@@ -791,31 +899,39 @@ export default function CheckoutPage() {
                   {paymentSession.error && (
                     <div className="p-4 mb-4 bg-red-50 border border-red-200 text-red-800 font-body text-sm">
                       {paymentSession.error}
-                      <button
-                        type="button"
-                        onClick={startPaymentSession}
-                        className="block mt-3 font-body text-xs text-wine underline"
-                      >
-                        Try again
-                      </button>
+                      {!paymentSession.clientSecret && (
+                        <button
+                          type="button"
+                          onClick={startPaymentSession}
+                          className="block mt-3 font-body text-xs text-wine underline"
+                        >
+                          Try again
+                        </button>
+                      )}
                     </div>
                   )}
 
-                  {!paymentSession.loading &&
-                    !paymentSession.error &&
-                    stripeElementsOptions &&
-                    stripePromise && (
-                      <Elements stripe={stripePromise} options={stripeElementsOptions}>
+                  {!paymentSession.loading && stripeElementsOptions && stripePromise && (
+                      <Elements
+                        key={paymentSession.paymentIntentId}
+                        stripe={stripePromise}
+                        options={stripeElementsOptions}
+                      >
                         <CheckoutPaymentForm
                           orderNumber={paymentSession.orderNumber}
                           paymentIntentId={paymentSession.paymentIntentId}
+                          clientSecret={paymentSession.clientSecret}
                           email={info.email}
                           firstName={info.firstName}
                           lastName={info.lastName}
                           billing={billing}
-                          subtotal={subtotal}
+                          chargeAmount={paymentSession.chargeAmount}
+                          currency={paymentSession.currency}
+                          autoRetryBrl={paymentSession.autoRetryBrl}
+                          onAutoRetryBrlHandled={handleAutoRetryBrlHandled}
                           userId={user?.id}
                           onSuccess={handlePaymentSuccess}
+                          onBrlRetryRequired={handleBrlRetryRequired}
                         />
                       </Elements>
                     )}
@@ -862,9 +978,14 @@ export default function CheckoutPage() {
                 <div className="flex justify-between pt-3 border-t border-taupe/20">
                   <span className="font-display text-lg font-light text-wine">Total</span>
                   <span className="font-display text-2xl font-light text-wine">
-                    ${subtotal.toFixed(2)}
+                    {formatChargeAmount(displayTotal, displayCurrency)}
                   </span>
                 </div>
+                {step === 3 && paymentSession.currency === 'BRL' && (
+                  <p className="font-body text-xs text-ink-subtle pt-2">
+                    Cobrança convertida para BRL devido às restrições do seu cartão brasileiro.
+                  </p>
+                )}
               </div>
 
               <div className="mt-4 space-y-1.5">
