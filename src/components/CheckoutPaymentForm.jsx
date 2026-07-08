@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, ShieldCheck } from 'lucide-react';
 import { PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
@@ -25,9 +25,6 @@ export default function CheckoutPaymentForm({
   billing,
   chargeAmount,
   currency = 'USD',
-  clientSecret,
-  autoRetryBrl,
-  onAutoRetryBrlHandled,
   onSuccess,
   onError,
   onBrlRetryRequired,
@@ -37,7 +34,6 @@ export default function CheckoutPaymentForm({
   const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [paymentError, setPaymentError] = useState('');
-  const autoRetryStarted = useRef(false);
 
   const completeSuccessfulPayment = async (resolvedPaymentIntentId) => {
     const result = await completeOrderPayment({
@@ -48,47 +44,6 @@ export default function CheckoutPaymentForm({
     });
     onSuccess(result);
   };
-
-  const handleCardPaymentResult = async (error, paymentIntent) => {
-    if (error) {
-      const message = error.message || 'Payment could not be completed.';
-      setPaymentError(message);
-      onError?.(message);
-      setLoading(false);
-      return;
-    }
-
-    if (paymentIntent?.status === 'succeeded') {
-      try {
-        await completeSuccessfulPayment(paymentIntent.id);
-      } catch (err) {
-        const message = err.message || 'Payment succeeded but order confirmation failed.';
-        setPaymentError(message);
-        onError?.(message);
-        setLoading(false);
-      }
-      return;
-    }
-
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    if (!autoRetryBrl?.paymentMethodId || !autoRetryBrl?.clientSecret || !stripe) return;
-    if (autoRetryStarted.current) return;
-
-    autoRetryStarted.current = true;
-    setLoading(true);
-    setPaymentError('');
-
-    stripe
-      .confirmCardPayment(autoRetryBrl.clientSecret, {
-        payment_method: autoRetryBrl.paymentMethodId,
-        receipt_email: email,
-      })
-      .then(({ error, paymentIntent }) => handleCardPaymentResult(error, paymentIntent))
-      .finally(() => onAutoRetryBrlHandled?.());
-  }, [autoRetryBrl, stripe, email, onAutoRetryBrlHandled]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -117,10 +72,8 @@ export default function CheckoutPaymentForm({
     if (error) {
       if (error.decline_code === 'currency_not_supported') {
         setPaymentError('');
-        onBrlRetryRequired?.({
-          paymentMethodId: error.payment_method?.id || null,
-        });
         setLoading(false);
+        onBrlRetryRequired?.();
         return;
       }
 
@@ -150,45 +103,37 @@ export default function CheckoutPaymentForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {!autoRetryBrl?.paymentMethodId && (
-        <PaymentElement
-          options={{
-            layout: 'tabs',
-            fields: {
-              billingDetails: {
-                name: 'never',
-                email: 'never',
-                phone: 'auto',
-                address: {
-                  country: 'never',
-                  line1: 'never',
-                  line2: 'never',
-                  city: 'never',
-                  state: 'never',
-                  postalCode: 'never',
-                },
-              },
-            },
-            wallets: {
-              applePay: 'never',
-              googlePay: 'never',
-            },
-          }}
-        />
-      )}
-
-      {autoRetryBrl?.paymentMethodId && loading && (
-        <div className="py-6 text-center">
-          <motion.span
-            animate={{ rotate: 360 }}
-            transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-            className="w-8 h-8 border-2 border-wine border-t-transparent rounded-full inline-block"
-          />
-          <p className="font-body text-sm text-ink-subtle mt-4">
-            Processing payment in Brazilian Real (BRL)…
-          </p>
+      {currency === 'BRL' && (
+        <div className="p-3 bg-wine/5 border border-gold/30 text-ink font-body text-sm">
+          Seu cartão brasileiro só pode ser cobrado em reais. Confirme os dados do cartão
+          para pagar <span className="font-medium text-wine">{formatChargeAmount(chargeAmount, 'BRL')}</span>.
         </div>
       )}
+
+      <PaymentElement
+        options={{
+          layout: 'tabs',
+          fields: {
+            billingDetails: {
+              name: 'never',
+              email: 'never',
+              phone: 'auto',
+              address: {
+                country: 'never',
+                line1: 'never',
+                line2: 'never',
+                city: 'never',
+                state: 'never',
+                postalCode: 'never',
+              },
+            },
+          },
+          wallets: {
+            applePay: 'never',
+            googlePay: 'never',
+          },
+        }}
+      />
 
       {paymentError && (
         <div className="p-3 bg-red-50 border border-red-200 text-red-800 font-body text-sm">
@@ -203,30 +148,28 @@ export default function CheckoutPaymentForm({
         </p>
       </div>
 
-      {!autoRetryBrl?.paymentMethodId && (
-        <motion.button
-          type="submit"
-          disabled={loading || !stripe || !elements}
-          whileTap={{ scale: 0.98 }}
-          className={`btn-primary w-full ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-        >
-          {loading ? (
-            <span className="flex items-center gap-2">
-              <motion.span
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                className="w-4 h-4 border-2 border-cream border-t-transparent rounded-full inline-block"
-              />
-              Processing...
-            </span>
-          ) : (
-            <>
-              <Lock size={14} strokeWidth={2} />
-              {payLabel}
-            </>
-          )}
-        </motion.button>
-      )}
+      <motion.button
+        type="submit"
+        disabled={loading || !stripe || !elements}
+        whileTap={{ scale: 0.98 }}
+        className={`btn-primary w-full ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+      >
+        {loading ? (
+          <span className="flex items-center gap-2">
+            <motion.span
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+              className="w-4 h-4 border-2 border-cream border-t-transparent rounded-full inline-block"
+            />
+            Processing...
+          </span>
+        ) : (
+          <>
+            <Lock size={14} strokeWidth={2} />
+            {payLabel}
+          </>
+        )}
+      </motion.button>
     </form>
   );
 }

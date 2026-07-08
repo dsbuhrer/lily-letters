@@ -1,4 +1,5 @@
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
+import { convertUsdToBrl } from '../_shared/fxQuotes.ts';
 import { getStripe } from '../_shared/stripe.ts';
 import { generateOrderNumber, getServiceSupabase } from '../_shared/orders.ts';
 
@@ -74,6 +75,22 @@ Deno.serve(async (req) => {
     const orderNumber = generateOrderNumber();
     const billingName = [firstName, lastName].filter(Boolean).join(' ').trim();
 
+    // Brazilian cards can only be charged in BRL, so bill BR customers in BRL
+    // from the start (the account settles in BRL — no Stripe FX conversion).
+    const isBrazil = String(billing?.country || '').toUpperCase() === 'BR';
+    let currency = 'USD';
+    let chargeCents = subtotalCents;
+    let originalSubtotalCents: number | null = null;
+    let originalCurrency: string | null = null;
+
+    if (isBrazil) {
+      const conversion = await convertUsdToBrl(subtotalCents);
+      currency = 'BRL';
+      chargeCents = conversion.brlCents;
+      originalSubtotalCents = subtotalCents;
+      originalCurrency = 'USD';
+    }
+
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
@@ -81,8 +98,10 @@ Deno.serve(async (req) => {
         email,
         user_id: userId,
         status: 'pending',
-        subtotal_cents: subtotalCents,
-        currency: 'USD',
+        subtotal_cents: chargeCents,
+        currency,
+        original_subtotal_cents: originalSubtotalCents,
+        original_currency: originalCurrency,
         payment_provider: 'stripe',
         billing_name: billingName || firstName,
         billing_address: billing,
@@ -101,8 +120,8 @@ Deno.serve(async (req) => {
     if (itemsError) throw itemsError;
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: subtotalCents,
-      currency: 'usd',
+      amount: chargeCents,
+      currency: currency.toLowerCase(),
       payment_method_types: ['card'],
       receipt_email: email,
       description: `Order ${orderNumber} — Lilly Letters`,
@@ -110,6 +129,9 @@ Deno.serve(async (req) => {
       metadata: {
         order_id: order.id,
         order_number: orderNumber,
+        ...(isBrazil
+          ? { original_currency: 'USD', original_subtotal_cents: String(subtotalCents) }
+          : {}),
       },
     });
 
@@ -130,6 +152,9 @@ Deno.serve(async (req) => {
         id: order.id,
         clientSecret: paymentIntent.client_secret,
         paymentIntentId: paymentIntent.id,
+        currency,
+        chargeAmount: chargeCents / 100,
+        usdAmount: subtotalCents / 100,
       },
       201,
     );

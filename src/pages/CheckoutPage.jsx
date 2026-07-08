@@ -32,7 +32,6 @@ function createEmptyPaymentSession(chargeAmount = 0) {
     error: null,
     currency: 'USD',
     chargeAmount,
-    autoRetryBrl: null,
   };
 }
 
@@ -187,9 +186,8 @@ export default function CheckoutPage() {
         paymentIntentId: result.paymentIntentId,
         loading: false,
         error: null,
-        currency: 'USD',
-        chargeAmount: subtotal,
-        autoRetryBrl: null,
+        currency: result.currency || 'USD',
+        chargeAmount: result.chargeAmount ?? subtotal,
       });
     } catch (err) {
       setPaymentSession({
@@ -283,7 +281,7 @@ export default function CheckoutPage() {
     });
   };
 
-  const confirmBrlRetry = async (preview, paymentMethodId, orderNumber) => {
+  const confirmBrlRetry = async (preview, orderNumber) => {
     const accepted = await confirm({
       title: 'Cobrança em reais (BRL)',
       message:
@@ -299,7 +297,6 @@ export default function CheckoutPage() {
         ...prev,
         error:
           'Pagamento em USD não é suportado para este cartão. Aceite a cobrança em BRL ou use outro cartão.',
-        autoRetryBrl: null,
       }));
       return;
     }
@@ -320,10 +317,6 @@ export default function CheckoutPage() {
         currency: 'BRL',
         chargeAmount: confirmResult.brlAmount,
         error: null,
-        autoRetryBrl: {
-          clientSecret: confirmResult.clientSecret,
-          paymentMethodId,
-        },
       }));
     } catch (confirmErr) {
       const msg = String(confirmErr.message || '').toLowerCase();
@@ -334,23 +327,15 @@ export default function CheckoutPage() {
           email: info.email,
           userId: user?.id,
         });
-        await confirmBrlRetry(freshPreview, paymentMethodId, orderNumber);
+        await confirmBrlRetry(freshPreview, orderNumber);
         return;
       }
       throw confirmErr;
     }
   };
 
-  const handleBrlRetryRequired = async ({ paymentMethodId }) => {
+  const handleBrlRetryRequired = async () => {
     if (!paymentSession.orderNumber) return;
-
-    if (!paymentMethodId) {
-      setPaymentSession((prev) => ({
-        ...prev,
-        error: 'Não foi possível reutilizar o cartão. Tente novamente ou use outro cartão.',
-      }));
-      return;
-    }
 
     setPaymentSession((prev) => ({ ...prev, error: null, loading: true }));
 
@@ -363,7 +348,7 @@ export default function CheckoutPage() {
       });
 
       setPaymentSession((prev) => ({ ...prev, loading: false }));
-      await confirmBrlRetry(preview, paymentMethodId, paymentSession.orderNumber);
+      await confirmBrlRetry(preview, paymentSession.orderNumber);
     } catch (err) {
       setPaymentSession((prev) => ({
         ...prev,
@@ -371,13 +356,6 @@ export default function CheckoutPage() {
         error: err.message || 'Não foi possível converter o pagamento para BRL.',
       }));
     }
-  };
-
-  const handleAutoRetryBrlHandled = () => {
-    setPaymentSession((prev) => ({
-      ...prev,
-      autoRetryBrl: null,
-    }));
   };
 
   const displayCurrency = step === 3 && paymentSession.currency === 'BRL' ? 'BRL' : 'USD';
@@ -921,15 +899,12 @@ export default function CheckoutPage() {
                         <CheckoutPaymentForm
                           orderNumber={paymentSession.orderNumber}
                           paymentIntentId={paymentSession.paymentIntentId}
-                          clientSecret={paymentSession.clientSecret}
                           email={info.email}
                           firstName={info.firstName}
                           lastName={info.lastName}
                           billing={billing}
                           chargeAmount={paymentSession.chargeAmount}
                           currency={paymentSession.currency}
-                          autoRetryBrl={paymentSession.autoRetryBrl}
-                          onAutoRetryBrlHandled={handleAutoRetryBrlHandled}
                           userId={user?.id}
                           onSuccess={handlePaymentSuccess}
                           onBrlRetryRequired={handleBrlRetryRequired}
