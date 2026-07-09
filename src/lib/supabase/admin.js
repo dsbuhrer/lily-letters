@@ -337,13 +337,6 @@ async function nextProductId(supabase) {
   return (data?.id ?? 0) + 1;
 }
 
-function productSaveError(error) {
-  if (error?.code === '23505' && /sku/i.test(error.message || '')) {
-    return new Error('This SKU is already used by another product.');
-  }
-  return new Error(error.message);
-}
-
 export async function saveProduct(body, id) {
   const supabase = requireSupabase();
   const sku = body.sku?.trim() || null;
@@ -374,7 +367,7 @@ export async function saveProduct(body, id) {
 
   if (id) {
     const { data, error } = await supabase.from('products').update(row).eq('id', id).select().single();
-    if (error) throw productSaveError(error);
+    if (error) throw new Error(error.message);
     return { product: mapProduct(data) };
   }
   const { data, error } = await supabase
@@ -382,7 +375,7 @@ export async function saveProduct(body, id) {
     .insert({ ...row, id: await nextProductId(supabase) })
     .select()
     .single();
-  if (error) throw productSaveError(error);
+  if (error) throw new Error(error.message);
   return { product: mapProduct(data) };
 }
 

@@ -48,7 +48,7 @@ export async function getProduct(idOrSlug) {
   if (slugError) throw new Error(slugError.message);
   if (bySlug) return { product: mapProduct(bySlug) };
 
-  const { data: bySku, error: skuError } = await base().eq('sku', key).maybeSingle();
+  const { data: bySku, error: skuError } = await base().eq('sku', key).limit(1).maybeSingle();
   if (skuError) throw new Error(skuError.message);
   if (!bySku) throw new Error('Product not found');
   return { product: mapProduct(bySku) };
