@@ -48,6 +48,8 @@ const AdminProductCategoryEditorPage = lazy(() => import('./pages/admin/AdminPro
 const AdminContactsPage = lazy(() => import('./pages/admin/AdminContactsPage'));
 const AdminSubscribersPage = lazy(() => import('./pages/admin/AdminSubscribersPage'));
 const AdminOrdersPage = lazy(() => import('./pages/admin/AdminOrdersPage'));
+const AdminCouponsPage = lazy(() => import('./pages/admin/AdminCouponsPage'));
+const AdminCouponEditorPage = lazy(() => import('./pages/admin/AdminCouponEditorPage'));
 
 const HIDE_LAYOUT = ['/checkout', '/order-confirmation', '/admin'];
 
@@ -201,6 +203,22 @@ export default function App() {
                 element={
                   <Suspense fallback={<PageFallback />}>
                     <AdminProductEditorPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/admin/coupons"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <AdminCouponsPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/admin/coupons/:id"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <AdminCouponEditorPage />
                   </Suspense>
                 }
               />

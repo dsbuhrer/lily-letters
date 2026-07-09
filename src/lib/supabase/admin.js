@@ -393,6 +393,215 @@ export async function deleteProduct(id) {
   return { ok: true };
 }
 
+function roundPrice(value) {
+  return Math.max(0.01, Math.round(value * 100) / 100);
+}
+
+function applyBulkSaleRow(product, discountType, discountValue) {
+  const currentPrice = Number(product.price);
+  const currentOriginal = product.original_price != null ? Number(product.original_price) : null;
+  const currentBadge = product.badge || null;
+  const onSale = product.on_sale === true;
+
+  let preSaleState = product.pre_sale_state;
+  let basePrice;
+
+  if (!onSale) {
+    preSaleState = { price: currentPrice, original_price: currentOriginal, badge: currentBadge };
+    basePrice = currentPrice;
+  } else {
+    basePrice = Number(preSaleState?.price ?? currentPrice);
+  }
+
+  let newPrice;
+  if (discountType === 'percent') {
+    newPrice = roundPrice(basePrice * (1 - Number(discountValue) / 100));
+  } else {
+    newPrice = roundPrice(basePrice - Number(discountValue));
+  }
+
+  return {
+    price: newPrice,
+    original_price: basePrice,
+    badge: 'Sale',
+    on_sale: true,
+    pre_sale_state: preSaleState,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+function endBulkSaleRow(product) {
+  if (!product.on_sale || !product.pre_sale_state) return null;
+  const snap = product.pre_sale_state;
+  return {
+    price: snap.price,
+    original_price: snap.original_price ?? null,
+    badge: snap.badge ?? null,
+    on_sale: false,
+    pre_sale_state: null,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+export async function bulkUpdateProducts({ productIds, action, discountType, discountValue }) {
+  const supabase = requireSupabase();
+  const ids = (productIds || []).map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0);
+  if (!ids.length) throw new Error('Select at least one product.');
+
+  const { data: products, error: fetchError } = await supabase.from('products').select('*').in('id', ids);
+  if (fetchError) throw new Error(fetchError.message);
+
+  const updated = [];
+  for (const product of products || []) {
+    let row;
+    if (action === 'end') {
+      row = endBulkSaleRow(product);
+      if (!row) continue;
+    } else if (action === 'apply') {
+      if (!discountType || !['percent', 'fixed'].includes(discountType)) {
+        throw new Error('Select a valid discount type.');
+      }
+      const value = Number(discountValue);
+      if (!Number.isFinite(value) || value <= 0) throw new Error('Enter a valid discount value.');
+      if (discountType === 'percent' && value >= 100) {
+        throw new Error('Percent discount must be less than 100%.');
+      }
+      row = applyBulkSaleRow(product, discountType, value);
+    } else {
+      throw new Error('Invalid bulk action.');
+    }
+
+    const { data, error } = await supabase.from('products').update(row).eq('id', product.id).select().single();
+    if (error) throw new Error(error.message);
+    updated.push(mapProduct(data));
+  }
+
+  return { products: updated, count: updated.length };
+}
+
+function mapCoupon(row, productIds = []) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    code: row.code,
+    description: row.description || '',
+    discountType: row.discount_type,
+    discountValue: Number(row.discount_value),
+    scope: row.scope,
+    minSubtotalCents: row.min_subtotal_cents,
+    maxRedemptions: row.max_redemptions,
+    timesRedeemed: row.times_redeemed ?? 0,
+    startsAt: row.starts_at,
+    endsAt: row.ends_at,
+    active: row.active !== false,
+    productIds,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function listCoupons() {
+  const supabase = requireSupabase();
+  const { data, error } = await supabase.from('coupons').select('*').order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+
+  const coupons = data || [];
+  if (!coupons.length) return { coupons: [] };
+
+  const { data: links, error: linksError } = await supabase
+    .from('coupon_products')
+    .select('coupon_id, product_id')
+    .in(
+      'coupon_id',
+      coupons.map((c) => c.id),
+    );
+  if (linksError) throw new Error(linksError.message);
+
+  const productsByCoupon = (links || []).reduce((acc, link) => {
+    if (!acc[link.coupon_id]) acc[link.coupon_id] = [];
+    acc[link.coupon_id].push(link.product_id);
+    return acc;
+  }, {});
+
+  return {
+    coupons: coupons.map((c) => mapCoupon(c, productsByCoupon[c.id] || [])),
+  };
+}
+
+export async function getCoupon(id) {
+  const supabase = requireSupabase();
+  const { data, error } = await supabase.from('coupons').select('*').eq('id', id).maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error('Coupon not found');
+
+  const { data: links, error: linksError } = await supabase
+    .from('coupon_products')
+    .select('product_id')
+    .eq('coupon_id', id);
+  if (linksError) throw new Error(linksError.message);
+
+  return {
+    coupon: mapCoupon(
+      data,
+      (links || []).map((l) => l.product_id),
+    ),
+  };
+}
+
+export async function saveCoupon(body, id) {
+  const supabase = requireSupabase();
+  const code = String(body.code || '')
+    .trim()
+    .toUpperCase();
+  if (!code) throw new Error('Coupon code is required.');
+
+  const row = {
+    code,
+    description: body.description?.trim() || null,
+    discount_type: body.discountType,
+    discount_value: Number(body.discountValue),
+    scope: body.scope || 'cart',
+    min_subtotal_cents: body.minSubtotalCents != null ? Number(body.minSubtotalCents) : null,
+    max_redemptions: body.maxRedemptions != null ? Number(body.maxRedemptions) : null,
+    starts_at: body.startsAt || null,
+    ends_at: body.endsAt || null,
+    active: body.active !== false,
+    updated_at: new Date().toISOString(),
+  };
+
+  let couponId = id;
+  if (id) {
+    const { data, error } = await supabase.from('coupons').update(row).eq('id', id).select().single();
+    if (error) throw new Error(error.message);
+    couponId = data.id;
+  } else {
+    const { data, error } = await supabase.from('coupons').insert(row).select().single();
+    if (error) throw new Error(error.message);
+    couponId = data.id;
+  }
+
+  await supabase.from('coupon_products').delete().eq('coupon_id', couponId);
+
+  if (row.scope === 'products' && Array.isArray(body.productIds) && body.productIds.length) {
+    const productIds = body.productIds.map((pid) => Number(pid)).filter((pid) => Number.isFinite(pid) && pid > 0);
+    if (productIds.length) {
+      const { error: linkError } = await supabase.from('coupon_products').insert(
+        productIds.map((product_id) => ({ coupon_id: couponId, product_id })),
+      );
+      if (linkError) throw new Error(linkError.message);
+    }
+  }
+
+  return getCoupon(couponId);
+}
+
+export async function deleteCoupon(id) {
+  const supabase = requireSupabase();
+  const { error } = await supabase.from('coupons').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+  return { ok: true };
+}
+
 export async function listSubscribers(params = {}) {
   const supabase = requireSupabase();
   let query = supabase

@@ -101,6 +101,12 @@ export default function AdminProductEditorPage() {
     if (!form.name?.trim()) return 'Product name is required.';
     if (!form.category) return 'Select a category.';
     if (!form.price || form.price <= 0) return 'Enter a valid price.';
+    if (form.badge === 'Sale') {
+      const original = form.original_price ? Number(form.original_price) : 0;
+      if (!original || original <= Number(form.price)) {
+        return 'For Sale badge, original price must be higher than the sale price.';
+      }
+    }
     if (!form.images?.length || !form.images.some((url) => url?.trim())) {
       return 'Add at least one product image before saving.';
     }
@@ -267,6 +273,25 @@ export default function AdminProductEditorPage() {
             />
           </label>
         </div>
+
+        <label className="block">
+          <span className="text-xs uppercase tracking-widest text-ink-subtle">Badge</span>
+          <select
+            className="input-field mt-1"
+            value={form.badge}
+            onChange={(e) => set('badge', e.target.value)}
+          >
+            <option value="">None</option>
+            <option value="Sale">Sale</option>
+            <option value="New">New</option>
+            <option value="Best Seller">Best Seller</option>
+          </select>
+          {form.badge === 'Sale' && (
+            <span className="block mt-1 text-xs text-ink-subtle">
+              Sale badge shows a discount % when original price is higher than sale price.
+            </span>
+          )}
+        </label>
 
         <label className="block">
           <span className="text-xs uppercase tracking-widest text-ink-subtle">Description</span>

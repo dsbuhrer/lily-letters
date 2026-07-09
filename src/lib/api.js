@@ -22,6 +22,7 @@ export const api = {
   submitContact: mutations.submitContact,
   createOrder: ordersApi.createOrder,
   retryOrderBrl: ordersApi.retryOrderBrl,
+  validateCoupon: ordersApi.validateCoupon,
 
   admin: {
     stats: adminApi.getStats,
@@ -44,6 +45,11 @@ export const api = {
     product: adminApi.getProductAdmin,
     saveProduct: adminApi.saveProduct,
     deleteProduct: adminApi.deleteProduct,
+    bulkUpdateProducts: adminApi.bulkUpdateProducts,
+    coupons: adminApi.listCoupons,
+    coupon: adminApi.getCoupon,
+    saveCoupon: adminApi.saveCoupon,
+    deleteCoupon: adminApi.deleteCoupon,
     subscribers: adminApi.listSubscribers,
     contacts: adminApi.listContacts,
     updateContact: adminApi.updateContact,

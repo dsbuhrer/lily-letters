@@ -1,6 +1,7 @@
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@17.7.0?target=deno';
 import { sendOrderConfirmationEmail } from './orderEmail.ts';
+import { normalizeCouponCode } from './coupons.ts';
 
 const SIGNED_URL_TTL = 3600;
 
@@ -112,6 +113,31 @@ export function validatePaymentIntent(
   }
 }
 
+export async function incrementCouponRedemption(
+  supabase: SupabaseClient,
+  couponCode: string,
+) {
+  const normalized = normalizeCouponCode(couponCode);
+  if (!normalized) return;
+
+  const { data: coupon } = await supabase
+    .from('coupons')
+    .select('id, times_redeemed, max_redemptions')
+    .ilike('code', normalized)
+    .maybeSingle();
+
+  if (!coupon) return;
+  if (coupon.max_redemptions != null && coupon.times_redeemed >= coupon.max_redemptions) return;
+
+  await supabase
+    .from('coupons')
+    .update({
+      times_redeemed: (coupon.times_redeemed || 0) + 1,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', coupon.id);
+}
+
 export async function markOrderPaid(
   supabase: SupabaseClient,
   orderId: string,
@@ -122,6 +148,21 @@ export async function markOrderPaid(
     typeof paymentIntent.latest_charge === 'string'
       ? paymentIntent.latest_charge
       : paymentIntent.latest_charge?.id ?? null;
+
+  const { data: existing } = await supabase
+    .from('orders')
+    .select('status, coupon_code')
+    .eq('id', orderId)
+    .maybeSingle();
+
+  if (existing?.status === 'paid') {
+    const { data: paidOrder } = await supabase
+      .from('orders')
+      .select('id, order_number, email, status, subtotal_cents, currency, paid_at, billing_name')
+      .eq('id', orderId)
+      .single();
+    return paidOrder;
+  }
 
   const { data, error } = await supabase
     .from('orders')
@@ -135,10 +176,16 @@ export async function markOrderPaid(
     })
     .eq('id', orderId)
     .neq('status', 'refunded')
-    .select('id, order_number, email, status, subtotal_cents, currency, paid_at, billing_name')
+    .neq('status', 'paid')
+    .select('id, order_number, email, status, subtotal_cents, currency, paid_at, billing_name, coupon_code')
     .single();
 
   if (error) throw error;
+
+  if (data?.coupon_code) {
+    await incrementCouponRedemption(supabase, data.coupon_code);
+  }
+
   return data;
 }
 

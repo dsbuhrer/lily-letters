@@ -53,6 +53,8 @@ export function mapProduct(row) {
     saleEndsSoon: row.sale_ends_soon,
     featured: row.featured,
     active: row.active,
+    onSale: row.on_sale === true,
+    preSaleState: row.pre_sale_state || null,
   };
 }
 

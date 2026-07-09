@@ -55,6 +55,13 @@ export async function createOrder(payload) {
   return invokeFunction('create-order', payload);
 }
 
+export async function validateCoupon(payload) {
+  const supabase = requireSupabase();
+  const { data, error } = await supabase.functions.invoke('validate-coupon', { body: payload });
+  if (error) throw new Error(error.message);
+  return data || { valid: false, error: 'Could not validate coupon.' };
+}
+
 export async function retryOrderBrl(payload) {
   return invokeFunction('retry-order-brl', payload);
 }

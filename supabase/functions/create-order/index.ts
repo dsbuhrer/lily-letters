@@ -1,4 +1,10 @@
 import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
+import {
+  calculateDiscountCents,
+  loadCouponWithProducts,
+  normalizeCouponCode,
+  validateCouponApplicability,
+} from '../_shared/coupons.ts';
 import { convertUsdToBrl } from '../_shared/fxQuotes.ts';
 import { getStripe } from '../_shared/stripe.ts';
 import { generateOrderNumber, getServiceSupabase } from '../_shared/orders.ts';
@@ -22,6 +28,7 @@ Deno.serve(async (req) => {
     const items = body.items;
     const billing = body.billing || {};
     const userId = body.userId || null;
+    const couponCode = normalizeCouponCode(body.couponCode || '');
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return jsonResponse({ error: 'Invalid email' }, 400);
@@ -43,7 +50,7 @@ Deno.serve(async (req) => {
 
     const productMap = new Map((products || []).map((p) => [p.id, p]));
 
-    let subtotalCents = 0;
+    let grossSubtotalCents = 0;
     const orderItems: Array<{
       product_id: number;
       product_name: string;
@@ -60,7 +67,7 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: `Product ${item.productId} is not available` }, 400);
       }
       const priceCents = Math.round(Number(product.price) * 100);
-      subtotalCents += priceCents;
+      grossSubtotalCents += priceCents;
       orderItems.push({
         product_id: item.productId,
         product_name: item.name || product.slug,
@@ -71,6 +78,26 @@ Deno.serve(async (req) => {
         pdf_file_name: product.pdf_file_name || null,
       });
     }
+
+    let discountCents = 0;
+    let appliedCouponCode: string | null = null;
+
+    if (couponCode) {
+      const cartLines = orderItems.map((item) => ({
+        productId: item.product_id,
+        priceCents: item.price_cents,
+      }));
+      const { coupon, eligibleProductIds } = await loadCouponWithProducts(supabase, couponCode);
+      const validationError = validateCouponApplicability(coupon, cartLines, eligibleProductIds);
+      if (validationError) {
+        return jsonResponse({ error: validationError }, 400);
+      }
+      const discountResult = calculateDiscountCents(coupon!, cartLines, eligibleProductIds);
+      discountCents = discountResult.discountCents;
+      appliedCouponCode = coupon!.code;
+    }
+
+    const subtotalCents = Math.max(0, grossSubtotalCents - discountCents);
 
     const orderNumber = generateOrderNumber();
     const billingName = [firstName, lastName].filter(Boolean).join(' ').trim();
@@ -99,6 +126,9 @@ Deno.serve(async (req) => {
         user_id: userId,
         status: 'pending',
         subtotal_cents: chargeCents,
+        gross_subtotal_cents: grossSubtotalCents,
+        discount_cents: discountCents,
+        coupon_code: appliedCouponCode,
         currency,
         original_subtotal_cents: originalSubtotalCents,
         original_currency: originalCurrency,
@@ -155,6 +185,9 @@ Deno.serve(async (req) => {
         currency,
         chargeAmount: chargeCents / 100,
         usdAmount: subtotalCents / 100,
+        grossUsdAmount: grossSubtotalCents / 100,
+        discountUsdAmount: discountCents / 100,
+        couponCode: appliedCouponCode,
       },
       201,
     );

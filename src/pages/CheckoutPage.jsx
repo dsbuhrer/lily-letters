@@ -8,7 +8,7 @@ import useCartStore from '../store/cartStore';
 import CheckoutEmailNotice from '../components/CheckoutEmailNotice';
 import CheckoutPaymentForm from '../components/CheckoutPaymentForm';
 import api from '../lib/api';
-import { retryOrderBrl } from '../lib/supabase/orders';
+import { retryOrderBrl, validateCoupon } from '../lib/supabase/orders';
 import { useAuth } from '../context/AuthContext';
 import { useUiFeedback } from '../context/UiFeedbackContext';
 import { clearCheckoutSession } from '../lib/stripeCheckout';
@@ -65,6 +65,10 @@ export default function CheckoutPage() {
   });
   const [billingErrors, setBillingErrors] = useState({});
   const [paymentSession, setPaymentSession] = useState(() => createEmptyPaymentSession());
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState('');
 
   const emailLocked = Boolean(user?.email);
 
@@ -143,16 +147,65 @@ export default function CheckoutPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const buildOrderPayload = () => ({
-    email: info.email,
-    firstName: info.firstName,
-    lastName: info.lastName,
-    items: items.map((item) => ({
+  const cartItemsPayload = () =>
+    items.map((item) => ({
       productId: item.id,
       name: item.name,
       price: item.price,
       slug: item.slug,
-    })),
+    }));
+
+  const applyCoupon = async () => {
+    const code = couponInput.trim();
+    if (!code) {
+      setCouponError('Enter a coupon code.');
+      return;
+    }
+    setCouponLoading(true);
+    setCouponError('');
+    try {
+      const result = await validateCoupon({
+        code,
+        items: cartItemsPayload().map(({ productId }) => ({ productId })),
+      });
+      if (!result.valid) {
+        setAppliedCoupon(null);
+        setCouponError(result.error || 'Invalid coupon code.');
+        return;
+      }
+      setAppliedCoupon({
+        code: result.code,
+        discountAmount: result.discountAmount,
+        total: result.total,
+      });
+      setCouponInput(result.code);
+      if (step === 3) {
+        setPaymentSession(createEmptyPaymentSession(subtotal));
+        await startPaymentSession(result.code);
+      }
+    } catch (err) {
+      setAppliedCoupon(null);
+      setCouponError(err.message || 'Could not apply coupon.');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = async () => {
+    setAppliedCoupon(null);
+    setCouponInput('');
+    setCouponError('');
+    if (step === 3) {
+      setPaymentSession(createEmptyPaymentSession(subtotal));
+      await startPaymentSession(null);
+    }
+  };
+
+  const buildOrderPayload = (couponCode = appliedCoupon?.code) => ({
+    email: info.email,
+    firstName: info.firstName,
+    lastName: info.lastName,
+    items: cartItemsPayload(),
     billing: {
       street: billing.street.trim(),
       postalCode: billing.postalCode.trim(),
@@ -161,9 +214,12 @@ export default function CheckoutPage() {
       country: billing.country,
     },
     userId: user?.id,
+    couponCode: couponCode || undefined,
   });
 
-  const startPaymentSession = async () => {
+  const startPaymentSession = async (couponCodeOverride) => {
+    const couponCode =
+      couponCodeOverride !== undefined ? couponCodeOverride || undefined : appliedCoupon?.code;
     if (!stripePromise) {
       setPaymentSession((prev) => ({
         ...prev,
@@ -179,7 +235,7 @@ export default function CheckoutPage() {
     });
 
     try {
-      const result = await api.createOrder(buildOrderPayload());
+      const result = await api.createOrder(buildOrderPayload(couponCode));
       setPaymentSession({
         clientSecret: result.clientSecret,
         orderNumber: result.orderId,
@@ -358,9 +414,11 @@ export default function CheckoutPage() {
     }
   };
 
+  const discountAmount = appliedCoupon?.discountAmount ?? 0;
+  const usdTotal = Math.max(0, subtotal - discountAmount);
   const displayCurrency = step === 3 && paymentSession.currency === 'BRL' ? 'BRL' : 'USD';
   const displayTotal =
-    step === 3 && paymentSession.currency === 'BRL' ? paymentSession.chargeAmount : subtotal;
+    step === 3 && paymentSession.currency === 'BRL' ? paymentSession.chargeAmount : usdTotal;
 
   const stripeElementsOptions = useMemo(
     () =>
@@ -943,10 +1001,58 @@ export default function CheckoutPage() {
               </div>
 
               <div className="space-y-2 pt-4 border-t border-taupe/20">
+                <div className="pb-3 border-b border-taupe/20 space-y-2">
+                  <label htmlFor="checkout-coupon" className="form-label">
+                    Coupon code
+                  </label>
+                  <div className="flex gap-2 mt-1">
+                    <input
+                      id="checkout-coupon"
+                      className="input-field flex-1"
+                      placeholder="Enter code"
+                      value={couponInput}
+                      onChange={(e) => {
+                        setCouponInput(e.target.value.toUpperCase());
+                        if (couponError) setCouponError('');
+                      }}
+                      disabled={couponLoading}
+                    />
+                    {appliedCoupon ? (
+                      <button type="button" className="btn-ghost shrink-0" onClick={removeCoupon}>
+                        Remove
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn-ghost shrink-0"
+                        onClick={applyCoupon}
+                        disabled={couponLoading}
+                      >
+                        {couponLoading ? '…' : 'Apply'}
+                      </button>
+                    )}
+                  </div>
+                  {couponError && (
+                    <p className="font-body text-xs text-red-600/90 mt-1.5" role="alert">
+                      {couponError}
+                    </p>
+                  )}
+                  {appliedCoupon && (
+                    <p className="font-body text-xs text-sage mt-1.5">
+                      Coupon <strong className="text-wine">{appliedCoupon.code}</strong> applied
+                    </p>
+                  )}
+                </div>
                 <div className="flex justify-between font-body text-sm">
                   <span className="text-ink-subtle">Subtotal</span>
                   <span className="text-ink">${subtotal.toFixed(2)}</span>
                 </div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between font-body text-sm">
+                    <span className="text-ink-subtle">Discount</span>
+                    <span className="text-sage font-medium">-${discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between font-body text-sm">
                   <span className="text-ink-subtle">Shipping</span>
                   <span className="text-sage font-medium">Free (Digital)</span>
