@@ -96,9 +96,10 @@ function BulkSaleModal({ selectedCount, onClose, onApply, onEnd, loading }) {
 
 export default function AdminProductsPage() {
   const { confirm, toast } = useUiFeedback();
-  const { categories: productCategories } = useProductCategories();
+  const { categories: productCategories, groupedForSelect } = useProductCategories();
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [sort, setSort] = useState('name_asc');
   const [showInactive, setShowInactive] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -111,11 +112,21 @@ export default function AdminProductsPage() {
     load();
   }, []);
 
-  const activeCount = products.filter((p) => p.active !== false).length;
+  const visibleProducts = useMemo(
+    () => (showInactive ? products : products.filter((p) => p.active !== false)),
+    [products, showInactive],
+  );
+
+  const categoryFilteredProducts = useMemo(
+    () =>
+      categoryFilter
+        ? visibleProducts.filter((p) => p.category === categoryFilter)
+        : visibleProducts,
+    [visibleProducts, categoryFilter],
+  );
 
   const filteredProducts = useMemo(() => {
-    const visible = showInactive ? products : products.filter((p) => p.active !== false);
-    const matched = filterBySearch(visible, search, (p) => [
+    const matched = filterBySearch(categoryFilteredProducts, search, (p) => [
       p.name,
       p.sku,
       p.slug,
@@ -124,7 +135,7 @@ export default function AdminProductsPage() {
       p.subtitle,
     ]);
     return sortByKey(matched, sort, productComparators);
-  }, [products, search, sort, productCategories, showInactive]);
+  }, [categoryFilteredProducts, search, sort, productCategories]);
 
   const selectedCount = selectedIds.size;
   const allVisibleSelected =
@@ -254,11 +265,14 @@ export default function AdminProductsPage() {
         search={search}
         onSearchChange={setSearch}
         searchPlaceholder="Search name, SKU, ID, category, slug…"
+        categoryFilter={categoryFilter}
+        onCategoryFilterChange={setCategoryFilter}
+        categoryGroups={groupedForSelect}
         sort={sort}
         onSortChange={setSort}
         sortOptions={PRODUCT_SORT_OPTIONS}
         filteredCount={filteredProducts.length}
-        totalCount={showInactive ? products.length : activeCount}
+        totalCount={categoryFilteredProducts.length}
       />
 
       <div className="table-shell overflow-x-auto">
@@ -287,7 +301,11 @@ export default function AdminProductsPage() {
             {filteredProducts.length === 0 ? (
               <tr>
                 <td colSpan={8} className="data-table-empty">
-                  {products.length === 0 ? 'No products yet.' : 'No products match your search.'}
+                  {products.length === 0
+                    ? 'No products yet.'
+                    : categoryFilteredProducts.length === 0
+                      ? 'No products in this category.'
+                      : 'No products match your search.'}
                 </td>
               </tr>
             ) : (

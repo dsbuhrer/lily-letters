@@ -10,6 +10,9 @@ export default function AdminListToolbar({
   sort,
   onSortChange,
   sortOptions,
+  categoryFilter,
+  onCategoryFilterChange,
+  categoryGroups,
   filteredCount,
   totalCount,
 }) {
@@ -32,6 +35,27 @@ export default function AdminListToolbar({
           aria-label="Search list"
         />
       </div>
+      {categoryGroups && (
+        <label className="flex items-center gap-2 text-sm text-ink-muted shrink-0">
+          <span className="sr-only">Filter by category</span>
+          <select
+            className="input-field w-52"
+            value={categoryFilter}
+            onChange={(e) => onCategoryFilterChange(e.target.value)}
+          >
+            <option value="">All categories</option>
+            {Object.entries(categoryGroups).map(([group, items]) => (
+              <optgroup key={group} label={group}>
+                {items.map((c) => (
+                  <option key={c.slug} value={c.slug}>
+                    {c.label}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </label>
+      )}
       <label className="flex items-center gap-2 text-sm text-ink-muted shrink-0">
         <span className="sr-only">Sort by</span>
         <select className="input-field w-52" value={sort} onChange={(e) => onSortChange(e.target.value)}>
