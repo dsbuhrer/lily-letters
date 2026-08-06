@@ -220,3 +220,92 @@ export async function sendOrderConfirmationEmail(
     })),
   });
 }
+
+function escapeAttr(value: string) {
+  return escapeHtml(value);
+}
+
+function buildReviewRequestHtml(
+  order: OrderEmailDetails,
+  reviewUrl: string,
+  productNames: string[],
+) {
+  const greeting = order.billing_name
+    ? `Hi ${escapeHtml(order.billing_name.split(' ')[0] || order.billing_name)},`
+    : 'Hi there,';
+  const namesList = productNames.map((n) => `<li>${escapeHtml(n)}</li>`).join('');
+
+  return `<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#f8f5ef;font-family:Georgia,serif;">
+  <div style="max-width:560px;margin:32px auto;background:#fff;padding:32px 28px;border:1px solid #e8e0d4;">
+    <p style="margin:0 0 16px;color:#4c2233;font-size:18px;">${greeting}</p>
+    <p style="margin:0 0 16px;color:#5c4f47;font-size:15px;line-height:1.6;">
+      Thank you for your order <strong>${escapeHtml(order.order_number)}</strong>.
+      We'd love to hear how your templates turned out.
+    </p>
+    ${
+      productNames.length
+        ? `<ul style="margin:0 0 20px;padding-left:20px;color:#5c4f47;font-size:14px;line-height:1.6;">${namesList}</ul>`
+        : ''
+    }
+    <p style="margin:0 0 24px;color:#5c4f47;font-size:15px;line-height:1.6;">
+      It only takes a minute — your review helps other couples find the perfect stationery.
+    </p>
+    <p style="margin:0 0 28px;">
+      <a href="${escapeAttr(reviewUrl)}"
+         style="display:inline-block;background:#4c2233;color:#f8f5ef;text-decoration:none;padding:12px 22px;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;">
+        Leave a review
+      </a>
+    </p>
+    <p style="margin:0;color:#9a8f86;font-size:12px;line-height:1.5;">
+      Or open this link: ${escapeHtml(reviewUrl)}
+    </p>
+    <p style="margin:24px 0 0;color:#4c2233;font-size:14px;">The Lily Letters Co.</p>
+  </div>
+</body>
+</html>`;
+}
+
+function buildReviewRequestText(
+  order: OrderEmailDetails,
+  reviewUrl: string,
+  productNames: string[],
+) {
+  const greeting = order.billing_name
+    ? `Hi ${order.billing_name.split(' ')[0] || order.billing_name},`
+    : 'Hi there,';
+  const lines = [
+    greeting,
+    '',
+    `Thank you for your order ${order.order_number}. We'd love to hear how your templates turned out.`,
+    '',
+  ];
+  if (productNames.length) {
+    lines.push('Your purchase:');
+    for (const name of productNames) lines.push(`- ${name}`);
+    lines.push('');
+  }
+  lines.push('Leave a review:', reviewUrl, '', 'The Lily Letters Co.');
+  return lines.join('\n');
+}
+
+export async function sendReviewRequestEmail(
+  order: OrderEmailDetails & { review_token: string },
+  productNames: string[],
+) {
+  if (!order.review_token) {
+    return { sent: false, reason: 'missing_token' as const };
+  }
+
+  const siteUrl = Deno.env.get('SITE_URL') || 'https://thelilylettersco.com';
+  const reviewUrl = `${siteUrl.replace(/\/$/, '')}/review/${order.review_token}`;
+  const subject = `How did you like your templates? (${order.order_number})`;
+
+  return sendSmtpMail({
+    to: order.email,
+    subject,
+    content: buildReviewRequestText(order, reviewUrl, productNames),
+    html: buildReviewRequestHtml(order, reviewUrl, productNames),
+  });
+}

@@ -31,6 +31,29 @@ export async function getProducts(params = {}) {
   return { products: (data || []).map(mapProduct) };
 }
 
+export async function getProductReviews(productId) {
+  const supabase = requireSupabase();
+  const id = Number(productId);
+  if (!Number.isFinite(id) || id <= 0) return { reviews: [] };
+
+  const { data, error } = await supabase
+    .from('product_reviews')
+    .select('id, rating, body, author_name, created_at')
+    .eq('product_id', id)
+    .order('created_at', { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return {
+    reviews: (data || []).map((row) => ({
+      id: row.id,
+      rating: row.rating,
+      body: row.body,
+      authorName: row.author_name,
+      createdAt: row.created_at,
+    })),
+  };
+}
+
 export async function getProduct(idOrSlug) {
   const supabase = requireSupabase();
   const key = String(idOrSlug);

@@ -1,6 +1,6 @@
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@17.7.0?target=deno';
-import { sendOrderConfirmationEmail } from './orderEmail.ts';
+import { sendOrderConfirmationEmail, sendReviewRequestEmail } from './orderEmail.ts';
 import { normalizeCouponCode } from './coupons.ts';
 
 const SIGNED_URL_TTL = 3600;
@@ -193,12 +193,12 @@ export async function fetchOrderItems(supabase: SupabaseClient, orderId: string)
   const { data, error } = await supabase
     .from('order_items')
     .select(
-      'product_id, product_name, product_slug, price_cents, canva_link, pdf_url, pdf_file_name',
+      'id, product_id, product_name, product_slug, price_cents, canva_link, pdf_url, pdf_file_name',
     )
     .eq('order_id', orderId);
 
   if (error) throw error;
-  return (data || []) as OrderItemRow[];
+  return (data || []) as (OrderItemRow & { id: string })[];
 }
 
 export async function sendOrderConfirmationEmailIfNeeded(
@@ -236,6 +236,92 @@ export async function sendOrderConfirmationEmailIfNeeded(
     await supabase
       .from('orders')
       .update({ confirmation_email_sent_at: null })
+      .eq('id', orderId);
+    throw error;
+  }
+}
+
+export async function sendReviewRequestEmailIfNeeded(
+  supabase: SupabaseClient,
+  orderId: string,
+) {
+  // Ensure a review token exists before claiming the send
+  const { data: existing, error: existingError } = await supabase
+    .from('orders')
+    .select('id, review_token, review_email_sent_at, status')
+    .eq('id', orderId)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+  if (!existing || existing.status !== 'paid') {
+    return { sent: false, reason: 'not_eligible' as const };
+  }
+  if (existing.review_email_sent_at) {
+    return { sent: false, reason: 'already_sent' as const };
+  }
+
+  let reviewToken = existing.review_token as string | null;
+  if (!reviewToken) {
+    const { data: withToken, error: tokenError } = await supabase
+      .from('orders')
+      .update({ review_token: crypto.randomUUID() })
+      .eq('id', orderId)
+      .is('review_token', null)
+      .select('review_token')
+      .maybeSingle();
+    if (tokenError) throw tokenError;
+    reviewToken = withToken?.review_token ?? null;
+    if (!reviewToken) {
+      const { data: refreshed } = await supabase
+        .from('orders')
+        .select('review_token')
+        .eq('id', orderId)
+        .maybeSingle();
+      reviewToken = refreshed?.review_token ?? null;
+    }
+  }
+
+  if (!reviewToken) {
+    return { sent: false, reason: 'missing_token' as const };
+  }
+
+  const { data: claimed, error: claimError } = await supabase
+    .from('orders')
+    .update({ review_email_sent_at: new Date().toISOString() })
+    .eq('id', orderId)
+    .eq('status', 'paid')
+    .is('review_email_sent_at', null)
+    .select('id, order_number, email, billing_name, review_token')
+    .maybeSingle();
+
+  if (claimError) throw claimError;
+  if (!claimed) return { sent: false, reason: 'already_sent' as const };
+
+  try {
+    const items = await fetchOrderItems(supabase, orderId);
+    const productNames = items.map((item) => item.product_name).filter(Boolean);
+    const result = await sendReviewRequestEmail(
+      {
+        order_number: claimed.order_number,
+        email: claimed.email,
+        billing_name: claimed.billing_name,
+        review_token: claimed.review_token || reviewToken,
+      },
+      productNames,
+    );
+
+    if (!result.sent) {
+      await supabase
+        .from('orders')
+        .update({ review_email_sent_at: null })
+        .eq('id', orderId);
+    }
+
+    return result;
+  } catch (error) {
+    await supabase
+      .from('orders')
+      .update({ review_email_sent_at: null })
       .eq('id', orderId);
     throw error;
   }

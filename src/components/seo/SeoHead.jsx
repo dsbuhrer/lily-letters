@@ -8,6 +8,7 @@ export default function SeoHead({
   type = 'website',
   keywords,
   jsonLd,
+  noIndex = false,
 }) {
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const url = canonical || (typeof window !== 'undefined' ? window.location.href : siteUrl);
@@ -18,6 +19,7 @@ export default function SeoHead({
     <Helmet>
       <title>{title}</title>
       <meta name="description" content={description} />
+      {noIndex && <meta name="robots" content="noindex, nofollow" />}
       {keywordsStr && <meta name="keywords" content={keywordsStr} />}
       {canonical && <link rel="canonical" href={canonical} />}
       <meta property="og:type" content={type} />

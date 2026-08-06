@@ -210,35 +210,39 @@ export default function ProductCard({ product, index = 0 }) {
 
         <div className="flex items-center justify-between mt-1.5 flex-wrap gap-y-1 shrink-0">
 
-          <div className="flex items-center gap-1">
+          {product.reviews > 0 ? (
+            <div className="flex items-center gap-1">
 
-            <div className="flex">
+              <div className="flex">
 
-              {Array.from({ length: 5 }).map((_, i) => (
+                {Array.from({ length: 5 }).map((_, i) => (
 
-                <Star
+                  <Star
 
-                  key={i}
+                    key={i}
 
-                  size={10}
+                    size={10}
 
-                  strokeWidth={0}
+                    strokeWidth={0}
 
-                  fill={i < Math.floor(product.rating) ? '#978152' : '#d4cbc4'}
+                    fill={i < Math.floor(product.rating || 0) ? '#978152' : '#d4cbc4'}
 
-                />
+                  />
 
-              ))}
+                ))}
+
+              </div>
+
+              <span className="font-body text-xs text-ink-subtle hidden sm:inline">
+
+                ({product.reviews})
+
+              </span>
 
             </div>
-
-            <span className="font-body text-xs text-ink-subtle hidden sm:inline">
-
-              ({product.reviews})
-
-            </span>
-
-          </div>
+          ) : (
+            <div />
+          )}
 
           <div className="flex items-center gap-1.5">
 

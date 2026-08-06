@@ -10,6 +10,7 @@ import {
   ShoppingBag,
   LogOut,
   Ticket,
+  Star,
 } from 'lucide-react';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 
@@ -21,6 +22,7 @@ const links = [
   { to: '/admin/coupons', label: 'Coupons', icon: Ticket },
   { to: '/admin/product-categories', label: 'Product categories', icon: Layers },
   { to: '/admin/orders', label: 'Orders', icon: ShoppingBag },
+  { to: '/admin/reviews', label: 'Reviews', icon: Star },
   { to: '/admin/contacts', label: 'Contacts', icon: MessageSquare },
   { to: '/admin/subscribers', label: 'Subscribers', icon: Mail },
 ];

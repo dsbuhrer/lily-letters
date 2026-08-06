@@ -5,6 +5,7 @@ import {
   getServiceSupabase,
   markOrderPaid,
   sendOrderConfirmationEmailIfNeeded,
+  sendReviewRequestEmailIfNeeded,
 } from '../_shared/orders.ts';
 
 async function handlePaymentIntentSucceeded(
@@ -28,6 +29,11 @@ async function handlePaymentIntentSucceeded(
     await sendOrderConfirmationEmailIfNeeded(supabase, order.id);
   } catch (emailError) {
     console.error('Order confirmation email failed:', emailError);
+  }
+  try {
+    await sendReviewRequestEmailIfNeeded(supabase, order.id);
+  } catch (emailError) {
+    console.error('Review request email failed:', emailError);
   }
 }
 

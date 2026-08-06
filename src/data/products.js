@@ -31,8 +31,8 @@ export const products = [
     price: 7.00,
     originalPrice: null,
     badge: null,
-    rating: 5.0,
-    reviews: 5,
+    rating: null,
+    reviews: 0,
     description:
       'This burgundy wedding thank you card template is made for a formal and timeless celebration. The deep red color and classic layout create a look that feels traditional, refined, and quietly luxurious. Inspired by old money style weddings, this card is perfect for black-tie events, church ceremonies, ballroom receptions, and elegant estate venues.',
     includes: [
@@ -63,8 +63,8 @@ export const products = [
     price: 7.00,
     originalPrice: null,
     badge: null,
-    rating: 5.0,
-    reviews: 5,
+    rating: null,
+    reviews: 0,
     description:
       'This burgundy wedding table sign template is made for a formal and timeless celebration. Inspired by old money style weddings, this guestbook sign is perfect for rehearsal dinners, black-tie events, church ceremonies, ballroom receptions, and elegant estate venues.',
     includes: [
@@ -98,8 +98,8 @@ export const products = [
     price: 8.00,
     originalPrice: null,
     badge: 'New',
-    rating: 5.0,
-    reviews: 5,
+    rating: null,
+    reviews: 0,
     description:
       'This elegant, classy, and timeless sage green floral alphabetical seating plan was created for those who love the delicate vintage garden aesthetics. All line art is hand-drawn to bring a touch of art to your special day. Available in portrait and landscape orientations, in multiple sizes.',
     includes: [
@@ -131,8 +131,8 @@ export const products = [
     price: 8.00,
     originalPrice: null,
     badge: null,
-    rating: 5.0,
-    reviews: 5,
+    rating: null,
+    reviews: 0,
     description:
       'This elegant, classy, and timeless sage green floral Welcome Sign was created for those who love the delicate vintage garden aesthetics. All line art is hand-drawn to bring a touch of art to your rehearsal dinner or the night before celebration. Available in multiple sizes.',
     includes: [
@@ -163,8 +163,8 @@ export const products = [
     price: 6.00,
     originalPrice: null,
     badge: null,
-    rating: 5.0,
-    reviews: 5,
+    rating: null,
+    reviews: 0,
     description:
       'This hand-drawn wedding menu was designed with a whimsical, garden-inspired aesthetic in mind, pairing natural green accents with timeless vintage details. Perfect for couples who want their stationery to feel personal, hand-drawn, and full of character. Includes a Thank You card on the back.',
     includes: [
@@ -197,8 +197,8 @@ export const products = [
     price: 5.00,
     originalPrice: null,
     badge: null,
-    rating: 5.0,
-    reviews: 5,
+    rating: null,
+    reviews: 0,
     description:
       'This hand-drawn wedding place card was designed with a whimsical, garden-inspired aesthetic in mind, pairing natural green accents with timeless vintage details. Includes meal choice icon. Perfect for couples who want their stationery to feel personal, hand-drawn, and full of character.',
     includes: [
@@ -233,8 +233,8 @@ export const products = [
     price: 4.55,
     originalPrice: 7.00,
     badge: 'Sale',
-    rating: 5.0,
-    reviews: 5,
+    rating: null,
+    reviews: 0,
     description:
       'This hand-drawn wedding bar menu table sign was designed with a whimsical, garden-inspired aesthetic in mind, pairing natural green accents with timeless vintage details. List your signature cocktails, wines, and spirits in style. Perfect for couples who want their stationery to feel personal, hand-drawn, and full of character.',
     includes: [
@@ -269,8 +269,8 @@ export const products = [
     price: 11.24,
     originalPrice: 14.99,
     badge: 'Best Seller',
-    rating: 5.0,
-    reviews: 5,
+    rating: null,
+    reviews: 0,
     description:
       'This hand-drawn wedding invitation set was designed with a whimsical, garden-inspired aesthetic in mind, pairing natural green accents with timeless vintage details. Perfect for couples who want their stationery to feel personal, hand-drawn, and full of character. Includes the full suite: invitation, detail card, RSVP, and envelope liner.',
     includes: [

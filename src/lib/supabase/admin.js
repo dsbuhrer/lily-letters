@@ -115,6 +115,50 @@ export async function refundOrder(orderId) {
   return data;
 }
 
+export async function listReviews() {
+  const supabase = requireSupabase();
+  const { data, error } = await supabase
+    .from('product_reviews')
+    .select(
+      `
+      id,
+      rating,
+      body,
+      author_name,
+      author_email,
+      created_at,
+      product_id,
+      order_id,
+      products ( id, name, slug ),
+      orders ( id, order_number )
+    `,
+    )
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return {
+    reviews: (data || []).map((row) => ({
+      id: row.id,
+      rating: row.rating,
+      body: row.body,
+      authorName: row.author_name,
+      authorEmail: row.author_email,
+      createdAt: row.created_at,
+      productId: row.product_id,
+      productName: row.products?.name || `Product #${row.product_id}`,
+      productSlug: row.products?.slug || null,
+      orderId: row.order_id,
+      orderNumber: row.orders?.order_number || null,
+    })),
+  };
+}
+
+export async function deleteReview(id) {
+  const supabase = requireSupabase();
+  const { error } = await supabase.from('product_reviews').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+  return { ok: true };
+}
+
 export async function listPosts() {
   const supabase = requireSupabase();
   const { data, error } = await supabase

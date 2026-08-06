@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  ShoppingBag, Star, Download, Check, ArrowLeft,
+  ShoppingBag, Star, Download, Check,
 } from 'lucide-react';
 import { useProduct, useProducts } from '../hooks/useProducts';
 import useCartStore from '../store/cartStore';
@@ -10,14 +10,26 @@ import ProductCard from '../components/ProductCard';
 import WishlistButton from '../components/WishlistButton';
 import SeoHead from '../components/seo/SeoHead';
 import ProductMediaCarousel from '../components/ProductMediaCarousel';
+import api from '../lib/api';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { product, loading } = useProduct(id);
   const { products: allProducts } = useProducts();
   const [added, setAdded] = useState(false);
+  const [reviews, setReviews] = useState([]);
   const { addItem, openCart } = useCartStore();
+
+  useEffect(() => {
+    if (!product?.id) {
+      setReviews([]);
+      return;
+    }
+    api
+      .getProductReviews(product.id)
+      .then((r) => setReviews(r.reviews || []))
+      .catch(() => setReviews([]));
+  }, [product?.id]);
 
   if (loading) {
     return (
@@ -134,25 +146,27 @@ export default function ProductDetailPage() {
               )}
 
               {/* Rating */}
-              <div className="flex items-center gap-2 mb-5">
-                <div className="flex">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      size={14}
-                      strokeWidth={0}
-                      fill={i < Math.floor(product.rating) ? '#978152' : '#d4cbc4'}
-                    />
-                  ))}
+              {product.reviews > 0 && (
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="flex">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        size={14}
+                        strokeWidth={0}
+                        fill={i < Math.floor(product.rating || 0) ? '#978152' : '#d4cbc4'}
+                      />
+                    ))}
+                  </div>
+                  <span className="font-body text-sm text-gold">{product.rating}</span>
+                  <span className="font-body text-sm text-ink-faint">
+                    ({product.reviews} {product.reviews === 1 ? 'review' : 'reviews'})
+                  </span>
                 </div>
-                <span className="font-body text-sm text-gold">{product.rating}</span>
-                <span className="font-body text-sm text-ink-faint">
-                  ({product.reviews} reviews)
-                </span>
-              </div>
+              )}
 
               {/* Price */}
-              <div className="flex items-baseline gap-3 mb-6">
+              <div className={`flex items-baseline gap-3 mb-6 ${product.reviews > 0 ? '' : 'mt-4'}`}>
                 <span className="font-display text-4xl font-light text-wine">
                   ${product.price}
                 </span>
@@ -174,6 +188,47 @@ export default function ProductDetailPage() {
             </motion.div>
           </div>
         </div>
+
+        {reviews.length > 0 && (
+          <section className="mt-16 pt-12 border-t border-taupe/20">
+            <h2 className="font-display text-3xl font-light text-wine mb-8">
+              Customer Reviews
+            </h2>
+            <div className="space-y-6 max-w-3xl">
+              {reviews.map((review) => (
+                <article key={review.id} className="border-b border-taupe/20 pb-6 last:border-0">
+                  <div className="flex flex-wrap items-center gap-3 mb-2">
+                    <div className="flex">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          size={12}
+                          strokeWidth={0}
+                          fill={i < review.rating ? '#978152' : '#d4cbc4'}
+                        />
+                      ))}
+                    </div>
+                    <span className="font-body text-sm text-wine">{review.authorName}</span>
+                    {review.createdAt && (
+                      <span className="font-body text-xs text-ink-faint">
+                        {new Date(review.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
+                    )}
+                  </div>
+                  {review.body && (
+                    <p className="font-body text-sm text-ink-muted leading-relaxed whitespace-pre-wrap">
+                      {review.body}
+                    </p>
+                  )}
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Related */}
         {related.length > 0 && (

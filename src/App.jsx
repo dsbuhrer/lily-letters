@@ -15,6 +15,7 @@ import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import FAQPage from './pages/FAQPage';
 import WishlistPage from './pages/WishlistPage';
+import ReviewPage from './pages/ReviewPage';
 import AdminLayout from './components/admin/AdminLayout';
 import AdminGuard from './components/admin/AdminGuard';
 import AdminLoginPage from './pages/admin/AdminLoginPage';
@@ -50,6 +51,7 @@ const AdminSubscribersPage = lazy(() => import('./pages/admin/AdminSubscribersPa
 const AdminOrdersPage = lazy(() => import('./pages/admin/AdminOrdersPage'));
 const AdminCouponsPage = lazy(() => import('./pages/admin/AdminCouponsPage'));
 const AdminCouponEditorPage = lazy(() => import('./pages/admin/AdminCouponEditorPage'));
+const AdminReviewsPage = lazy(() => import('./pages/admin/AdminReviewsPage'));
 
 const HIDE_LAYOUT = ['/checkout', '/order-confirmation', '/admin'];
 
@@ -92,6 +94,7 @@ export default function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
+          <Route path="/review/:token" element={<ReviewPage />} />
 
           <Route path="/account/login" element={<AccountLoginPage />} />
           <Route path="/account/register" element={<AccountRegisterPage />} />
@@ -251,6 +254,14 @@ export default function App() {
                 element={
                   <Suspense fallback={<PageFallback />}>
                     <AdminOrdersPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/admin/reviews"
+                element={
+                  <Suspense fallback={<PageFallback />}>
+                    <AdminReviewsPage />
                   </Suspense>
                 }
               />

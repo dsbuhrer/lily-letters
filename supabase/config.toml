@@ -35,3 +35,12 @@ verify_jwt = false
 
 [functions.submit-contact]
 verify_jwt = false
+
+[functions.get-review-invite]
+verify_jwt = false
+
+[functions.submit-review]
+verify_jwt = false
+
+[functions.validate-coupon]
+verify_jwt = false

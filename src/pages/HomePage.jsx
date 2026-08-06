@@ -1,8 +1,8 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, Download, Palette, Printer, Star, ChevronDown } from 'lucide-react';
-import { getFeaturedProducts } from '../data/products';
+import api from '../lib/api';
 import ProductCard from '../components/ProductCard';
 
 const steps = [
@@ -71,8 +71,14 @@ export default function HomePage() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
   const heroY = useTransform(scrollYProgress, [0, 1], ['0%', '30%']);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  const [featured, setFeatured] = useState([]);
 
-  const featured = getFeaturedProducts();
+  useEffect(() => {
+    api
+      .getProducts({ featured: true })
+      .then((r) => setFeatured((r.products || []).slice(0, 4)))
+      .catch(() => setFeatured([]));
+  }, []);
 
   return (
     <main>

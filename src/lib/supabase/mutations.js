@@ -31,3 +31,21 @@ export async function submitContact(payload) {
   }
   return data;
 }
+
+export async function getReviewInvite(token) {
+  const supabase = requireSupabase();
+  const { data, error } = await supabase.functions.invoke('get-review-invite', {
+    body: { token },
+  });
+  if (error) throw new Error(error.message);
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
+export async function submitReview(payload) {
+  const supabase = requireSupabase();
+  const { data, error } = await supabase.functions.invoke('submit-review', { body: payload });
+  if (error) throw new Error(error.message);
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
