@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.validate-coupon]
 verify_jwt = false
+
+[functions.send-test-review-email]
+verify_jwt = true
