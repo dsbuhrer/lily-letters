@@ -254,10 +254,18 @@ Disallow: /order-confirmation
 Disallow: /account
 
 User-agent: GPTBot
-Allow: /blog/
+Allow: /
+Disallow: /admin
+Disallow: /checkout
+Disallow: /order-confirmation
+Disallow: /account
 
 User-agent: Google-Extended
 Allow: /
+Disallow: /admin
+Disallow: /checkout
+Disallow: /order-confirmation
+Disallow: /account
 
 Sitemap: ${siteUrl}/sitemap.xml
 `;
