@@ -49,3 +49,20 @@ export async function submitReview(payload) {
   if (data?.error) throw new Error(data.error);
   return data;
 }
+
+export async function trackPostView(postId, referrer) {
+  if (!postId) return { ok: false };
+  const supabase = requireSupabase();
+  try {
+    const { data, error } = await supabase.functions.invoke('track-post-view', {
+      body: {
+        post_id: postId,
+        referrer: referrer || (typeof document !== 'undefined' ? document.referrer : '') || null,
+      },
+    });
+    if (error) return { ok: false };
+    return data || { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}

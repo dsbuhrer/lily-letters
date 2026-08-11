@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.send-test-review-email]
 verify_jwt = true
+
+[functions.track-post-view]
+verify_jwt = false

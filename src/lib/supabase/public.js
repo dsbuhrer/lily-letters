@@ -174,12 +174,6 @@ export async function getPost(slug) {
   if (error) throw new Error(error.message);
   if (!post) throw new Error('Post not found');
 
-  try {
-    await supabase.rpc('increment_post_views', { post_id: post.id });
-  } catch {
-    /* optional */
-  }
-
   let related = [];
   if (post.category_id) {
     const { data: rel } = await supabase

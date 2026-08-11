@@ -8,6 +8,8 @@ import { filterBySearch, sortByKey } from '../../utils/adminListFilter';
 const POST_SORT_OPTIONS = [
   { value: 'updated_desc', label: 'Updated (newest)' },
   { value: 'updated_asc', label: 'Updated (oldest)' },
+  { value: 'views_desc', label: 'Views (high → low)' },
+  { value: 'views_asc', label: 'Views (low → high)' },
   { value: 'title_asc', label: 'Title (A–Z)' },
   { value: 'title_desc', label: 'Title (Z–A)' },
   { value: 'status', label: 'Status (draft first)' },
@@ -16,6 +18,8 @@ const POST_SORT_OPTIONS = [
 const postComparators = {
   updated_desc: (a, b) => new Date(b.updated_at) - new Date(a.updated_at),
   updated_asc: (a, b) => new Date(a.updated_at) - new Date(b.updated_at),
+  views_desc: (a, b) => (b.view_count || 0) - (a.view_count || 0),
+  views_asc: (a, b) => (a.view_count || 0) - (b.view_count || 0),
   title_asc: (a, b) => (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' }),
   title_desc: (a, b) => (b.title || '').localeCompare(a.title || '', undefined, { sensitivity: 'base' }),
   status: (a, b) => {
@@ -111,6 +115,7 @@ export default function AdminPostsPage() {
             <tr>
               <th>Title</th>
               <th>Status</th>
+              <th className="text-right">Views</th>
               <th>Updated</th>
               <th className="text-right">Actions</th>
             </tr>
@@ -118,7 +123,7 @@ export default function AdminPostsPage() {
           <tbody>
             {filteredPosts.length === 0 ? (
               <tr>
-                <td colSpan={4} className="data-table-empty">
+                <td colSpan={5} className="data-table-empty">
                   {posts.length === 0 ? 'No posts yet.' : 'No posts match your search.'}
                 </td>
               </tr>
@@ -134,6 +139,7 @@ export default function AdminPostsPage() {
                   <td>
                     <PostStatusLabel status={post.status} />
                   </td>
+                  <td className="text-right tabular-nums">{(post.view_count || 0).toLocaleString()}</td>
                   <td className="tabular-nums">
                     {new Date(post.updated_at).toLocaleDateString()}
                   </td>

@@ -23,12 +23,15 @@ export const api = {
   submitContact: mutations.submitContact,
   getReviewInvite: mutations.getReviewInvite,
   submitReview: mutations.submitReview,
+  trackPostView: mutations.trackPostView,
   createOrder: ordersApi.createOrder,
   retryOrderBrl: ordersApi.retryOrderBrl,
   validateCoupon: ordersApi.validateCoupon,
 
   admin: {
     stats: adminApi.getStats,
+    blogAnalytics: adminApi.getBlogAnalyticsSummary,
+    postAnalytics: adminApi.getPostAnalytics,
     posts: adminApi.listPosts,
     post: adminApi.getPostById,
     savePost: adminApi.savePost,

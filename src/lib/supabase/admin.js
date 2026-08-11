@@ -48,7 +48,18 @@ function preparePostRow(body, existingSlug, tagSlugs) {
 
 export async function getStats() {
   const supabase = requireSupabase();
-  const [drafts, published, subs, contacts, contactsUnread, orders, ordersPaid] = await Promise.all([
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const [
+    drafts,
+    published,
+    subs,
+    contacts,
+    contactsUnread,
+    orders,
+    ordersPaid,
+    views7d,
+    topPosts,
+  ] = await Promise.all([
     supabase.from('posts').select('id', { count: 'exact', head: true }).eq('status', 'draft'),
     supabase.from('posts').select('id', { count: 'exact', head: true }).eq('status', 'published'),
     supabase.from('subscribers').select('id', { count: 'exact', head: true }).is('unsubscribed_at', null),
@@ -56,7 +67,21 @@ export async function getStats() {
     supabase.from('contacts').select('id', { count: 'exact', head: true }).is('read_at', null),
     supabase.from('orders').select('id', { count: 'exact', head: true }),
     supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'paid'),
+    supabase.from('post_views').select('id', { count: 'exact', head: true }).gte('viewed_at', sevenDaysAgo),
+    supabase
+      .from('posts')
+      .select('id, title, slug, view_count')
+      .eq('status', 'published')
+      .order('view_count', { ascending: false })
+      .limit(5),
   ]);
+
+  const { data: viewTotals } = await supabase
+    .from('posts')
+    .select('view_count')
+    .eq('status', 'published');
+  const viewsAll = (viewTotals || []).reduce((sum, row) => sum + (row.view_count || 0), 0);
+
   return {
     drafts: drafts.count || 0,
     published: published.count || 0,
@@ -65,6 +90,88 @@ export async function getStats() {
     contacts_unread: contactsUnread.count || 0,
     orders: orders.count || 0,
     orders_paid: ordersPaid.count || 0,
+    views_7d: views7d.count || 0,
+    views_all: viewsAll,
+    top_posts: topPosts.data || [],
+  };
+}
+
+function aggregateCounts(rows, keyFn) {
+  const map = new Map();
+  for (const row of rows) {
+    const key = keyFn(row);
+    if (!key) continue;
+    map.set(key, (map.get(key) || 0) + 1);
+  }
+  return [...map.entries()]
+    .map(([key, count]) => ({ key, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+export async function getBlogAnalyticsSummary() {
+  const stats = await getStats();
+  return {
+    views_7d: stats.views_7d,
+    views_all: stats.views_all,
+    top_posts: stats.top_posts,
+  };
+}
+
+export async function getPostAnalytics(postId) {
+  if (!postId) throw new Error('Post id required');
+  const supabase = requireSupabase();
+  const now = Date.now();
+  const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  const [{ data: post, error: postError }, { data: rows, error: viewsError }] = await Promise.all([
+    supabase.from('posts').select('id, title, view_count').eq('id', postId).maybeSingle(),
+    supabase
+      .from('post_views')
+      .select('device_type, country_code, country_name, viewed_at')
+      .eq('post_id', postId)
+      .order('viewed_at', { ascending: false })
+      .limit(5000),
+  ]);
+
+  if (postError) throw new Error(postError.message);
+  if (!post) throw new Error('Post not found');
+  if (viewsError) throw new Error(viewsError.message);
+
+  const views = rows || [];
+  const views7d = views.filter((v) => v.viewed_at >= sevenDaysAgo).length;
+  const views30d = views.filter((v) => v.viewed_at >= thirtyDaysAgo).length;
+
+  const byDevice = aggregateCounts(views, (v) => v.device_type || 'unknown').map((item) => ({
+    device: item.key,
+    count: item.count,
+  }));
+
+  const byCountry = aggregateCounts(
+    views,
+    (v) => v.country_code || (v.country_name ? v.country_name : null),
+  )
+    .slice(0, 10)
+    .map((item) => {
+      const sample = views.find(
+        (v) =>
+          v.country_code === item.key ||
+          (!v.country_code && v.country_name === item.key),
+      );
+      return {
+        country_code: sample?.country_code || (item.key.length === 2 ? item.key : null),
+        country_name: sample?.country_name || item.key,
+        count: item.count,
+      };
+    });
+
+  return {
+    view_count: post.view_count || 0,
+    views_7d: views7d,
+    views_30d: views30d,
+    views_logged: views.length,
+    by_device: byDevice,
+    by_country: byCountry,
   };
 }
 

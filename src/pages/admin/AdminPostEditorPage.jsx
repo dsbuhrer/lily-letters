@@ -13,6 +13,7 @@ import {
 } from '../../constants/blogHeroImage';
 import { slugify } from '../../utils/slugify';
 import BlogTagInput from '../../components/admin/BlogTagInput';
+import PostAnalyticsPanel from '../../components/admin/PostAnalyticsPanel';
 
 const STEPS = [
   { id: 'basics', label: 'Basics' },
@@ -376,6 +377,8 @@ export default function AdminPostEditorPage() {
         URL: <span className="text-wine font-mono">/blog/{previewSlug}</span>
         <span className="text-ink-faint"> (slug generated from title)</span>
       </p>
+
+      {!isNew && id && <PostAnalyticsPanel postId={id} />}
 
       <nav className="flex gap-1 mb-8 overflow-x-auto pb-1" aria-label="Steps">
         {STEPS.map((s, i) => (

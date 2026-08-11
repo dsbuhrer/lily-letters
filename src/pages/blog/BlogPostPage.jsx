@@ -49,6 +49,19 @@ export default function BlogPostPage() {
       .finally(() => setLoading(false));
   }, [slug]);
 
+  useEffect(() => {
+    const postId = data?.post?.id;
+    if (!postId || typeof window === 'undefined') return;
+    const key = `post_viewed_${postId}`;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, '1');
+    } catch {
+      /* private mode / blocked storage */
+    }
+    api.trackPostView(postId).catch(() => {});
+  }, [data?.post?.id]);
+
   const preparedContent = useMemo(
     () => (data?.post?.content ? prepareBlogContentHtml(data.post.content) : ''),
     [data?.post?.content],
